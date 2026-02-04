@@ -1,0 +1,51 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3>Edit Training</h3>
+
+<form method="post" enctype="multipart/form-data" class="card p-4">
+  {% csrf_token %}
+
+  <input
+    name="title"
+    value="{{ training.title }}"
+    class="form-control mb-3"
+    required
+  >
+
+  <textarea
+    name="description"
+    class="form-control mb-3"
+    required
+  >{{ training.description }}</textarea>
+
+  <input
+    name="duration"
+    value="{{ training.duration }}"
+    class="form-control mb-3"
+  >
+
+  <input
+    name="fee"
+    type="number"
+    value="{{ training.fee }}"
+    class="form-control mb-3"
+  >
+
+  {% if training.image %}
+    <img src="{{ training.image.url }}" class="img-fluid mb-2 rounded">
+  {% endif %}
+
+  <input type="file" name="image" class="form-control mb-3">
+
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" name="is_active"
+           {% if training.is_active %}checked{% endif %}>
+    <label class="form-check-label">Active</label>
+  </div>
+
+  <button class="btn btn-primary">Update Training</button>
+  <a href="{% url 'admin_training_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+
+{% endblock %}

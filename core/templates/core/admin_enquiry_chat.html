@@ -1,0 +1,50 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h4>Enquiry Chat</h4>
+
+<p>
+  <strong>Candidate:</strong> {{ enquiry.user.email }} 
+  <br>
+  <strong>Training:</strong> {{ enquiry.training.title }}
+</p>
+
+<div class="card mb-3">
+  <div class="card-body" style="max-height: 350px; overflow-y: auto;">
+
+    {% for m in messages %}
+      <div class="mb-2">
+        {% if m.sender.is_staff %}
+          <div class="text-end">
+            <span class="badge bg-success">Admin</span>
+            <div class="bg-success text-white p-2 rounded d-inline-block">
+              {{ m.message }}
+            </div>
+          </div>
+        {% else %}
+          <div>
+            <span class="badge bg-secondary">Candidate</span>
+            <div class="bg-light p-2 rounded d-inline-block">
+              {{ m.message }}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+  </div>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <textarea
+    name="message"
+    class="form-control mb-2"
+    placeholder="Reply..."
+    required
+  ></textarea>
+
+  <button class="btn btn-success">Send Reply</button>
+</form>
+
+{% endblock %}

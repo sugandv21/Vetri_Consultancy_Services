@@ -1,0 +1,112 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<style>
+/* Card hover effect */
+.service-card {
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.service-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 1rem 2rem rgba(0,0,0,.15);
+}
+</style>
+
+<div class="container py-5">
+
+  <!-- PAGE HEADER -->
+  <div class="text-center mb-5">
+    <h2 class="fw-bold">Our Services</h2>
+    <p class="text-muted">
+      We help candidates grow and companies hire the right talent
+    </p>
+  </div>
+
+  <!-- SERVICES GRID -->
+  <div class="row g-4">
+
+    <!-- SERVICE 1 -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card service-card h-100 shadow-sm border-start border-primary border-4">
+        <div class="card-body text-center">
+          <div class="fs-1 mb-3 text-primary">💼</div>
+          <h5 class="card-title">Job Placement</h5>
+          <p class="card-text text-muted">
+            We connect skilled candidates with top companies across industries.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICE 2 -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card service-card h-100 shadow-sm border-start border-success border-4">
+        <div class="card-body text-center">
+          <div class="fs-1 mb-3 text-success">🎓</div>
+          <h5 class="card-title">Training Programs</h5>
+          <p class="card-text text-muted">
+            Industry-focused training to upgrade skills and improve employability.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICE 3 -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card service-card h-100 shadow-sm border-start border-warning border-4">
+        <div class="card-body text-center">
+          <div class="fs-1 mb-3 text-warning">📝</div>
+          <h5 class="card-title">Resume Assistance</h5>
+          <p class="card-text text-muted">
+            Professional resume guidance to stand out in the hiring process.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICE 4 -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card service-card h-100 shadow-sm border-start border-info border-4">
+        <div class="card-body text-center">
+          <div class="fs-1 mb-3 text-info">🤖</div>
+          <h5 class="card-title">AI Career Guidance</h5>
+          <p class="card-text text-muted">
+            Get instant help and career guidance using our AI assistant.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICE 5 -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card service-card h-100 shadow-sm border-start border-danger border-4">
+        <div class="card-body text-center">
+          <div class="fs-1 mb-3 text-danger">🏢</div>
+          <h5 class="card-title">Employer Services</h5>
+          <p class="card-text text-muted">
+            Hire verified candidates, post jobs, and manage applications easily.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICE 6 -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card service-card h-100 shadow-sm border-start border-secondary border-4">
+        <div class="card-body text-center">
+          <div class="fs-1 mb-3 text-secondary">📊</div>
+          <h5 class="card-title">Career Tracking</h5>
+          <p class="card-text text-muted">
+            Track applications, saved jobs, and training progress in one place.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

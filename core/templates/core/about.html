@@ -1,0 +1,56 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<style>
+.about-card {
+  transition: all 0.3s ease;
+}
+.about-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 1rem 2rem rgba(0,0,0,.12);
+}
+</style>
+
+<div class="container py-5">
+
+  <!-- HEADER -->
+  <div class="text-center mb-5">
+    <h2 class="fw-bold">About Us</h2>
+    <p class="text-muted">
+      Connecting talent with opportunity
+    </p>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
+
+      <div class="card about-card shadow-sm border-0 p-4">
+
+        <h5 class="text-primary mb-3">Who We Are</h5>
+
+        <p>
+          VCS is a professional consultancy platform focused on helping
+          candidates build successful careers and enabling companies to
+          hire skilled talent efficiently.
+        </p>
+
+        <p>
+          We provide job placement support, skill-based training programs,
+          resume assistance, and AI-powered career guidance to make the
+          hiring process faster and smarter.
+        </p>
+
+        <p>
+          Our mission is to bridge the gap between talent and opportunity
+          through technology, training, and trusted connections.
+        </p>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

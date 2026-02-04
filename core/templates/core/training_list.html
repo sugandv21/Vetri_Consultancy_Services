@@ -1,0 +1,64 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">Training Programs</h3>
+
+<div class="row">
+{% for t in trainings %}
+  <div class="col-md-4 mb-4">
+    <div class="card h-100 shadow-sm">
+
+      {% if t.image %}
+        <img
+          src="{{ t.image.url }}"
+          class="card-img-top"
+          alt="{{ t.title }}"
+          style="height: 200px; object-fit: cover;"
+        >
+      {% endif %}
+
+      <div class="card-body d-flex flex-column">
+
+        <h5 class="card-title">{{ t.title }}</h5>
+
+        <!-- SHORT DESCRIPTION -->
+        <p class="card-text text-muted">
+          {{ t.description|truncatechars:120 }}
+        </p>
+
+        <!-- VIEW MORE -->
+        <a href="{% url 'training_detail' t.id %}"
+           class="btn btn-outline-info btn-sm mb-2 align-self-start">
+          View More
+        </a>
+
+        <p class="mb-1"><strong>Duration:</strong> {{ t.duration }}</p>
+        <p class="mb-3"><strong>Fee:</strong> ₹{{ t.fee }}</p>
+
+        <!-- ACTIONS -->
+        <div class="mt-auto">
+
+          {% if t.id in enrolled_ids %}
+            <span class="badge bg-success mb-2">Enrolled</span>
+          {% else %}
+            <a href="{% url 'enroll_training' t.id %}"
+               class="btn btn-primary btn-sm mb-2">
+              Enroll
+            </a>
+          {% endif %}
+
+          <a href="{% url 'training_enquiry_chat' t.id %}"
+             class="btn btn-outline-secondary btn-sm mb-2">
+            Enquiry
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <p>No training available.</p>
+{% endfor %}
+</div>
+
+{% endblock %}

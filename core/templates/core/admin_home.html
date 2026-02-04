@@ -1,0 +1,76 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">Admin Home</h3>
+
+<p class="text-muted">
+  Welcome back, {{ request.user.email }}
+</p>
+
+<div class="row mb-4">
+
+  <!-- Candidates -->
+  <div class="col-md-3 mb-3">
+    <div class="card text-center shadow-sm border-primary">
+      <div class="card-body bg-primary bg-opacity-10">
+        <h6 class="text-primary">Candidates</h6>
+        <h2 class="text-primary">{{ total_candidates }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Jobs -->
+  <div class="col-md-3 mb-3">
+    <div class="card text-center shadow-sm border-info">
+      <div class="card-body bg-info bg-opacity-10">
+        <h6 class="text-info">Total Jobs</h6>
+        <h2 class="text-info">{{ total_jobs }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Jobs -->
+  <div class="col-md-3 mb-3">
+    <div class="card text-center shadow-sm border-warning">
+      <div class="card-body bg-warning bg-opacity-10">
+        <h6 class="text-warning">Pending Jobs</h6>
+        <h2 class="text-warning">{{ pending_jobs }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Jobs -->
+  <div class="col-md-3 mb-3">
+    <div class="card text-center shadow-sm border-success">
+      <div class="card-body bg-success bg-opacity-10">
+        <h6 class="text-success">Active Jobs</h6>
+        <h2 class="text-success">{{ active_jobs }}</h2>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- QUICK ACTIONS -->
+<div class="card shadow-sm">
+  <div class="card-header bg-dark text-white">
+    Quick Actions
+  </div>
+  <div class="card-body">
+
+    <a href="{% url 'candidate_list' %}" class="btn btn-outline-primary me-2 mb-2">
+      Candidates
+    </a>
+
+    <a href="{% url 'create_job' %}" class="btn btn-outline-secondary me-2 mb-2">
+      Create Job
+    </a>
+
+    <a href="{% url 'active_jobs' %}" class="btn btn-outline-success me-2 mb-2">
+      Active Jobs
+    </a>
+
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<style>
+/* Pricing card hover */
+.pricing-card {
+  transition: all 0.3s ease;
+}
+.pricing-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 1rem 2rem rgba(0,0,0,.15);
+}
+</style>
+
+<div class="container py-5">
+
+  <!-- HEADER -->
+  <div class="text-center mb-5">
+    <h2 class="fw-bold">Pricing Plans</h2>
+    <p class="text-muted">
+      Choose a plan that fits your career goals
+    </p>
+  </div>
+
+  <!-- PRICING CARDS -->
+  <div class="row g-4 justify-content-center">
+
+    <!-- FREE PLAN -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card pricing-card h-100 shadow-sm border-secondary">
+        <div class="card-body text-center">
+
+          <h5 class="card-title">Free</h5>
+          <h2 class="my-3 text-secondary">₹0</h2>
+          <p class="text-muted">Perfect to get started</p>
+
+          <ul class="list-unstyled my-4">
+            <li>✔ Job Search</li>
+            <li>✔ Apply for Jobs</li>
+            <li>✔ Profile Creation</li>
+            <li class="text-muted">✖ AI Guidance</li>
+            <li class="text-muted">✖ Priority Support</li>
+          </ul>
+
+          <span class="btn btn-secondary disabled fst-italic">
+            Current Plan
+          </span>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- PRO PLAN -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card pricing-card h-100 shadow border-primary">
+
+        <!-- Popular badge -->
+        <div class="text-center mt-3">
+          <span class="badge bg-primary">Most Popular</span>
+        </div>
+
+        <div class="card-body text-center">
+
+          <h5 class="card-title">Pro</h5>
+          <h2 class="my-3 text-primary">₹999</h2>
+          <p class="text-muted">One-time / yearly</p>
+
+          <ul class="list-unstyled my-4">
+            <li>✔ Everything in Free</li>
+            <li>✔ AI Career Guidance</li>
+            <li>✔ Resume Assistance</li>
+            <li>✔ Training Priority Access</li>
+            <li>✔ Priority Support</li>
+          </ul>
+
+          <a href="#" class="btn btn-warning fw-semibold">
+            Upgrade to Pro
+          </a>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

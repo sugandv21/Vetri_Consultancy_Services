@@ -1,0 +1,46 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h4>Enquiry – {{ training.title }}</h4>
+
+<div class="card mb-3">
+  <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+
+    {% for m in messages %}
+      <div class="mb-2">
+        {% if m.sender == request.user %}
+          <div class="text-end">
+            <span class="badge bg-primary">You</span>
+            <div class="bg-primary text-white p-2 rounded d-inline-block">
+              {{ m.message }}
+            </div>
+          </div>
+        {% else %}
+          <div>
+            <span class="badge bg-secondary">Admin</span>
+            <div class="bg-light p-2 rounded d-inline-block">
+              {{ m.message }}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="text-muted">No messages yet.</p>
+    {% endfor %}
+
+  </div>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <textarea
+    name="message"
+    class="form-control mb-2"
+    placeholder="Type your message..."
+    required
+  ></textarea>
+
+  <button class="btn btn-primary">Send</button>
+</form>
+
+{% endblock %}
