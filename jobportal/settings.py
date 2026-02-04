@@ -154,9 +154,12 @@ ACCOUNT_SIGNUP_FIELDS = [
 
 
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
-LOGOUT_REDIRECT_URL = 'login'
+# LOGIN_URL = 'login'
+# LOGIN_REDIRECT_URL = 'dashboard'
+# LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = "/auth/login/"
+LOGIN_REDIRECT_URL = "/auth/dashboard/"
+LOGOUT_REDIRECT_URL = "/auth/login/"
 
 
 # Tell allauth to auto-create and auto-login social users
@@ -197,5 +200,6 @@ DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL",
     EMAIL_HOST_USER
 )
+
 
 
