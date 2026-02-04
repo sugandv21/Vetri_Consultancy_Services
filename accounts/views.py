@@ -415,51 +415,47 @@ def ai_chatbot(request):
 
 
 #email update
-from django.views.decorators.http import require_POST
 from django.core.mail import send_mail
 from django.conf import settings
-
 
 @staff_required
 @require_POST
 def update_application_status(request, app_id):
     application = get_object_or_404(JobApplication, id=app_id)
-    old_status = application.status
 
     new_status = request.POST.get("status")
+    old_status = application.status
 
-    if new_status not in dict(JobApplication.STATUS_CHOICES):
+    if new_status in dict(JobApplication.STATUS_CHOICES):
+        application.status = new_status
+        application.save()
+
+        # Send email ONLY when moved to INTERVIEW
+        if new_status == "INTERVIEW" and old_status != "INTERVIEW":
+            try:
+                send_mail(
+                    subject="🎉 You’re shortlisted for Interview!",
+                    message=(
+                        f"Hi {application.user.profile.full_name or 'Candidate'},\n\n"
+                        "Congratulations! 🎯\n\n"
+                        "You have been shortlisted for the screening interview.\n"
+                        "You will receive the meeting link shortly.\n\n"
+                        "Please start preparing and all the very best! 🌟\n\n"
+                        "Regards,\n"
+                        "Vetri Consultancy Services"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[application.user.email],
+                    fail_silently=True,  # 🔥 THIS IS KEY
+                )
+            except Exception as e:
+                # Optional: log error, but DO NOT break app
+                print("Email send failed:", e)
+
+        messages.success(request, "Application status updated successfully.")
+    else:
         messages.error(request, "Invalid status selected.")
-        return redirect("candidate_detail", user_id=application.user.id)
 
-    application.status = new_status
-    application.save()
-
-    # Send email ONLY when moved to INTERVIEW
-    if old_status != "INTERVIEW" and new_status == "INTERVIEW":
-        candidate = application.user
-        job = application.job
-
-        subject = "🎉 Shortlisted for Screening Interview"
-        message = (
-            f"Dear {candidate.profile.full_name or 'Candidate'},\n\n"
-            f"We are pleased to inform you that you have been shortlisted "
-            f"for a screening interview for the position of "
-            f"{job.title} at {job.company_name}.\n\n"
-            "You will receive the interview meeting link shortly.\n\n"
-            "Please start preparing and give it your best.\n\n"
-            "Wishing you all the very best!\n\n"
-            "Regards,\n"
-            "Vetri Consultancy Services"
-        )
-
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[candidate.email],
-            fail_silently=True,  
-        )
-
-    messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
+
+
