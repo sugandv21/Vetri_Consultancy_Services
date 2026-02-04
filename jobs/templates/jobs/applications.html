@@ -1,0 +1,29 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3>My Applications</h3>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Job</th>
+      <th>Company</th>
+      <th>Status</th>
+      <th>Applied On</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for app in applications %}
+    <tr>
+      <td>{{ app.job.title }}</td>
+      <td>{{ app.job.company_name }}</td>
+      <td>{{ app.get_status_display }}</td>
+      <td>{{ app.applied_at|date:"d M Y" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">No applications yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

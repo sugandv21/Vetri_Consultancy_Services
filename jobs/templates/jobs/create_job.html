@@ -1,0 +1,54 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3>Create Job</h3>
+
+<form method="post">
+  {% csrf_token %}
+
+  <input class="form-control mb-2" name="title" placeholder="Job Title">
+  <input class="form-control mb-2" name="company" placeholder="Company Name">
+  <input class="form-control mb-2" name="location" placeholder="Location">
+
+  <div class="row mb-2">
+        <div class="col">
+            <input type="number" class="form-control"
+                name="exp_min"
+                placeholder="Min Experience"
+                min="0"
+                required>
+        </div>
+        <div class="col">
+            <input type="number" class="form-control"
+                name="exp_max"
+                placeholder="Max Experience"
+                min="0"
+                required>
+        </div>
+    </div>
+
+
+  <select class="form-control mb-2" name="job_type">
+    <option value="FT">Full-time</option>
+    <option value="IN">Internship</option>
+    <option value="CT">Contract</option>
+  </select>
+
+  <textarea class="form-control mb-2" name="description" placeholder="Job Description"></textarea>
+  <input class="form-control mb-2" name="skills" placeholder="Required Skills">
+
+  <input type="date" class="form-control mb-2" name="deadline">
+
+  <label>
+    <input type="checkbox" name="fresher"> Fresher Friendly
+  </label>
+
+  <select class="form-control mb-3" name="visibility">
+    <option value="FREE">Free</option>
+    <option value="PRO">Pro</option>
+  </select>
+
+  <button class="btn btn-primary">Submit Job</button>
+</form>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3>Saved Jobs</h3>
+
+<ul class="list-group">
+  {% for s in jobs %}
+  <li class="list-group-item d-flex justify-content-between">
+    {{ s.job.title }} – {{ s.job.company_name }}
+    <a href="{% url 'apply_job' s.job.id %}" class="btn btn-sm btn-success">Apply</a>
+  </li>
+  {% empty %}
+  <li class="list-group-item">No saved jobs.</li>
+  {% endfor %}
+</ul>
+
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="card shadow-sm">
+  <div class="card-body">
+
+    <h3>{{ job.title }}</h3>
+    <p class="text-muted">
+      <strong>{{ job.company_name }}</strong> • {{ job.location }}
+    </p>
+
+    <p>{{ job.experience_min }}–{{ job.experience_max }} years</p>
+
+    {% if job.visibility == "PRO" %}
+      <span class="badge bg-warning mb-2">PRO Job</span>
+    {% endif %}
+
+    <hr>
+
+    <h5>Description</h5>
+    <p>{{ job.description }}</p>
+
+    <h6>Skills</h6>
+    <p>{{ job.skills }}</p>
+
+    <p><strong>Deadline:</strong> {{ job.deadline }}</p>
+
+    <hr>
+
+    <!-- ACTIONS -->
+    {% if job.visibility == "PRO" and not request.user.is_pro %}
+
+      <div class="alert alert-warning">
+        This is a <strong>PRO job</strong>.
+        Upgrade your account to apply.
+      </div>
+
+      <a class="btn btn-outline-warning disabled">
+        Upgrade to PRO to Apply
+      </a>
+
+    {% else %}
+
+      <a href="{% url 'save_job' job.id %}" class="btn btn-outline-secondary">
+        Save
+      </a>
+
+      <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">
+        Apply
+      </a>
+
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

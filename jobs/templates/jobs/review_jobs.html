@@ -1,0 +1,29 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3>Pending Job Approvals</h3>
+
+<table class="table">
+  <tr>
+    <th>Title</th>
+    <th>Company</th>
+    <th>Created By</th>
+    <th>Actions</th>
+  </tr>
+
+  {% for job in jobs %}
+  <tr>
+    <td>{{ job.title }}</td>
+    <td>{{ job.company_name }}</td>
+    <td>{{ job.created_by.email }}</td>
+    <td>
+      <a href="{% url 'approve_job' job.id %}" class="btn btn-success btn-sm">Approve</a>
+      <a href="{% url 'reject_job' job.id %}" class="btn btn-danger btn-sm">Reject</a>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="4">No pending jobs</td></tr>
+  {% endfor %}
+</table>
+
+{% endblock %}
