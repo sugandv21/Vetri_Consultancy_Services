@@ -80,7 +80,7 @@ class User(AbstractUser):
     #  Use email as login
     email = models.EmailField(unique=True)
 
-    # 👤 Optional: Google provides this automatically
+    # Optional: Google provides this automatically
     full_name = models.CharField(max_length=100, blank=True)
 
     #  Subscription
@@ -122,23 +122,29 @@ class Profile(models.Model):
         related_name="profile"
     )
 
+    # Basic info
     full_name = models.CharField(max_length=100, blank=True)
     mobile_number = models.CharField(max_length=15, blank=True)
 
+    # Professional info
     experience = models.IntegerField(null=True, blank=True)
     location = models.CharField(max_length=100, blank=True)
     skills = models.CharField(max_length=255, blank=True)
 
+    # Resume
     resume = models.FileField(
         upload_to="resumes/",
         blank=True,
         null=True
     )
 
+    # ✅ Track one-time profile completion email
+    completion_email_sent = models.BooleanField(default=False)
+
     def completion_percentage(self):
         """
         Calculates profile completion percentage accurately.
-        Handles empty strings, integers, and FileField correctly.
+        Safe for Google login users and normal signup users.
         """
 
         filled = 0
@@ -150,7 +156,7 @@ class Profile(models.Model):
         if self.mobile_number and self.mobile_number.strip():
             filled += 1
 
-        # experience can be 0, so check for None
+        # experience can be 0, so check None only
         if self.experience is not None:
             filled += 1
 
@@ -160,14 +166,15 @@ class Profile(models.Model):
         if self.skills and self.skills.strip():
             filled += 1
 
-        # FileField must be checked using `.name`
+        # FileField must be checked via name
         if self.resume and self.resume.name:
             filled += 1
 
         return int((filled / total) * 100)
 
     def __str__(self):
-        return self.user.email
+        return f"{self.user.email} Profile"
+
     
 def debug_completion(self):
     return {

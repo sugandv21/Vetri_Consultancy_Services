@@ -5,7 +5,7 @@ urlpatterns = [
     path('login/', views.login_user, name='login'),
     path('register/', views.register_user, name='register'),
     path('logout/', views.logout_user, name='logout'),
-    path('dashboard/', views.dashboard_view, name='dashboard'),
+    # path('dashboard/', views.dashboard_view, name='dashboard'),
 
     path("admin-panel/dashboard/", views.admin_dashboard, name="admin_dashboard"),
 
@@ -27,6 +27,8 @@ urlpatterns = [
 
     path("payment/", views.payment, name="payment"),
     path("upgrade/pro/", views.upgrade_to_pro, name="upgrade_to_pro"),
+    path("dashboard/", views.dashboard, name="dashboard"),
+
 ]
 
 

@@ -54,6 +54,78 @@
       </div>
     </div>
 
+  </div> <!-- END row -->
+
+  <!-- MY TRAININGS SECTION -->
+  <h4 class="mt-5">My Trainings</h4>
+
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Training</th>
+          <th>Mentor</th>
+          <th>Training Link</th> 
+          
+          <th>Timing</th>
+          <th>Certificate</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for e in enrollments %}
+        <tr>
+          <td>{{ e.training.title }}</td>
+
+          <td>
+            {{ e.mentor_name|default:"Not assigned" }}<br>
+            <small class="text-muted">{{ e.mentor_email }}</small>
+          </td>
+          
+          <td>
+            {% if e.training_link %}
+              <a href="{{ e.training_link }}"
+                target="_blank"
+                class="btn btn-sm btn-primary">
+                Join
+              </a>
+            {% else %}
+              <span class="text-muted">Link not shared</span>
+            {% endif %}
+          </td>
+
+
+          <td>
+            {{ e.course_timing|default:"To be announced" }}
+          </td>
+
+          <td>
+            {% if not e.is_completed %}
+              <span class="text-muted">
+                Available after course completion
+              </span>
+            {% elif e.is_completed and not e.certificate %}
+              <span class="text-warning">
+                Certificate uploading soon
+              </span>
+            {% else %}
+              <a href="{{ e.certificate.url }}"
+                 class="btn btn-sm btn-success">
+                Download
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">
+            No trainings enrolled.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+
 </div>
 {% endblock %}
