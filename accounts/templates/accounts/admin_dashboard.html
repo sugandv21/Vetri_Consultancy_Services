@@ -1,0 +1,40 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">Admin Dashboard</h3>
+
+<div class="row">
+
+  <!-- Candidates -->
+  <div class="col-md-3 mb-3">
+    <div class="card text-center shadow-sm border-primary">
+      <div class="card-body bg-primary bg-opacity-10">
+        <h6 class="text-primary">Candidates</h6>
+        <h2 class="fw-bold text-primary">{{ total_candidates }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Jobs -->
+  <div class="col-md-3 mb-3">
+    <div class="card text-center shadow-sm border-info">
+      <div class="card-body bg-info bg-opacity-10">
+        <h6 class="text-info">Total Jobs</h6>
+        <h2 class="fw-bold text-info">{{ total_jobs }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Applications -->
+  <div class="col-md-3 mb-3">
+    <div class="card text-center shadow-sm border-success">
+      <div class="card-body bg-success bg-opacity-10">
+        <h6 class="text-success">Applications</h6>
+        <h2 class="fw-bold text-success">{{ total_applications }}</h2>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,212 @@
+<nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+  <div class="container">
+
+    <!-- BRAND -->
+    <a class="navbar-brand"
+       href="{% if user.is_authenticated and user.is_staff %}
+                {% url 'admin_home' %}
+             {% else %}
+                {% url 'public_home' %}
+             {% endif %}">
+      {% if user.is_authenticated and user.is_staff %}
+        VCS Admin
+      {% else %}
+        VCS
+      {% endif %}
+    </a>
+
+    <!-- TOGGLER -->
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#mainNavbar"
+      aria-controls="mainNavbar"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNavbar">
+
+      {% with request.resolver_match.url_name as url_name %}
+
+      <!-- ================= PUBLIC ================= -->
+      {% if not user.is_authenticated %}
+      <ul class="navbar-nav ms-auto">
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'home' %}active{% endif %}"
+             href="{% url 'public_home' %}">Home</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'services' %}active{% endif %}"
+             href="{% url 'services' %}">Services</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'pricing' %}active{% endif %}"
+             href="{% url 'pricing' %}">Pricing</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'about' %}active{% endif %}"
+             href="{% url 'about' %}">About</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'contact' %}active{% endif %}"
+             href="{% url 'contact' %}">Contact</a>
+        </li>
+
+        <li class="nav-item d-flex align-items-center ms-lg-3 gap-2">
+          <a href="{% url 'register' %}" class="btn btn-dark px-3 py-1">
+            Register
+          </a>
+          <a href="{% url 'login' %}" class="btn btn-outline-dark px-3 py-1">
+            Login
+          </a>
+        </li>
+
+      </ul>
+
+      <!-- ================= ADMIN / STAFF ================= -->
+      {% elif user.is_staff %}
+      <ul class="navbar-nav me-auto">
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'admin_dashboard' %}active{% endif %}"
+             href="{% url 'admin_dashboard' %}">
+            Dashboard
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'candidate_list' %}active{% endif %}"
+             href="{% url 'candidate_list' %}">
+            Candidates
+          </a>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle
+             {% if url_name in 'create_job active_jobs review_jobs' %}active{% endif %}"
+             href="#" data-bs-toggle="dropdown">
+            Jobs
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'create_job' %}">Create Job</a></li>
+            <li><a class="dropdown-item" href="{% url 'active_jobs' %}">Active Jobs</a></li>
+            {% if user.is_superuser %}
+            <li><a class="dropdown-item" href="{% url 'review_jobs' %}">Review Jobs</a></li>
+            {% endif %}
+          </ul>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'admin_enrollments' %}active{% endif %}"
+             href="{% url 'admin_enrollments' %}">
+            Training Enrollments
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'add_training' %}active{% endif %}"
+             href="{% url 'add_training' %}">
+            Add Training
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'admin_enquiries' %}active{% endif %}"
+             href="{% url 'admin_enquiries' %}">
+            Enquiries
+          </a>
+        </li>
+      </ul>
+
+      <!-- ================= CANDIDATE ================= -->
+      {% else %}
+      <ul class="navbar-nav me-auto">
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'dashboard' %}active{% endif %}"
+             href="/auth/dashboard/">
+            Dashboard
+          </a>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle
+             {% if url_name in 'search_jobs saved_jobs applications' %}active{% endif %}"
+             href="#" data-bs-toggle="dropdown">
+            Jobs
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'search_jobs' %}">Search Jobs</a></li>
+            <li><a class="dropdown-item" href="{% url 'saved_jobs' %}">Saved Jobs</a></li>
+            <li><a class="dropdown-item" href="{% url 'applications' %}">Applications</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'training_list' %}active{% endif %}"
+             href="{% url 'training_list' %}">
+            Training
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% if url_name == 'chatbot' %}active{% endif %}"
+             href="{% url 'ai_chat_page' %}">
+            Chatbot
+          </a>
+        </li>
+      </ul>
+      {% endif %}
+
+      <!-- ================= USER MENU ================= -->
+      {% if user.is_authenticated %}
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+              {{ user.profile.full_name|default:user.email }}
+            </a>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+
+              {% if not user.is_staff %}
+                <li>
+                  <a class="dropdown-item" href="{% url 'my_profile' %}">
+                    My Profile
+                  </a>
+                </li>
+
+                <li>
+                  <a class="dropdown-item" href="{% url 'settings' %}">
+                    Settings
+                  </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
+
+              <li>
+                <a class="dropdown-item text-danger" href="/auth/logout/">
+                  Logout
+                </a>
+              </li>
+
+            </ul>
+          </li>
+        </ul>
+        {% endif %}
+
+
+      {% endwith %}
+
+    </div>
+  </div>
+</nav>

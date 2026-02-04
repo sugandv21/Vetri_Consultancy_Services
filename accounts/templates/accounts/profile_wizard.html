@@ -1,0 +1,86 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-3">Complete Your Profile</h3>
+
+<div class="mb-4">
+  <label class="form-label">Profile Completion</label>
+  <div class="progress">
+    <div class="progress-bar bg-success"
+         role="progressbar"
+         style="width: {{ completion }}%">
+      {{ completion }}%
+    </div>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <div class="mb-3">
+    <label class="form-label">Full Name</label>
+    <input
+      type="text"
+      class="form-control"
+      name="full_name"
+      value="{{ profile.full_name|default:'' }}"
+    >
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Experience (years)</label>
+    <input
+      type="number"
+      class="form-control"
+      name="experience"
+      value="{{ profile.experience|default_if_none:'' }}"
+      min="0"
+    >
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Location</label>
+    <input
+      type="text"
+      class="form-control"
+      name="location"
+      value="{{ profile.location|default:'' }}"
+    >
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Skills</label>
+    <input
+      type="text"
+      class="form-control"
+      name="skills"
+      value="{{ profile.skills|default:'' }}"
+      placeholder="Python, Django, SQL"
+    >
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Resume (PDF / DOC)</label>
+    <input
+      type="file"
+      class="form-control"
+      name="resume"
+      accept=".pdf,.doc,.docx"
+    >
+
+    {% if profile.resume %}
+      <small class="text-success d-block mt-1">
+        Uploaded:
+        <a href="{{ profile.resume.url }}" target="_blank">
+          View Resume
+        </a>
+      </small>
+    {% endif %}
+  </div>
+
+  <button class="btn btn-success">
+    Save & Continue
+  </button>
+</form>
+
+{% endblock %}

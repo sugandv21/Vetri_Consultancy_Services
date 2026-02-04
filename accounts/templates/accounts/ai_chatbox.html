@@ -1,0 +1,53 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="card shadow-sm">
+  <div class="card-header bg-primary text-white">
+    🤖 AI Help Assistant
+  </div>
+
+  <div class="card-body" style="height: 350px; overflow-y: auto;" id="chat-box">
+    <div class="text-muted mb-2">
+      Ask me how to use the platform 👇
+    </div>
+  </div>
+
+  <div class="card-footer">
+    <div class="input-group">
+      <input type="text" id="chat-input" class="form-control" placeholder="How do I apply for a job?">
+      <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function sendMessage() {
+  const input = document.getElementById("chat-input");
+  const chatBox = document.getElementById("chat-box");
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  chatBox.innerHTML += `<div class="mb-2"><strong>You:</strong> ${message}</div>`;
+  input.value = "";
+
+  fetch("{% url 'ai_chatbot' %}", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": "{{ csrf_token }}"
+    },
+    body: JSON.stringify({
+      message: message,
+      page: "{{ request.resolver_match.url_name }}"
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    chatBox.innerHTML += `<div class="mb-3 text-success"><strong>AI:</strong> ${data.reply}</div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+}
+</script>
+
+{% endblock %}

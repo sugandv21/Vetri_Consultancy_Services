@@ -1,0 +1,60 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">Account Settings</h3>
+
+<!-- ACCOUNT INFO -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h6>Account Information</h6>
+
+    <p><strong>Email:</strong> {{ user.email }}</p>
+
+    <p>
+      <strong>Subscription:</strong>
+
+      <span class="badge bg-{% if user.is_pro %}success{% else %}secondary{% endif %}">
+        {{ user.subscription_type }}
+      </span>
+
+      {% if not user.is_pro %}
+        {% comment %} <span class="text-muted ms-2 fst-italic btn btn-warning">
+          Upgrade to Pro
+        </span> {% endcomment %}
+        <form method="post" action="{% url 'upgrade_to_pro' %}" class="d-inline">
+          {% csrf_token %}
+          <button class="btn btn-warning ms-2">
+            Upgrade to Pro
+          </button>
+        </form>
+
+      {% endif %}
+    </p>
+
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD -->
+<div class="card">
+  <div class="card-body">
+    <h6>Change Password</h6>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <input type="password" class="form-control"
+               name="new_password" placeholder="New Password">
+      </div>
+
+      <div class="mb-3">
+        <input type="password" class="form-control"
+               name="confirm_password" placeholder="Confirm Password">
+      </div>
+
+      <button class="btn btn-warning">Update Password</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">My Dashboard</h2>
+
+  <div class="row">
+
+    <!-- Saved Jobs -->
+    <div class="col-12 col-md-6 col-lg-4 mb-3">
+      <div class="card text-center shadow-sm h-100 border-primary">
+        <div class="card-body bg-primary bg-opacity-10">
+          <h5 class="card-title text-primary">Saved Jobs</h5>
+          <p class="display-4 fw-bold text-primary">
+            {{ saved_jobs_count }}
+          </p>
+          <a href="{% url 'saved_jobs' %}"
+             class="btn btn-outline-primary btn-sm">
+            View saved jobs
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Applications -->
+    <div class="col-12 col-md-6 col-lg-4 mb-3">
+      <div class="card text-center shadow-sm h-100 border-success">
+        <div class="card-body bg-success bg-opacity-10">
+          <h5 class="card-title text-success">Applications</h5>
+          <p class="display-4 fw-bold text-success">
+            {{ applications_count }}
+          </p>
+          <a href="{% url 'applications' %}"
+             class="btn btn-outline-success btn-sm">
+            View applications
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trainings Enrolled -->
+    <div class="col-12 col-md-6 col-lg-4 mb-3">
+      <div class="card text-center shadow-sm h-100 border-warning">
+        <div class="card-body bg-warning bg-opacity-10">
+          <h5 class="card-title text-warning">Trainings Enrolled</h5>
+          <p class="display-4 fw-bold text-warning">
+            {{ enrolled_trainings_count }}
+          </p>
+          <a href="{% url 'training_list' %}"
+             class="btn btn-outline-warning btn-sm">
+            View trainings
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

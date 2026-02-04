@@ -1,0 +1,70 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="row justify-content-center mt-5">
+  <div class="col-md-5">
+    <div class="card shadow text-center">
+      <div class="card-body">
+
+        <h4 class="mb-2">Pro Subscription</h4>
+        <p class="text-muted">Unlock all premium features</p>
+
+        <h2 class="mb-4">₹999</h2>
+
+        <!-- Pay Now button (opens modal only, no submit) -->
+        <button
+          type="button"
+          class="btn btn-success w-100"
+          data-bs-toggle="modal"
+          data-bs-target="#paymentSuccessModal">
+          Pay Now
+        </button>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ PAYMENT SUCCESS MODAL -->
+<div class="modal fade"
+     id="paymentSuccessModal"
+     tabindex="-1"
+     aria-hidden="true"
+     data-bs-backdrop="static"
+     data-bs-keyboard="false">
+
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h5 class="modal-title text-success">Payment Successful</h5>
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body text-center">
+        <p class="mb-2">🎉 Your Pro subscription is now active.</p>
+        <p class="text-muted">
+          You can now continue to complete your profile.
+        </p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <form method="post" class="w-100">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary w-100">
+            Continue
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
