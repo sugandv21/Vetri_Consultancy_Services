@@ -422,40 +422,28 @@ from django.conf import settings
 @require_POST
 def update_application_status(request, app_id):
     application = get_object_or_404(JobApplication, id=app_id)
-
-    new_status = request.POST.get("status")
     old_status = application.status
+    new_status = request.POST.get("status")
 
-    if new_status in dict(JobApplication.STATUS_CHOICES):
-        application.status = new_status
-        application.save()
-
-        # Send email ONLY when moved to INTERVIEW
-        if new_status == "INTERVIEW" and old_status != "INTERVIEW":
-            try:
-                send_mail(
-                    subject="🎉 You’re shortlisted for Interview!",
-                    message=(
-                        f"Hi {application.user.profile.full_name or 'Candidate'},\n\n"
-                        "Congratulations! 🎯\n\n"
-                        "You have been shortlisted for the screening interview.\n"
-                        "You will receive the meeting link shortly.\n\n"
-                        "Please start preparing and all the very best! 🌟\n\n"
-                        "Regards,\n"
-                        "Vetri Consultancy Services"
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[application.user.email],
-                    fail_silently=True,  # 🔥 THIS IS KEY
-                )
-            except Exception as e:
-                # Optional: log error, but DO NOT break app
-                print("Email send failed:", e)
-
-        messages.success(request, "Application status updated successfully.")
-    else:
+    if new_status not in dict(JobApplication.STATUS_CHOICES):
         messages.error(request, "Invalid status selected.")
+        return redirect("candidate_detail", user_id=application.user.id)
 
+    application.status = new_status
+    application.save()
+
+    if old_status != "INTERVIEW" and new_status == "INTERVIEW":
+        send_mail(
+            subject="🎉 Shortlisted for Screening Interview",
+            message=(
+                f"Dear {application.user.profile.full_name or 'Candidate'},\n\n"
+                f"You have been shortlisted for the interview.\n\n"
+                "Regards,\nVetri Consultancy Services"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[application.user.email],
+            fail_silently=False,  # ✅ STEP 1
+        )
+
+    messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
-
-
