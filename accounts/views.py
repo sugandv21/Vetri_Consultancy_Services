@@ -446,7 +446,6 @@ from django.conf import settings
 from accounts.decorators import staff_required
 from jobs.models import JobApplication
 
-
 @staff_required
 @require_POST
 def update_application_status(request, app_id):
@@ -480,16 +479,24 @@ def update_application_status(request, app_id):
             "Vetri Consultancy Services"
         )
 
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[candidate.email],
-            fail_silently=True,
-        )
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[candidate.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            # Email failure should NOT block admin action
+            messages.warning(
+                request,
+                "Status updated, but email could not be sent."
+            )
 
     messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
+
 
 
 
@@ -519,3 +526,4 @@ def dashboard(request):
     }
 
     return render(request, "accounts/dashboard.html", context)
+
