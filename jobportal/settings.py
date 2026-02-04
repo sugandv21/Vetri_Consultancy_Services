@@ -154,12 +154,9 @@ ACCOUNT_SIGNUP_FIELDS = [
 
 
 
-# LOGIN_URL = 'login'
-# LOGIN_REDIRECT_URL = 'dashboard'
-# LOGOUT_REDIRECT_URL = 'login'
-LOGIN_URL = "/auth/login/"
-LOGIN_REDIRECT_URL = "/auth/dashboard/"
-LOGOUT_REDIRECT_URL = "/auth/login/"
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
 
 
 # Tell allauth to auto-create and auto-login social users
@@ -184,23 +181,33 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.smtp.EmailBackend"
-)
+# EMAIL_BACKEND = os.getenv(
+#     "EMAIL_BACKEND",
+#     "django.core.mail.backends.smtp.EmailBackend"
+# )
 
-EMAIL_HOST = os.getenv("EMAIL_HOST")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS") == "True"
+# EMAIL_HOST = os.getenv("EMAIL_HOST")
+# EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+# EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS") == "True"
 
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+# EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
-DEFAULT_FROM_EMAIL = os.getenv(
+# DEFAULT_FROM_EMAIL = os.getenv(
+#     "DEFAULT_FROM_EMAIL",
+#     EMAIL_HOST_USER
+# )
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+
+DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
     EMAIL_HOST_USER
 )
-
-
-
-
