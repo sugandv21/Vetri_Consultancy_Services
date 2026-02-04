@@ -23,17 +23,30 @@ class Training(models.Model):
         return self.title
 
 
-
 class Enrollment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     training = models.ForeignKey(Training, on_delete=models.CASCADE)
     enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    mentor_name = models.CharField(max_length=150, blank=True)
+    mentor_email = models.EmailField(blank=True)
+    course_timing = models.CharField(max_length=150, blank=True)
+    training_link = models.URLField(blank=True) 
+
+    certificate = models.FileField(
+        upload_to="certificates/",
+        blank=True,
+        null=True
+    )
+
+    is_completed = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ("user", "training")
 
     def __str__(self):
         return f"{self.user} → {self.training}"
+
 
 
 class TrainingEnquiry(models.Model):

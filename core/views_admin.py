@@ -119,3 +119,31 @@ def admin_enquiry_chat(request, enquiry_id):
         "messages": messages_qs
     })
 
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from accounts.decorators import staff_required
+from core.models import Enrollment
+
+
+@staff_required
+def edit_enrollment(request, enrollment_id):
+    enrollment = get_object_or_404(Enrollment, id=enrollment_id)
+
+    if request.method == "POST":
+        enrollment.mentor_name = request.POST.get("mentor_name")
+        enrollment.mentor_email = request.POST.get("mentor_email")
+        enrollment.course_timing = request.POST.get("course_timing")
+        enrollment.training_link = request.POST.get("training_link")
+        enrollment.is_completed = "is_completed" in request.POST
+
+        if request.FILES.get("certificate"):
+            enrollment.certificate = request.FILES["certificate"]
+
+        enrollment.save()
+        messages.success(request, "Enrollment details updated successfully.")
+        return redirect("admin_enrollments")
+
+    return render(request, "core/edit_enrollment.html", {
+        "enrollment": enrollment
+    })

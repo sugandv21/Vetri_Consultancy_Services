@@ -11,6 +11,9 @@ from .views_admin import (
     admin_enquiry_chat,
 )
 from .views import services_view, pricing_view, about_view, contact_view
+from core import views
+from core import views_admin
+
 
 urlpatterns = [
 
@@ -45,6 +48,15 @@ urlpatterns = [
     path("pricing/", pricing_view, name="pricing"),
      path("about/", about_view, name="about"),
     path("contact/", contact_view, name="contact"),
+    
+    # core/urls.py
+    path(
+    "admin/enrollment/<int:enrollment_id>/edit/",
+    views_admin.edit_enrollment,
+    name="edit_enrollment"
+),
+
+
     
 
 ]

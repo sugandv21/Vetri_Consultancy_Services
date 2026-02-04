@@ -13,6 +13,7 @@
           <th>Candidate Email</th>
           <th>Training</th>
           <th>Enrolled On</th>
+          <th>Update details</th>
         </tr>
       </thead>
 
@@ -23,6 +24,13 @@
           <td>{{ e.user.email }}</td>
           <td>{{ e.training.title }}</td>
           <td>{{ e.enrolled_at|date:"d M Y, H:i" }}</td>
+          <td>
+  <a href="{% url 'edit_enrollment' e.id %}"
+     class="btn btn-sm btn-outline-primary">
+    Update
+  </a>
+</td>
+
         </tr>
         {% empty %}
         <tr>

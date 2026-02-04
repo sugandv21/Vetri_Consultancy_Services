@@ -20,3 +20,5 @@ class TrainingEnquiryAdmin(admin.ModelAdmin):
 @admin.register(EnquiryMessage)
 class EnquiryMessageAdmin(admin.ModelAdmin):
     list_display = ("enquiry", "sender", "created_at")
+
+
