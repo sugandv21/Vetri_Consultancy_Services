@@ -367,21 +367,57 @@ def candidate_detail(request, user_id):
     
 #status update by admin
 from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.conf import settings
+from django.core.mail import send_mail
+from accounts.decorators import staff_required
+from jobs.models import JobApplication
+
+
 @staff_required
 @require_POST
 def update_application_status(request, app_id):
     application = get_object_or_404(JobApplication, id=app_id)
 
+    old_status = application.status
     new_status = request.POST.get("status")
 
-    if new_status in dict(JobApplication.STATUS_CHOICES):
-        application.status = new_status
-        application.save()
-        messages.success(request, "Application status updated.")
-    else:
+    if new_status not in dict(JobApplication.STATUS_CHOICES):
         messages.error(request, "Invalid status selected.")
+        return redirect(
+            "candidate_detail",
+            user_id=application.user.id
+        )
 
-    return redirect("candidate_detail", user_id=application.user.id) 
+    application.status = new_status
+    application.save()
+
+    # Send email ONLY when moved to INTERVIEW
+    if old_status != "INTERVIEW" and new_status == "INTERVIEW":
+        try:
+            send_mail(
+                subject="🎉 Shortlisted for Screening Interview",
+                message=(
+                    f"Dear {application.user.profile.full_name or 'Candidate'},\n\n"
+                    "You have been shortlisted for a screening interview.\n\n"
+                    "Further details will be shared soon.\n\n"
+                    "Regards,\n"
+                    "Vetri Consultancy Services"
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[application.user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            print("EMAIL ERROR:", e)
+
+    messages.success(request, "Application status updated successfully.")
+    return redirect(
+        "candidate_detail",
+        user_id=application.user.id
+    )
+
 
 
 from django.contrib.auth.decorators import login_required
@@ -414,36 +450,3 @@ def ai_chatbot(request):
     return JsonResponse({"reply": reply})
 
 
-#email update
-from django.core.mail import send_mail
-from django.conf import settings
-
-@staff_required
-@require_POST
-def update_application_status(request, app_id):
-    application = get_object_or_404(JobApplication, id=app_id)
-    old_status = application.status
-    new_status = request.POST.get("status")
-
-    if new_status not in dict(JobApplication.STATUS_CHOICES):
-        messages.error(request, "Invalid status selected.")
-        return redirect("candidate_detail", user_id=application.user.id)
-
-    application.status = new_status
-    application.save()
-
-    if old_status != "INTERVIEW" and new_status == "INTERVIEW":
-        send_mail(
-            subject="🎉 Shortlisted for Screening Interview",
-            message=(
-                f"Dear {application.user.profile.full_name or 'Candidate'},\n\n"
-                f"You have been shortlisted for the interview.\n\n"
-                "Regards,\nVetri Consultancy Services"
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[application.user.email],
-            fail_silently=False,  # ✅ STEP 1
-        )
-
-    messages.success(request, "Application status updated.")
-    return redirect("candidate_detail", user_id=application.user.id)
