@@ -133,5 +133,26 @@ def about_view(request):
     return render(request, "core/about.html")
 
 
+# def contact_view(request):
+#     return render(request, "core/contact.html")
+
+from .models import ContactMessage
+
 def contact_view(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        message_text = request.POST.get("message")
+
+        ContactMessage.objects.create(
+            name=name,
+            email=email,
+            message=message_text
+        )
+
+        messages.success(request, "Your message has been sent successfully!")
+
+        return redirect("contact")
+
     return render(request, "core/contact.html")
+
