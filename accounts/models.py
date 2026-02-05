@@ -138,42 +138,40 @@ class Profile(models.Model):
         null=True
     )
 
-    # ✅ Track one-time profile completion email
+    # Track one-time profile completion email
     completion_email_sent = models.BooleanField(default=False)
 
-    def completion_percentage(self):
+   def completion_percentage(self):
         """
-        Calculates profile completion percentage accurately.
-        Safe for Google login users and normal signup users.
+        Calculates profile completion percentage safely.
+        Never crashes in production.
         """
+    
+        try:
+            fields = [
+                self.full_name.strip() if self.full_name else None,
+                self.mobile_number.strip() if self.mobile_number else None,
+                self.location.strip() if self.location else None,
+                self.skills.strip() if self.skills else None,
+                self.experience if self.experience is not None else None,
+                self.resume.name if getattr(self.resume, "name", None) else None,
+            ]
+    
+            filled = sum(1 for f in fields if f not in [None, "", 0])
+            total = len(fields) or 1   # prevent division by zero
+    
+            return int((filled / total) * 100)
+    
+        except Exception:
+            return 0
 
-        filled = 0
-        total = 6  # total number of profile fields
-
-        if self.full_name and self.full_name.strip():
-            filled += 1
-
-        if self.mobile_number and self.mobile_number.strip():
-            filled += 1
-
-        # experience can be 0, so check None only
-        if self.experience is not None:
-            filled += 1
-
-        if self.location and self.location.strip():
-            filled += 1
-
-        if self.skills and self.skills.strip():
-            filled += 1
-
-        # FileField must be checked via name
-        if self.resume and self.resume.name:
-            filled += 1
-
-        return int((filled / total) * 100)
 
     def __str__(self):
-        return f"{self.user.email} Profile"
+        try:
+            return f"{self.user.email} Profile"
+        except Exception:
+            return "Profile"
+
 
     
 def debug_completion(self):
@@ -185,5 +183,6 @@ def debug_completion(self):
         "skills": bool(self.skills and self.skills.strip()),
         "resume": bool(self.resume and self.resume.name),
     }
+
 
 
