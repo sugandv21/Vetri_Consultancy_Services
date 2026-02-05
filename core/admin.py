@@ -20,6 +20,8 @@ class TrainingEnquiryAdmin(admin.ModelAdmin):
 @admin.register(EnquiryMessage)
 class EnquiryMessageAdmin(admin.ModelAdmin):
     list_display = ("enquiry", "sender", "created_at")
+    
+from .models import ContactMessage
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):

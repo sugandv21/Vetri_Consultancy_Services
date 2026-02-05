@@ -72,9 +72,8 @@ class EnquiryMessage(models.Model):
         return self.sender.is_staff
 
     def __str__(self):
-
         return f"Message by {self.sender}"
-
+    
     
 class ContactMessage(models.Model):
     name = models.CharField(max_length=120)

@@ -133,8 +133,6 @@ def about_view(request):
     return render(request, "core/about.html")
 
 
-# def contact_view(request):
-#     return render(request, "core/contact.html")
 
 from .models import ContactMessage
 
@@ -155,4 +153,3 @@ def contact_view(request):
         return redirect("contact")
 
     return render(request, "core/contact.html")
-
