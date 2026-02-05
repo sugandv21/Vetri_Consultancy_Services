@@ -66,8 +66,7 @@ def register_user(request):
         profile = user.profile
         profile.full_name = full_name
         profile.mobile_number = mobile
-        profile.save()
-              
+        profile.save()        
 
         #  Authenticate user FIRST
         user = authenticate(request, email=email, password=password)
@@ -108,6 +107,8 @@ def logout_user(request):
 
 
 
+
+
 #from django.core.mail import send_mail
 from accounts.utils.email import safe_send_mail
 from django.conf import settings
@@ -117,8 +118,7 @@ from django.shortcuts import redirect, render
 
 @login_required
 def profile_wizard(request):
-    profile, created = Profile.objects.get_or_create(user=request.user)
-
+    profile = request.user.profile
 
     if request.method == "POST":
         profile.full_name = request.POST.get("full_name")
@@ -135,9 +135,12 @@ def profile_wizard(request):
 
         profile.save()
 
+        # ✅ Check completion AFTER save
         completion = profile.completion_percentage()
 
+        # ✅ Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
+           
             safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
@@ -148,6 +151,7 @@ def profile_wizard(request):
                 ),
                 recipient_list=[request.user.email],
             )
+
 
             profile.completion_email_sent = True
             profile.save(update_fields=["completion_email_sent"])
@@ -167,8 +171,7 @@ def profile_wizard(request):
 
 @login_required
 def my_profile(request):
-    profile, created = Profile.objects.get_or_create(user=request.user)
-
+    profile = request.user.profile
 
     if request.method == "POST":
         profile.full_name = request.POST.get("full_name")
@@ -185,9 +188,12 @@ def my_profile(request):
 
         profile.save()
 
+        # Check completion AFTER save
         completion = profile.completion_percentage()
 
+        # Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
+           
             safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
@@ -214,8 +220,166 @@ def my_profile(request):
         }
     )
 
-from django.views.decorators.http import require_POST
+
+#setting
+@login_required
+def settings_view(request):
+    if request.method == "POST":
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if new_password:
+            if new_password != confirm_password:
+                messages.error(request, "Passwords do not match.")
+                return redirect("settings")
+
+            request.user.set_password(new_password)
+            request.user.save()
+            messages.success(request, "Password updated successfully.")
+            return redirect("login")
+
+    return render(request, "accounts/settings.html")
+
+#upgrade to pro
+@login_required
+def upgrade_to_pro(request):
+    if request.method == "POST":
+        user = request.user
+
+        # Already pro? it skips
+        if user.subscription_type == User.PRO:
+            return redirect("dashboard")
+
+        # Mark as PRO and payment follow
+        user.subscription_type = User.PRO
+        user.save(update_fields=["subscription_type"])
+
+        return redirect("payment")
+
+    return redirect("settings")
+
+#canditate list 
+
+@staff_required
+def candidate_list(request):
+    candidates = (
+        User.objects
+        .filter(is_staff=False)
+        .select_related("profile")
+        .order_by("-date_joined")
+    )
+
+    return render(
+        request,
+        "accounts/candidate.html",
+        {"candidates": candidates}
+    )
+
+#canditate and  admin dashboard
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from jobs.models import SavedJob, JobApplication
+from core.models import Enrollment   # adjust import if Enrollment is in another app
+
+
+
+
+#admin dashboard
+from jobs.models import Job, JobApplication
+from core.models import Training, Enrollment, TrainingEnquiry
+@staff_required
+def admin_dashboard(request):
+    total_candidates = User.objects.filter(is_staff=False).count()
+    total_jobs = Job.objects.count()
+    pending_jobs = Job.objects.filter(status="PENDING").count()
+    active_jobs = Job.objects.filter(status="PUBLISHED").count()
+    total_applications = JobApplication.objects.count()
+    total_trainings = Training.objects.count()
+    total_enrollments = Enrollment.objects.count()
+    total_enquiries = TrainingEnquiry.objects.count()
+
+    return render(
+        request,
+        "accounts/admin_dashboard.html",
+        {
+            "total_candidates": total_candidates,
+            "total_jobs": total_jobs,
+            "pending_jobs": pending_jobs,
+            "active_jobs": active_jobs,
+            "total_applications": total_applications,
+            "total_trainings": total_trainings,
+            "total_enrollments": total_enrollments,
+            "total_enquiries": total_enquiries,
+        }
+    )
+# #candidate resume view:
+
+from jobs.models import JobApplication
+from accounts.decorators import staff_required
 from django.shortcuts import get_object_or_404
+
+@staff_required
+def candidate_detail(request, user_id):
+    candidate = get_object_or_404(User, id=user_id, is_staff=False)
+
+    applications = JobApplication.objects.filter(user=candidate)
+
+    enrollments = Enrollment.objects.filter(user=candidate).select_related("training")
+
+    return render(
+        request,
+        "accounts/candidate_detail.html",
+        {
+            "candidate": candidate,
+            "applications": applications,
+            "enrollments": enrollments,
+        }
+    )
+    
+    
+
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+
+@login_required
+def ai_chat_page(request):
+    return render(request, "accounts/ai_chatbox.html")
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from accounts.ai_helper import get_ai_help
+import json
+
+
+@csrf_exempt
+@require_POST
+def ai_chatbot(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"reply": "Please login to use the assistant."})
+
+    data = json.loads(request.body)
+    message = data.get("message")
+    page = data.get("page")
+
+    reply = get_ai_help(request.user, message, page)
+
+    return JsonResponse({"reply": reply})
+
+
+#email update
+#and
+#status update by admin
+
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
+from accounts.decorators import staff_required
 from jobs.models import JobApplication
 
 @staff_required
@@ -235,15 +399,12 @@ def update_application_status(request, app_id):
 
     # Send email ONLY when moved to INTERVIEW
     if old_status != "INTERVIEW" and new_status == "INTERVIEW":
-
         candidate = application.user
         job = application.job
 
-        profile, _ = Profile.objects.get_or_create(user=candidate)
-
         subject = "🎉 Shortlisted for Screening Interview"
         message = (
-            f"Dear {profile.full_name or 'Candidate'},\n\n"
+            f"Dear {candidate.profile.full_name or 'Candidate'},\n\n"
             f"We are pleased to inform you that you have been shortlisted "
             f"for a screening interview for the position of "
             f"{job.title} at {job.company_name}.\n\n"
@@ -254,14 +415,48 @@ def update_application_status(request, app_id):
             "Vetri Consultancy Services"
         )
 
-        sent = safe_send_mail(
-            subject=subject,
-            message=message,
-            recipient_list=[candidate.email],
-        )
+       
 
-        if not sent:
-            messages.warning(request, "Status updated but email failed.")
+    sent = safe_send_mail(
+        subject=subject,
+        message=message,
+        recipient_list=[candidate.email],
+    )
+    
+    if not sent:
+        messages.warning(request, "Status updated but email failed.")
+
 
     messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
+
+
+
+
+from django.contrib.auth.decorators import login_required
+from core.models import Enrollment
+from jobs.models import JobApplication, Job
+from jobs.models import SavedJob, JobApplication
+from core.models import Enrollment
+
+@login_required
+def dashboard(request):
+    enrollments = Enrollment.objects.filter(
+        user=request.user
+    ).select_related("training")
+
+    context = {
+        "saved_jobs_count": SavedJob.objects.filter(
+            user=request.user
+        ).count(),
+
+        "applications_count": JobApplication.objects.filter(
+            user=request.user
+        ).count(),
+
+        "enrolled_trainings_count": enrollments.count(),
+        "enrollments": enrollments,
+    }
+
+    return render(request, "accounts/dashboard.html", context)
+
