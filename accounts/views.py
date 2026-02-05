@@ -387,7 +387,6 @@ from jobs.models import JobApplication
 def update_application_status(request, app_id):
     application = get_object_or_404(JobApplication, id=app_id)
     old_status = application.status
-
     new_status = request.POST.get("status")
 
     if new_status not in dict(JobApplication.STATUS_CHOICES):
@@ -397,7 +396,7 @@ def update_application_status(request, app_id):
     application.status = new_status
     application.save()
 
-    # Send email ONLY when moved to INTERVIEW
+    # send mail ONLY when moved to INTERVIEW
     if old_status != "INTERVIEW" and new_status == "INTERVIEW":
         candidate = application.user
         job = application.job
@@ -405,29 +404,27 @@ def update_application_status(request, app_id):
         subject = "🎉 Shortlisted for Screening Interview"
         message = (
             f"Dear {candidate.profile.full_name or 'Candidate'},\n\n"
-            f"We are pleased to inform you that you have been shortlisted "
-            f"for a screening interview for the position of "
+            f"You have been shortlisted for a screening interview for "
             f"{job.title} at {job.company_name}.\n\n"
-            "You will receive the interview meeting link shortly.\n\n"
-            "Please start preparing and give it your best.\n\n"
-            "Wishing you all the very best!\n\n"
+            "Prepare well. Meeting link will be shared soon.\n\n"
             "Regards,\n"
             "Vetri Consultancy Services"
         )
 
-       
+        sent = safe_send_mail(
+            subject=subject,
+            message=message,
+            recipient_list=[candidate.email],
+        )
 
-    sent = safe_send_mail(
-        subject=subject,
-        message=message,
-        recipient_list=[candidate.email],
-    )
-    
-    if not sent:
-        messages.warning(request, "Status updated but email failed.")
+        if sent:
+            messages.success(request, "Application status updated & email sent.")
+        else:
+            messages.warning(request, "Status updated but email failed.")
 
+    else:
+        messages.success(request, "Application status updated.")
 
-    messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
 
 
@@ -459,4 +456,5 @@ def dashboard(request):
     }
 
     return render(request, "accounts/dashboard.html", context)
+
 
