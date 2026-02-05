@@ -6,53 +6,142 @@
 <div class="card shadow-sm">
   <div class="card-body p-0">
 
-    <table class="table table-striped mb-0 align-middle">
-      <thead class="table-dark">
-        <tr>
-          <th>#</th>
-          <th>Candidate</th>
-          <th>Email</th>
-          <th>Training</th>
-          <th>Message</th>
-          <th>Enquired On</th>
-          <th>Action</th>
-          
-        </tr>
-      </thead>
+<div class="table-responsive">
+  <table class="table table-striped mb-0 align-middle enquiry-table">
 
-      <tbody>
-        {% for e in enquiries %}
-        <tr>
-          <td>{{ forloop.counter }}</td>
-          <td>
-            {{ e.user.profile.full_name|default:"—" }}
-          </td>
-          <td>{{ e.user.email }}</td>
-          <td>{{ e.training.title }}</td>
-          <td style="max-width: 300px;">
-            {{ e.last_message|default:"—"|truncatechars:120 }}
-          </td>
+    <thead class="table-dark">
+      <tr>
+        <th>S.No</th>
+        <th>Candidate</th>
+        <th>Email</th>
+        <th>Training</th>
+        <th>Message</th>
+        <th>Enquired On</th>
+        <th>Action</th>
+      </tr>
+    </thead>
 
-          <td>{{ e.last_message_time|date:"d M Y, H:i" }}</td>
+    <tbody>
+      {% for e in enquiries %}
+      <tr>
 
-          <td>
-            <a href="{% url 'admin_enquiry_chat' e.id %}" class="btn btn-sm btn-primary">
-              View / Reply
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="6" class="text-center py-4 text-muted">
-            No enquiries found.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+        <td data-label="ID">
+          {{ forloop.counter }}
+        </td>
 
-    </table>
+        <td data-label="Candidate">
+          {{ e.user.profile.full_name|default:"—" }}
+        </td>
+
+        <td data-label="Email">
+          {{ e.user.email }}
+        </td>
+
+        <td data-label="Training">
+          {{ e.training.title }}
+        </td>
+
+        <td data-label="Message">
+          {{ e.last_message|default:"—"|truncatechars:120 }}
+        </td>
+
+        <td data-label="Enquired On">
+          {{ e.last_message_time|date:"d M Y, H:i" }}
+        </td>
+
+        <td data-label="Action">
+          <a href="{% url 'admin_enquiry_chat' e.id %}"
+             class="btn btn-sm btn-primary w-100">
+            View / Reply
+          </a>
+        </td>
+
+      </tr>
+
+      {% empty %}
+      <tr>
+        <td colspan="7" class="text-center py-4 text-muted">
+          No enquiries found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+
+  </table>
+</div>
 
   </div>
 </div>
+
+<style>
+@media (max-width: 768px) {
+
+  /* stop bootstrap scroll */
+  .table-responsive {
+    overflow-x: visible !important;
+  }
+
+  .enquiry-table thead {
+    display: none;
+  }
+
+  /* break table */
+  .enquiry-table,
+  .enquiry-table tbody,
+  .enquiry-table tr,
+  .enquiry-table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* card */
+  .enquiry-table tr {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    margin: 0 0 16px 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  }
+
+  /* cells */
+  .enquiry-table td {
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid #f1f1f1;
+    position: relative;
+    padding: 10px 10px 10px 50%;
+    font-size: 14px;
+    min-height: 40px;
+
+    /* wrap long text */
+    white-space: normal !important;
+    word-break: break-word;
+  }
+
+  .enquiry-table td:last-child {
+    border-bottom: none;
+    padding-top: 14px;
+  }
+
+  /* labels */
+  .enquiry-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 44%;
+    padding-left: 2px;
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+  }
+
+  /* button */
+  .enquiry-table .btn {
+    width: 100%;
+    margin-top: 6px;
+  }
+}
+</style>
 
 {% endblock %}

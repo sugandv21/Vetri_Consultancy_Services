@@ -6,46 +6,128 @@
 <div class="card shadow-sm">
   <div class="card-body p-0">
 
-    <table class="table table-striped mb-0 align-middle">
-      <thead class="table-dark">
-        <tr>
-          <th>#</th>
-          <th>Candidate Email</th>
-          <th>Training</th>
-          <th>Enrolled On</th>
-          <th>Update details</th>
-        </tr>
-      </thead>
+<div class="table-responsive">
+  <table class="table table-striped mb-0 align-middle enrollment-table">
 
-      <tbody>
-        {% for e in enrollments %}
-        <tr>
-          <td>{{ forloop.counter }}</td>
-          <td>{{ e.user.email }}</td>
-          <td>{{ e.training.title }}</td>
-          <td>{{ e.enrolled_at|date:"d M Y, H:i" }}</td>
-          <td>
-  <a href="{% url 'edit_enrollment' e.id %}"
-     class="btn btn-sm btn-outline-primary">
-    Update
-  </a>
-</td>
+    <thead class="table-dark">
+      <tr>
+        <th>#</th>
+        <th>Candidate Email</th>
+        <th>Training</th>
+        <th>Enrolled On</th>
+        <th>Update details</th>
+      </tr>
+    </thead>
 
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="4" class="text-center py-4 text-muted">
-            No enrollments found.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+    <tbody>
+      {% for e in enrollments %}
+      <tr>
+        <td data-label="ID">
+          {{ forloop.counter }}
+        </td>
 
-    </table>
+        <td data-label="Candidate Email">
+          {{ e.user.email }}
+        </td>
 
-    
+        <td data-label="Training">
+          {{ e.training.title }}
+        </td>
+
+        <td data-label="Enrolled On">
+          {{ e.enrolled_at|date:"d M Y, H:i" }}
+        </td>
+
+        <td data-label="Update">
+          <a href="{% url 'edit_enrollment' e.id %}"
+             class="btn btn-sm btn-outline-primary w-100">
+            Update
+          </a>
+        </td>
+      </tr>
+
+      {% empty %}
+      <tr>
+        <td colspan="5" class="text-center py-4 text-muted">
+          No enrollments found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+
+  </table>
+</div>
 
   </div>
 </div>
+
+<style>
+@media (max-width: 768px) {
+
+  /* remove horizontal scroll */
+  .table-responsive {
+    overflow-x: visible !important;
+  }
+
+  .enrollment-table thead {
+    display: none;
+  }
+
+  .enrollment-table,
+  .enrollment-table tbody,
+  .enrollment-table tr,
+  .enrollment-table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* FIXED CARD ALIGNMENT */
+  .enrollment-table tr {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    margin: 0 0 16px 0;   /* 🔥 ONLY bottom margin */
+    box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  }
+
+  /* CELL */
+  .enrollment-table td {
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid #f1f1f1;
+    position: relative;
+    padding: 10px 10px 10px 48%;
+    font-size: 14px;
+    min-height: 40px;
+    white-space: normal !important;
+  }
+
+  .enrollment-table td:last-child {
+    border-bottom: none;
+    padding-top: 14px;
+  }
+
+  /* LABELS — align perfectly */
+  .enrollment-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 44%;
+    padding-left: 2px;
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+  }
+
+  /* BUTTON */
+  .enrollment-table .btn {
+    width: 100%;
+    margin-top: 6px;
+  }
+}
+</style>
+
+
 
 {% endblock %}

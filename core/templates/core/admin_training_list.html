@@ -3,12 +3,19 @@
 
 <h3 class="mb-4">Training Programs</h3>
 
-<a href="{% url 'add_training' %}" class="btn btn-primary mb-3">
-  + Add Training
-</a>
+<div class="add-training-wrapper mb-5">
+  <a href="{% url 'add_training' %}" class="btn btn-primary add-training-btn">
+    + Add Training
+  </a>
+</div>
+
 
 <div class="card shadow-sm">
-  <table class="table table-striped mb-0 align-middle">
+  <div class="card-body p-0">
+
+<div class="table-responsive">
+  <table class="table table-striped mb-0 align-middle training-table">
+
     <thead class="table-dark">
       <tr>
         <th>Title</th>
@@ -21,24 +28,36 @@
     <tbody>
       {% for t in trainings %}
       <tr>
-        <td>{{ t.title }}</td>
-        <td>₹{{ t.fee }}</td>
-        <td>
+
+        <td data-label="Title">
+          {{ t.title }}
+        </td>
+
+        <td data-label="Fee">
+          ₹{{ t.fee }}
+        </td>
+
+        <td data-label="Status">
           {% if t.is_active %}
             <span class="badge bg-success">Active</span>
           {% else %}
             <span class="badge bg-secondary">Inactive</span>
           {% endif %}
         </td>
-        <td>
-          <a href="{% url 'edit_training' t.id %}" class="btn btn-sm btn-warning">
-            Edit
-          </a>
-          <a href="{% url 'delete_training' t.id %}" class="btn btn-sm btn-danger">
-            Delete
-          </a>
+
+        <td data-label="Actions">
+          <div class="d-grid gap-2 d-md-flex">
+            <a href="{% url 'edit_training' t.id %}" class="btn btn-sm btn-warning flex-fill">
+              Edit
+            </a>
+            <a href="{% url 'delete_training' t.id %}" class="btn btn-sm btn-danger flex-fill">
+              Delete
+            </a>
+          </div>
         </td>
+
       </tr>
+
       {% empty %}
       <tr>
         <td colspan="4" class="text-center text-muted py-4">
@@ -47,7 +66,104 @@
       </tr>
       {% endfor %}
     </tbody>
+
   </table>
 </div>
+
+
+  </div>
+</div>
+
+<style>
+@media (max-width: 768px) {
+
+  /* remove bootstrap horizontal scroll */
+  .table-responsive {
+    overflow-x: visible !important;
+  }
+
+  .training-table thead {
+    display: none;
+  }
+
+  .training-table,
+  .training-table tbody,
+  .training-table tr,
+  .training-table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* CARD ROW — fixed alignment */
+  .training-table tr {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    margin: 0 0 16px 0;   /* 🔥 only bottom margin now */
+    box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  }
+
+  /* CELL */
+  .training-table td {
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid #f1f1f1;
+    position: relative;
+    padding: 10px 10px 10px 48%;
+    font-size: 14px;
+    min-height: 40px;
+    white-space: normal !important;
+  }
+
+  .training-table td:last-child {
+    border-bottom: none;
+    padding-top: 14px;
+  }
+
+  /* LABELS */
+  .training-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 44%;
+    padding-left: 2px;
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+  }
+
+  /* BUTTONS */
+  .training-table .btn {
+    width: 100%;
+  }
+}
+
+
+/* MOBILE — full width */
+.add-training-btn {
+  width: 100%;
+  padding: 10px 14px;
+  font-weight: 500;
+}
+
+/* DESKTOP — compact button */
+@media (min-width: 768px) {
+
+  .add-training-wrapper {
+    display: flex;
+    justify-content: flex-start; /* change to flex-end if you want right side */
+  }
+
+  .add-training-btn {
+    width: auto;
+    padding: 6px 14px;     /* smaller height */
+    font-size: 14px;
+    border-radius: 6px;
+  }
+}
+
+</style>
+
 
 {% endblock %}
