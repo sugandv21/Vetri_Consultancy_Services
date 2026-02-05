@@ -29,7 +29,12 @@ def login_user(request):
 
         login(request, user)
         messages.success(request, "Login successful.")
-        return redirect("dashboard")
+
+        # 🔥 ROLE BASED REDIRECT
+        if user.is_staff:     # admin / consultant
+            return redirect("admin_dashboard")
+        else:                 # candidate
+            return redirect("dashboard")
 
     return render(request, "accounts/login.html")
 
@@ -438,23 +443,20 @@ from core.models import Enrollment
 
 @login_required
 def dashboard(request):
+
+    # block admin entering candidate dashboard
+    if request.user.is_staff:
+        return redirect("admin_dashboard")
+
     enrollments = Enrollment.objects.filter(
         user=request.user
     ).select_related("training")
 
     context = {
-        "saved_jobs_count": SavedJob.objects.filter(
-            user=request.user
-        ).count(),
-
-        "applications_count": JobApplication.objects.filter(
-            user=request.user
-        ).count(),
-
+        "saved_jobs_count": SavedJob.objects.filter(user=request.user).count(),
+        "applications_count": JobApplication.objects.filter(user=request.user).count(),
         "enrolled_trainings_count": enrollments.count(),
         "enrollments": enrollments,
     }
 
     return render(request, "accounts/dashboard.html", context)
-
-
