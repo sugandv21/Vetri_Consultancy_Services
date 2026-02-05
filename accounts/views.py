@@ -12,7 +12,6 @@ from .decorators import staff_required
 def post_job(request):
     return render(request, "jobs/post_job.html")
 
-
 def login_user(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -63,14 +62,17 @@ def register_user(request):
             subscription_type=subscription,
         )
 
-        # FIXED: ensure profile always exists
-        profile, created = Profile.objects.get_or_create(user=user)
+        # Profile already created by signal
+        profile = user.profile
         profile.full_name = full_name
         profile.mobile_number = mobile
         profile.save()
+              
 
+        #  Authenticate user FIRST
         user = authenticate(request, email=email, password=password)
 
+        #  Then login (no backend error)
         if user is not None:
             login(request, user)
 
@@ -82,16 +84,21 @@ def register_user(request):
     return render(request, "accounts/register.html")
 
 
+
+
 @login_required
 def payment(request):
+    # Block FREE users
     if request.user.subscription_type != User.PRO:
         return redirect("dashboard")
 
     if request.method == "POST":
+        # Fake payment success
         messages.success(request, "Payment successful! Welcome to Pro 🎉")
         return redirect("profile_wizard")
 
     return render(request, "accounts/payment.html")
+
 
 
 def logout_user(request):
@@ -99,11 +106,19 @@ def logout_user(request):
     messages.success(request, "You have logged out successfully.")
     return redirect("login")
 
+
+
+#from django.core.mail import send_mail
 from accounts.utils.email import safe_send_mail
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.shortcuts import redirect, render
 
 @login_required
 def profile_wizard(request):
     profile, created = Profile.objects.get_or_create(user=request.user)
+
 
     if request.method == "POST":
         profile.full_name = request.POST.get("full_name")
@@ -143,13 +158,17 @@ def profile_wizard(request):
     return render(
         request,
         "accounts/profile_wizard.html",
-        {"profile": profile, "completion": profile.completion_percentage()}
+        {
+            "profile": profile,
+            "completion": profile.completion_percentage()
+        }
     )
 
 
 @login_required
 def my_profile(request):
     profile, created = Profile.objects.get_or_create(user=request.user)
+
 
     if request.method == "POST":
         profile.full_name = request.POST.get("full_name")
@@ -189,7 +208,10 @@ def my_profile(request):
     return render(
         request,
         "accounts/profile.html",
-        {"profile": profile, "completion": profile.completion_percentage()}
+        {
+            "profile": profile,
+            "completion": profile.completion_percentage()
+        }
     )
 
 from django.views.decorators.http import require_POST
@@ -201,6 +223,7 @@ from jobs.models import JobApplication
 def update_application_status(request, app_id):
     application = get_object_or_404(JobApplication, id=app_id)
     old_status = application.status
+
     new_status = request.POST.get("status")
 
     if new_status not in dict(JobApplication.STATUS_CHOICES):
@@ -210,9 +233,12 @@ def update_application_status(request, app_id):
     application.status = new_status
     application.save()
 
+    # Send email ONLY when moved to INTERVIEW
     if old_status != "INTERVIEW" and new_status == "INTERVIEW":
+
         candidate = application.user
         job = application.job
+
         profile, _ = Profile.objects.get_or_create(user=candidate)
 
         subject = "🎉 Shortlisted for Screening Interview"
@@ -228,7 +254,12 @@ def update_application_status(request, app_id):
             "Vetri Consultancy Services"
         )
 
-        sent = safe_send_mail(subject=subject, message=message, recipient_list=[candidate.email])
+        sent = safe_send_mail(
+            subject=subject,
+            message=message,
+            recipient_list=[candidate.email],
+        )
+
         if not sent:
             messages.warning(request, "Status updated but email failed.")
 
