@@ -348,9 +348,14 @@ def candidate_detail(request, user_id):
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-
 @login_required
 def ai_chat_page(request):
+
+    # block FREE users
+    if request.user.subscription_type != User.PRO:
+        messages.warning(request, "AI Assistant is a PRO feature. Please upgrade your plan.")
+        return redirect("/auth/settings/?upgrade=1")
+
     return render(request, "accounts/ai_chatbox.html")
 
 from django.http import JsonResponse
@@ -359,12 +364,18 @@ from django.views.decorators.csrf import csrf_exempt
 from accounts.ai_helper import get_ai_help
 import json
 
-
 @csrf_exempt
 @require_POST
 def ai_chatbot(request):
+
     if not request.user.is_authenticated:
         return JsonResponse({"reply": "Please login to use the assistant."})
+
+    # block free users
+    if request.user.subscription_type != User.PRO:
+        return JsonResponse({
+            "reply": "This feature is available only for PRO users. Upgrade your plan."
+        })
 
     data = json.loads(request.body)
     message = data.get("message")
@@ -460,3 +471,4 @@ def dashboard(request):
     }
 
     return render(request, "accounts/dashboard.html", context)
+
