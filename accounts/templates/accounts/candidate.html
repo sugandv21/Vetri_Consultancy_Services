@@ -6,76 +6,154 @@
 <div class="card shadow-sm">
   <div class="card-body p-0">
 
-    <table class="table table-striped mb-0 align-middle">
-      <thead class="table-dark">
-        <tr>
-          <th>Email</th>
-          <th>Full Name</th>
-          <th>Experience</th>
-          <th>Location</th>
-          <th>Skills</th>
-          <th>Subscription</th>
-          <th>Joined</th>
-          <th>Actions</th> <!-- NEW -->
-        </tr>
-      </thead>
+<!-- Responsive wrapper -->
+<div class="table-responsive">
+  <table class="table table-striped mb-0 align-middle candidate-table">
 
-      <tbody>
-        {% for user in candidates %}
-        <tr>
-          <td>{{ user.email }}</td>
+    <thead class="table-dark">
+      <tr>
+        <th>Email</th>
+        <th>Full Name</th>
+        <th>Experience</th>
+        <th>Location</th>
+        <th>Skills</th>
+        <th>Subscription</th>
+        <th>Joined</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
 
-          <td>
-            {{ user.profile.full_name|default:"—" }}
-          </td>
+    <tbody>
+      {% for user in candidates %}
+      <tr>
+        <td data-label="Email">
+          {{ user.email }}
+        </td>
 
-          <td>
-            {% if user.profile.experience is not None %}
-              {{ user.profile.experience }} yrs
-            {% else %}
-              —
-            {% endif %}
-          </td>
+        <td data-label="Full Name">
+          {{ user.profile.full_name|default:"—" }}
+        </td>
 
-          <td>
-            {{ user.profile.location|default:"—" }}
-          </td>
+        <td data-label="Experience">
+          {% if user.profile.experience is not None %}
+            {{ user.profile.experience }} yrs
+          {% else %}
+            —
+          {% endif %}
+        </td>
 
-          <td>
-            {{ user.profile.skills|default:"—" }}
-          </td>
+        <td data-label="Location">
+          {{ user.profile.location|default:"—" }}
+        </td>
 
-          <td>
-            <span class="badge bg-{% if user.is_pro %}success{% else %}secondary{% endif %}">
-              {{ user.subscription_type }}
-            </span>
-          </td>
+        <td data-label="Skills">
+          {{ user.profile.skills|default:"—" }}
+        </td>
 
-          <td>
-            {{ user.date_joined|date:"d M Y" }}
-          </td>
+        <td data-label="Subscription">
+          <span class="badge bg-{% if user.is_pro %}success{% else %}secondary{% endif %}">
+            {{ user.subscription_type }}
+          </span>
+        </td>
 
-          <td>
-            <a
-              href="{% url 'candidate_detail' user.id %}"
-              class="btn btn-sm btn-outline-primary"
-            >
-              View
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="8" class="text-center py-4">
-            No candidates found.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+        <td data-label="Joined">
+          {{ user.date_joined|date:"d M Y" }}
+        </td>
 
-    </table>
+        <td data-label="Actions">
+          <a href="{% url 'candidate_detail' user.id %}"
+             class="btn btn-sm btn-outline-primary w-100">
+            View
+          </a>
+        </td>
+      </tr>
+
+      {% empty %}
+      <tr>
+        <td colspan="8" class="text-center py-4">
+          No candidates found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+
+  </table>
+</div>
+
 
   </div>
 </div>
+<style>
+@media (max-width: 768px) {
+
+  /* 🔥 STOP bootstrap horizontal scroll */
+  .table-responsive {
+    overflow-x: visible !important;
+  }
+
+  /* hide header */
+  .candidate-table thead {
+    display: none;
+  }
+
+  /* break table structure */
+  .candidate-table,
+  .candidate-table tbody,
+  .candidate-table tr,
+  .candidate-table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* card row — centered */
+  .candidate-table tr {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    margin: 0 0 16px 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  }
+
+  /* cell */
+  .candidate-table td {
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid #f1f1f1;
+    position: relative;
+    padding: 10px 10px 10px 50%;
+    font-size: 14px;
+    min-height: 40px;
+
+    /* allow long email + skills wrap */
+    white-space: normal !important;
+    word-break: break-word;
+  }
+
+  .candidate-table td:last-child {
+    border-bottom: none;
+    padding-top: 14px;
+  }
+
+  /* labels */
+  .candidate-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 44%;
+    padding-left: 2px;
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+  }
+
+  /* button */
+  .candidate-table .btn {
+    width: 100%;
+    margin-top: 6px;
+  }
+}
+</style>
+
 
 {% endblock %}
