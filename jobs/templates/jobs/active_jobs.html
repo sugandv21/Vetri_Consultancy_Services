@@ -3,47 +3,146 @@
 
 <h3 class="mb-4">Active Jobs</h3>
 
-<div class="card">
+<div class="card shadow-sm">
   <div class="card-body p-0">
-    <table class="table table-striped mb-0">
-      <thead class="table-dark">
-        <tr>
-          <th>Title</th>
-          <th>Company</th>
-          <th>Location</th>
-          <th>Experience</th>
-          <th>Type</th>
-          <th>Visibility</th>
-          <th>Deadline</th>
-          <th>Posted By</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for job in jobs %}
-        <tr>
-          <td>{{ job.title }}</td>
-          <td>{{ job.company_name }}</td>
-          <td>{{ job.location }}</td>
-          <td>{{ job.experience_min }} – {{ job.experience_max }} yrs</td>
-          <td>{{ job.get_job_type_display }}</td>
-          <td>
-            <span class="badge bg-{% if job.visibility == 'PRO' %}success{% else %}secondary{% endif %}">
-              {{ job.visibility }}
-            </span>
-          </td>
-          <td>{{ job.deadline|date:"d M Y" }}</td>
-          <td>{{ job.created_by.email }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="8" class="text-center py-3">
-            No active jobs found.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+<div class="table-responsive">
+  <table class="table table-striped mb-0 align-middle job-table">
+
+    <thead class="table-dark">
+      <tr>
+        <th>Title</th>
+        <th>Company</th>
+        <th>Location</th>
+        <th>Experience</th>
+        <th>Type</th>
+        <th>Visibility</th>
+        <th>Deadline</th>
+        <th>Posted By</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for job in jobs %}
+      <tr>
+
+        <td data-label="Title">
+          {{ job.title }}
+        </td>
+
+        <td data-label="Company">
+          {{ job.company_name }}
+        </td>
+
+        <td data-label="Location">
+          {{ job.location }}
+        </td>
+
+        <td data-label="Experience">
+          {{ job.experience_min }} – {{ job.experience_max }} yrs
+        </td>
+
+        <td data-label="Type">
+          {{ job.get_job_type_display }}
+        </td>
+
+        <td data-label="Visibility">
+          <span class="badge bg-{% if job.visibility == 'PRO' %}success{% else %}secondary{% endif %}">
+            {{ job.visibility }}
+          </span>
+        </td>
+
+        <td data-label="Deadline">
+          {{ job.deadline|date:"d M Y" }}
+        </td>
+
+        <td data-label="Posted By">
+          {{ job.created_by.email }}
+        </td>
+
+      </tr>
+
+      {% empty %}
+      <tr>
+        <td colspan="8" class="text-center py-3">
+          No active jobs found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+
+  </table>
+</div>
+
+
   </div>
 </div>
+
+<style>
+@media (max-width: 768px) {
+
+  /* 1️⃣ REMOVE BOOTSTRAP SCROLL */
+  .table-responsive {
+    overflow-x: visible !important;
+  }
+
+  /* 2️⃣ HIDE HEADER */
+  .job-table thead {
+    display: none;
+  }
+
+  /* 3️⃣ BREAK TABLE STRUCTURE */
+  .job-table,
+  .job-table tbody,
+  .job-table tr,
+  .job-table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* 4️⃣ CARD ROW (no side margin = no shift & no overflow) */
+  .job-table tr {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    margin: 0 0 16px 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  }
+
+  /* 5️⃣ CELL STYLE */
+  .job-table td {
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid #f1f1f1;
+    position: relative;
+    padding: 10px 10px 10px 50%;
+    font-size: 14px;
+    min-height: 40px;
+
+    /* IMPORTANT — allows long text wrap */
+    white-space: normal !important;
+    word-break: break-word;
+  }
+
+  .job-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* 6️⃣ LABEL */
+  .job-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 44%;
+    padding-left: 2px;
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+  }
+
+}
+</style>
+
 
 {% endblock %}
