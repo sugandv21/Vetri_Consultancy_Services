@@ -129,18 +129,13 @@ def logout_user(request):
 #             "completion": profile.completion_percentage()
 #         }
 #     )
-from django.core.mail import send_mail
+
+#from django.core.mail import send_mail
+from accounts.utils.email import safe_send_mail
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect, render
-
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
-
 
 @login_required
 def profile_wizard(request):
@@ -166,20 +161,31 @@ def profile_wizard(request):
 
         # ✅ Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-            send_mail(
+            # send_mail(
+            #     subject="🎉 Profile Completed Successfully!",
+            #     message=(
+            #         f"Hi {profile.full_name or 'there'},\n\n"
+            #         "Your profile has been completed successfully.\n\n"
+            #         "You can now apply for jobs, save opportunities, "
+            #         "and track your applications from your dashboard.\n\n"
+            #         "Warm regards,\n"
+            #         "Vetri Consultancy Services"
+            #     ),
+            #     from_email=settings.DEFAULT_FROM_EMAIL,
+            #     recipient_list=[request.user.email],
+            #     fail_silently=False,  # IMPORTANT
+            # )
+            safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs, save opportunities, "
-                    "and track your applications from your dashboard.\n\n"
-                    "Warm regards,\n"
+                    "You can now apply for jobs and track applications.\n\n"
                     "Vetri Consultancy Services"
                 ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
-                fail_silently=False,  # IMPORTANT
             )
+
 
             profile.completion_email_sent = True
             profile.save(update_fields=["completion_email_sent"])
@@ -221,19 +227,30 @@ def my_profile(request):
 
         # Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-            send_mail(
+            # send_mail(
+            #     subject="🎉 Profile Completed Successfully!",
+            #     message=(
+            #         f"Hi {profile.full_name or 'there'},\n\n"
+            #         "Your profile has been completed successfully.\n\n"
+            #         "You can now apply for jobs, save opportunities, "
+            #         "and track your applications from your dashboard.\n\n"
+            #         "Warm regards,\n"
+            #         "Vetri Consultancy Services"
+            #     ),
+            #     from_email=settings.DEFAULT_FROM_EMAIL,
+            #     recipient_list=[request.user.email],
+            #     fail_silently=False,
+            # )
+
+            safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs, save opportunities, "
-                    "and track your applications from your dashboard.\n\n"
-                    "Warm regards,\n"
+                    "You can now apply for jobs and track applications.\n\n"
                     "Vetri Consultancy Services"
                 ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
-                fail_silently=False,
             )
 
             profile.completion_email_sent = True
@@ -479,20 +496,30 @@ def update_application_status(request, app_id):
             "Vetri Consultancy Services"
         )
 
-        try:
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[candidate.email],
-                fail_silently=False,
-            )
-        except Exception as e:
-            # Email failure should NOT block admin action
-            messages.warning(
-                request,
-                "Status updated, but email could not be sent."
-            )
+        # try:
+        #     send_mail(
+        #         subject=subject,
+        #         message=message,
+        #         from_email=settings.DEFAULT_FROM_EMAIL,
+        #         recipient_list=[candidate.email],
+        #         fail_silently=False,
+        #     )
+        # except Exception as e:
+        #     # Email failure should NOT block admin action
+        #     messages.warning(
+        #         request,
+        #         "Status updated, but email could not be sent."
+        #     )
+
+    sent = safe_send_mail(
+        subject=subject,
+        message=message,
+        recipient_list=[candidate.email],
+    )
+    
+    if not sent:
+        messages.warning(request, "Status updated but email failed.")
+
 
     messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
@@ -526,4 +553,5 @@ def dashboard(request):
     }
 
     return render(request, "accounts/dashboard.html", context)
+
 
