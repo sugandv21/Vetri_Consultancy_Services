@@ -1,21 +1,59 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
+<style>
+/* Mobile-only table stacking */
+@media (max-width: 767px) {
+  .responsive-table thead {
+    display: none;
+  }
+
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table tr {
+    margin-bottom: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
+  }
+
+  .responsive-table td {
+    border: none;
+    padding: 6px 0;
+  }
+
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+    color: #6c757d;
+  }
+}
+</style>
+
 <div class="container mt-4">
   <h2 class="mb-4">My Dashboard</h2>
 
-  <div class="row">
+  <div class="row g-3">
 
     <!-- Saved Jobs -->
-    <div class="col-12 col-md-6 col-lg-4 mb-3">
+    <div class="col-12 col-md-6 col-lg-4">
       <div class="card text-center shadow-sm h-100 border-primary">
-        <div class="card-body bg-primary bg-opacity-10">
+        <div class="card-body bg-primary bg-opacity-10 p-3 p-md-4">
           <h5 class="card-title text-primary">Saved Jobs</h5>
-          <p class="display-4 fw-bold text-primary">
+          <p class="fw-bold text-primary fs-1 fs-md-2">
             {{ saved_jobs_count }}
           </p>
           <a href="{% url 'saved_jobs' %}"
-             class="btn btn-outline-primary btn-sm">
+             class="btn btn-outline-primary btn-sm w-100 w-md-auto">
             View saved jobs
           </a>
         </div>
@@ -23,15 +61,15 @@
     </div>
 
     <!-- Applications -->
-    <div class="col-12 col-md-6 col-lg-4 mb-3">
+    <div class="col-12 col-md-6 col-lg-4">
       <div class="card text-center shadow-sm h-100 border-success">
-        <div class="card-body bg-success bg-opacity-10">
+        <div class="card-body bg-success bg-opacity-10 p-3 p-md-4">
           <h5 class="card-title text-success">Applications</h5>
-          <p class="display-4 fw-bold text-success">
+          <p class="fw-bold text-success fs-1 fs-md-2">
             {{ applications_count }}
           </p>
           <a href="{% url 'applications' %}"
-             class="btn btn-outline-success btn-sm">
+             class="btn btn-outline-success btn-sm w-100 w-md-auto">
             View applications
           </a>
         </div>
@@ -39,34 +77,33 @@
     </div>
 
     <!-- Trainings Enrolled -->
-    <div class="col-12 col-md-6 col-lg-4 mb-3">
+    <div class="col-12 col-md-6 col-lg-4">
       <div class="card text-center shadow-sm h-100 border-warning">
-        <div class="card-body bg-warning bg-opacity-10">
+        <div class="card-body bg-warning bg-opacity-10 p-3 p-md-4">
           <h5 class="card-title text-warning">Trainings Enrolled</h5>
-          <p class="display-4 fw-bold text-warning">
+          <p class="fw-bold text-warning fs-1 fs-md-2">
             {{ enrolled_trainings_count }}
           </p>
           <a href="{% url 'training_list' %}"
-             class="btn btn-outline-warning btn-sm">
+             class="btn btn-outline-warning btn-sm w-100 w-md-auto">
             View trainings
           </a>
         </div>
       </div>
     </div>
 
-  </div> <!-- END row -->
+  </div>
 
   <!-- MY TRAININGS SECTION -->
   <h4 class="mt-5">My Trainings</h4>
 
   <div class="table-responsive">
-    <table class="table table-bordered align-middle">
+    <table class="table table-bordered align-middle responsive-table">
       <thead class="table-light">
         <tr>
           <th>Training</th>
           <th>Mentor</th>
-          <th>Training Link</th> 
-          
+          <th>Training Link</th>
           <th>Timing</th>
           <th>Certificate</th>
         </tr>
@@ -75,18 +112,20 @@
       <tbody>
         {% for e in enrollments %}
         <tr>
-          <td>{{ e.training.title }}</td>
+          <td data-label="Training">
+            {{ e.training.title }}
+          </td>
 
-          <td>
+          <td data-label="Mentor">
             {{ e.mentor_name|default:"Not assigned" }}<br>
             <small class="text-muted">{{ e.mentor_email }}</small>
           </td>
-          
-          <td>
+
+          <td data-label="Training Link">
             {% if e.training_link %}
               <a href="{{ e.training_link }}"
                 target="_blank"
-                class="btn btn-sm btn-primary">
+                class="btn btn-sm btn-primary w-100 w-md-auto">
                 Join
               </a>
             {% else %}
@@ -94,12 +133,11 @@
             {% endif %}
           </td>
 
-
-          <td>
+          <td data-label="Timing">
             {{ e.course_timing|default:"To be announced" }}
           </td>
 
-          <td>
+          <td data-label="Certificate">
             {% if not e.is_completed %}
               <span class="text-muted">
                 Available after course completion
@@ -110,7 +148,7 @@
               </span>
             {% else %}
               <a href="{{ e.certificate.url }}"
-                 class="btn btn-sm btn-success">
+                 class="btn btn-sm btn-success w-100 w-md-auto">
                 Download
               </a>
             {% endif %}
@@ -118,7 +156,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="4" class="text-center text-muted py-4">
+          <td colspan="5" class="text-center text-muted py-4">
             No trainings enrolled.
           </td>
         </tr>
