@@ -20,35 +20,6 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-# class User(AbstractUser):
-#     username = None
-#     email = models.EmailField(unique=True)
-
-#     FREE = "FREE"
-#     PRO = "PRO"
-
-#     SUBSCRIPTION_CHOICES = [
-#         (FREE, "Free"),
-#         (PRO, "Pro"),
-#     ]
-
-#     subscription_type = models.CharField(
-#         max_length=10,
-#         choices=SUBSCRIPTION_CHOICES,
-#         default=FREE
-#     )
-
-#     USERNAME_FIELD = "email"
-#     REQUIRED_FIELDS = []
-
-#     objects = UserManager()
-
-#     def is_pro(self):
-#         return self.subscription_type == self.PRO
-
-from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.db import models
-
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -109,12 +80,6 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
 
-
-
-from django.db import models
-from django.conf import settings
-
-
 class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -141,12 +106,11 @@ class Profile(models.Model):
     # Track one-time profile completion email
     completion_email_sent = models.BooleanField(default=False)
 
-   def completion_percentage(self):
+    def completion_percentage(self):
         """
         Calculates profile completion percentage safely.
         Never crashes in production.
         """
-    
         try:
             fields = [
                 self.full_name.strip() if self.full_name else None,
@@ -156,15 +120,14 @@ class Profile(models.Model):
                 self.experience if self.experience is not None else None,
                 self.resume.name if getattr(self.resume, "name", None) else None,
             ]
-    
+
             filled = sum(1 for f in fields if f not in [None, "", 0])
-            total = len(fields) or 1   # prevent division by zero
-    
+            total = len(fields) or 1
+
             return int((filled / total) * 100)
-    
+
         except Exception:
             return 0
-
 
     def __str__(self):
         try:
@@ -172,17 +135,12 @@ class Profile(models.Model):
         except Exception:
             return "Profile"
 
-
-    
-def debug_completion(self):
-    return {
-        "full_name": bool(self.full_name and self.full_name.strip()),
-        "mobile_number": bool(self.mobile_number and self.mobile_number.strip()),
-        "experience": self.experience is not None,
-        "location": bool(self.location and self.location.strip()),
-        "skills": bool(self.skills and self.skills.strip()),
-        "resume": bool(self.resume and self.resume.name),
-    }
-
-
-
+    def debug_completion(self):
+        return {
+            "full_name": bool(self.full_name and self.full_name.strip()),
+            "mobile_number": bool(self.mobile_number and self.mobile_number.strip()),
+            "experience": self.experience is not None,
+            "location": bool(self.location and self.location.strip()),
+            "skills": bool(self.skills and self.skills.strip()),
+            "resume": bool(self.resume and self.resume.name),
+        }
