@@ -3,24 +3,7 @@ from django.db import models
 from django.conf import settings
 
 
-class UserManager(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
-        if not email:
-            raise ValueError("Email is required")
-
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        return self.create_user(email, password, **extra_fields)
-
-
-
+# ---------------- USER MANAGER ----------------
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -44,17 +27,14 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+# ---------------- USER MODEL ----------------
 class User(AbstractUser):
-    #  Remove username completely
-    username = None
-
-    #  Use email as login
+    username = None  # remove username
     email = models.EmailField(unique=True)
 
-    # Optional: Google provides this automatically
-    full_name = models.CharField(max_length=100, blank=True)
+    # optional (Google login etc.)
+    full_name = models.CharField(max_length=100, blank=True, null=True, default="")
 
-    #  Subscription
     FREE = "FREE"
     PRO = "PRO"
 
@@ -78,8 +58,10 @@ class User(AbstractUser):
         return self.subscription_type == self.PRO
 
     def __str__(self):
-        return self.email
+        return self.email or "User"
 
+
+# ---------------- PROFILE MODEL ----------------
 class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -88,24 +70,21 @@ class Profile(models.Model):
     )
 
     # Basic info
-    full_name = models.CharField(max_length=100, blank=True)
-    mobile_number = models.CharField(max_length=15, blank=True)
+    full_name = models.CharField(max_length=100, blank=True, null=True, default="")
+    mobile_number = models.CharField(max_length=15, blank=True, null=True, default="")
 
     # Professional info
     experience = models.IntegerField(null=True, blank=True)
-    location = models.CharField(max_length=100, blank=True)
-    skills = models.CharField(max_length=255, blank=True)
+    location = models.CharField(max_length=100, blank=True, null=True, default="")
+    skills = models.CharField(max_length=255, blank=True, null=True, default="")
 
     # Resume
-    resume = models.FileField(
-        upload_to="resumes/",
-        blank=True,
-        null=True
-    )
+    resume = models.FileField(upload_to="resumes/", blank=True, null=True)
 
     # Track one-time profile completion email
     completion_email_sent = models.BooleanField(default=False)
 
+    # -------- PROFILE COMPLETION (SAFE) --------
     def completion_percentage(self):
         """
         Calculates profile completion percentage safely.
@@ -123,7 +102,6 @@ class Profile(models.Model):
 
             filled = sum(1 for f in fields if f not in [None, "", 0])
             total = len(fields) or 1
-
             return int((filled / total) * 100)
 
         except Exception:
@@ -135,6 +113,7 @@ class Profile(models.Model):
         except Exception:
             return "Profile"
 
+    # Debug helper (unchanged)
     def debug_completion(self):
         return {
             "full_name": bool(self.full_name and self.full_name.strip()),
