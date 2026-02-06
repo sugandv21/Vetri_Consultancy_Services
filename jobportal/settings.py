@@ -169,7 +169,7 @@ ACCOUNT_LOGOUT_REDIRECT_URL = "login"
 ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.CustomSocialAccountAdapter"
 
-
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -231,6 +231,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
 
 
 
