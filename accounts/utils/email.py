@@ -1,28 +1,25 @@
-import resend
+import logging
+from django.core.mail import send_mail
 from django.conf import settings
 
-resend.api_key = settings.RESEND_API_KEY
-
+logger = logging.getLogger(__name__)
 
 def safe_send_mail(subject, message, recipient_list):
-    """
-    Sends email using Resend API.
-    Never crashes the site.
-    Returns True if sent, False if failed.
-    """
     try:
-        for email in recipient_list:
-            resend.Emails.send({
-                "from": settings.DEFAULT_FROM_EMAIL,
-                "to": [email],
-                "subject": subject,
-                "text": message,
-            })
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            recipient_list,
+            fail_silently=False,   # still detect failure
+        )
         return True
 
     except Exception as e:
-        print("EMAIL FAILED:", e)
+        logger.error(f"EMAIL FAILED: {e}")   # visible in Render logs
         return False
+
+
 
 
 # from django.core.mail import send_mail
@@ -44,5 +41,6 @@ def safe_send_mail(subject, message, recipient_list):
 #     except Exception as e:
 #         logger.error(f"MAIL ERROR: {e}")
 #         return False
+
 
 
