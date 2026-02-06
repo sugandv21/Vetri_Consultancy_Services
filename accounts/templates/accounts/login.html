@@ -1,41 +1,139 @@
 {% extends "accounts/base.html" %}
 {% load socialaccount %}
-
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-4">
-    <div class="card shadow">
-      <div class="card-body">
 
-        <h4 class="mb-3 text-center">Login</h4>
+<style>
+:root{
+  --primary:#1d8094;
+  --primary-dark:#063f4a;
+  --primary-hover:#166978;
+}
+
+/* PAGE BG */
+.auth-wrapper{
+  background:#f8fafc;
+  min-height:80vh;
+  display:flex;
+  align-items:center;
+}
+
+/* CARD */
+.auth-card{
+  background:#fff;
+  border-radius:18px;
+  padding:32px;
+  box-shadow:0 15px 40px rgba(0,0,0,.08);
+  border:1px solid #e5e7eb;
+  position:relative;
+  overflow:hidden;
+}
+
+.auth-card::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:4px;
+  background:linear-gradient(90deg,var(--primary),var(--primary-dark));
+}
+
+.auth-title{
+  font-weight:700;
+  color:#111827;
+}
+
+/* INPUTS */
+.form-control{
+  border-radius:12px;
+  padding:12px 14px;
+  border:1px solid #e5e7eb;
+  transition:.25s;
+}
+
+.form-control:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 0.15rem rgba(29,128,148,.15);
+}
+
+/* MAIN BUTTON */
+.btn-brand{
+  background:var(--primary);
+  border:none;
+  color:#fff;
+  border-radius:50px;
+  padding:12px;
+  font-weight:600;
+  transition:.25s;
+}
+
+.btn-brand:hover{
+  background:var(--primary-hover);
+  color:#fff;
+}
+
+/* GOOGLE BUTTON */
+.btn-google{
+  border:2px solid #e5e7eb;
+  border-radius:50px;
+  padding:12px;
+  font-weight:600;
+  background:#fff;
+  transition:.25s;
+}
+
+.btn-google:hover{
+  border-color:var(--primary);
+  color:var(--primary-dark);
+  background:#f8fafc;
+}
+
+.divider{
+  color:#9ca3af;
+  font-size:.9rem;
+}
+</style>
+
+<div class="auth-wrapper">
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+
+      <div class="auth-card">
+
+        <h4 class="auth-title mb-4 text-center">Login</h4>
 
         <form method="post">
           {% csrf_token %}
+
           <input class="form-control mb-3"
                  name="email"
                  placeholder="Email ID / Username"
                  required>
 
-          <input class="form-control mb-3"
+          <input class="form-control mb-4"
                  type="password"
                  name="password"
                  placeholder="Enter Password"
                  required>
 
-          <button class="btn btn-primary w-100">
+          <button class="btn-brand w-100">
             Login
           </button>
         </form>
 
-        <div class="text-center my-3">— OR —</div>
+        <div class="text-center my-4 divider">— OR —</div>
 
         <a href="{% provider_login_url 'google' %}"
-           class="btn btn-outline-danger w-100">
+           class="btn-google w-100 d-block text-center">
           Sign in with Google
         </a>
 
       </div>
+
     </div>
   </div>
 </div>
+</div>
+
 {% endblock %}

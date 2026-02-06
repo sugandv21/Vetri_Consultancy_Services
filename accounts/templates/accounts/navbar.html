@@ -158,14 +158,14 @@
           </a>
         </li>
 
-        <li class="nav-item">
+        {% comment %} <li class="nav-item">
   <a class="nav-link {% if url_name == 'chatbot' %}active{% endif %}"
      id="chatbotLink"
      href="{% if not user.is_authenticated %}{% url 'login' %}
            {% else %}{% url 'ai_chat_page' %}{% endif %}">
     🤖 AI Assistant
   </a>
-</li>
+</li> {% endcomment %}
 
 
 
@@ -215,4 +215,3 @@
     </div>
   </div>
 </nav>
-
