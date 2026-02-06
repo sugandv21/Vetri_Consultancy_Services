@@ -1,106 +1,429 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<style>
-/* Feature card hover effect */
-.feature-card {
-  transition: all 0.3s ease;
-}
-.feature-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
-}
-</style>
-
 <!-- HERO SECTION -->
-<section class="bg-primary bg-opacity-10 py-5">
-  <div class="container text-center" style="max-width: 900px;">
-    <h1 class="display-4 fw-bold mb-3 text-dark">
-      Build Your Career with <span class="text-primary">VCS</span>
+
+{% if hero %}
+
+<section class="hero-section text-white text-center d-flex align-items-center justify-content-center"
+        style="
+            min-height: 60vh;
+            background: linear-gradient(
+                rgba(0,0,0,{{ hero.overlay_opacity }}),
+                rgba(0,0,0,{{ hero.overlay_opacity }})
+            ),
+            url('{{ hero.background_image.url }}') center/cover no-repeat;
+        ">
+
+  <div class="container" style="max-width: 900px;">
+    <h1 class="display-4 fw-bold mb-3">
+      {{ hero.title }}
+      {% if hero.highlight_text %}
+        <span class="brand-highlight">{{ hero.highlight_text }}</span>
+      {% endif %}
+
     </h1>
 
-    <p class="lead text-secondary mb-4">
-      Career guidance, job assistance, and training — all in one powerful platform.
-    </p>
+<p class="lead mb-4">
+  {{ hero.subtitle }}
+</p>
 
-    <div class="d-flex justify-content-center gap-3 flex-column flex-sm-row align-items-center">
-      {% if user.is_authenticated %}
-        <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg px-4">
-          Go to Dashboard
-        </a>
-      {% else %}
-        <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-4">
-          Get Started Free
-        </a>
-        <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-4">
-          Login
-        </a>
-      {% endif %}
-    </div>
+<div class="d-flex justify-content-center gap-3 flex-column flex-sm-row align-items-center">
+  {% if user.is_authenticated %}
+    <a href="{% url 'dashboard' %}" class="btn homebutton btn-lg px-4">
+      Go to Dashboard
+    </a>
+  {% else %}
+    <a href="{% url 'register' %}" class="btn homebutton btn-lg px-4">
+      Get Started Free
+    </a>
+    <a href="{% url 'login' %}" class="btn homebutton-outline btn-lg px-4">
+      Login
+    </a>
+  {% endif %}
+</div>
+
   </div>
 </section>
+{% endif %}
 
 <!-- FEATURES -->
-<section class="container py-5">
-  <div class="row text-center g-4">
+<!-- ================= SERVICES SECTION ================= -->
+{% if features %}
+<section class="services-section py-5">
+  <div class="container">
 
-    <!-- Career Guidance -->
-    <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-primary feature-card">
-        <div class="card-body bg-primary bg-opacity-10">
-          <div class="fs-1 text-primary mb-3">🎯</div>
-          <h5 class="card-title text-primary">Career Guidance</h5>
-          <p class="card-text text-secondary">
-            Expert-led mentoring and personalized career paths tailored to your goals.
-          </p>
-        </div>
-      </div>
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Everything you need to grow your career</h2>
+      <p class="text-muted mt-2">One platform. Multiple career solutions.</p>
     </div>
 
-    <!-- Job Assistance -->
-    <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-success feature-card">
-        <div class="card-body bg-success bg-opacity-10">
-          <div class="fs-1 text-success mb-3">💼</div>
-          <h5 class="card-title text-success">Job Assistance</h5>
-          <p class="card-text text-secondary">
-            Search, save, and apply for verified jobs from trusted companies.
-          </p>
-        </div>
-      </div>
-    </div>
+    <div class="row g-4">
 
-    <!-- Training -->
-    <div class="col-md-4">
-      <div class="card h-100 shadow-sm border-warning feature-card">
-        <div class="card-body bg-warning bg-opacity-10">
-          <div class="fs-1 text-warning mb-3">🚀</div>
-          <h5 class="card-title text-warning">Training (VTS)</h5>
-          <p class="card-text text-secondary">
-            Upskill with hands-on, industry-ready courses and certifications.
-          </p>
-        </div>
+      {% for feature in features %}
+      <div class="col-md-4">
+
+        {# ---------- LINK RULES ---------- #}
+
+        {% if not user.is_authenticated %}
+            {% url 'login' as link %}
+
+        {% else %}
+            {% if feature.link_type == "enquiry" %}
+                {% url 'training_enquiry_chat' 1 as link %}
+            {% elif feature.link_type == "jobs" %}
+                {% url 'search_jobs' as link %}
+            {% elif feature.link_type == "training" %}
+                {% url 'training_list' as link %}
+            {% endif %}
+        {% endif %}
+
+        <a href="{{ link }}" class="service-card-link">
+
+          <div class="service-card">
+            <h4 class="service-title">{{ feature.title }}</h4>
+            <p class="service-text">{{ feature.description }}</p>
+          </div>
+
+        </a>
+
       </div>
+      {% endfor %}
+
     </div>
+  </div>
+</section>
+{% endif %}
+
+
+{% if not user.is_authenticated %}
+
+<!-- STATS -->
+
+<section class="stats-section py-5">
+  <div class="container">
+    <div class="row text-center">
+
+  {% for stat in stats %}
+  <div class="col-6 col-md-3 mb-4">
+    <div class="stat-number" data-target="{{ stat.value }}" data-suffix="{{ stat.suffix }}">
+      0{{ stat.suffix }}
+    </div>
+    <div class="stat-label">{{ stat.label }}</div>
+  </div>
+  {% endfor %}
+
+</div>
+
 
   </div>
 </section>
+{% endif %}
 
-<!-- CALL TO ACTION -->
-<section class="bg-primary text-white py-5 mb-5">
-  <div class="container text-center">
-    <h2 class="fw-bold mb-3">Ready to take the next step?</h2>
-    <p class="mb-4 text-white-50">
-      Join thousands of learners and professionals growing with VCS.
-    </p>
+{% if user.is_authenticated %}
+<section class="dashboard-preview py-5">
+  <div class="container">
+    <div class="row g-4">
 
-    {% if not user.is_authenticated %}
-      <a href="{% url 'register' %}" class="btn btn-light btn-lg px-5">
-        Create Free Account
-      </a>
+      <!-- PROFILE CARD -->
+      <div class="col-lg-4">
+        <div class="profile-card text-center">
+
+          <!-- Progress Ring -->
+          <div class="progress-wrapper">
+            <div class="progress-circle"
+                 style="--progress: {{ profile.completion_percentage }};">
+              <span>{{ profile.completion_percentage }}%</span>
+            </div>
+          </div>
+
+          <h5 class="fw-bold mt-3">{{ profile.full_name }}</h5>
+
+          <p class="text-muted small">
+            {{ profile.skills|default:"Add your skills to get better matches" }}
+          </p>
+
+          <p class="text-muted small">
+            Last updated {{ profile.updated_at|timesince }} ago
+          </p>
+
+          <a href="{% url 'my_profile' %}" class="btn homebutton w-100 mt-3">
+            Edit profile
+          </a>
+
+        </div>
+      </div>
+
+
+      <!-- MATCHING JOBS -->
+      <div class="col-lg-8">
+        <div class="jobs-box">
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">Recommended jobs for you</h5>
+            <a href="{% url 'search_jobs' %}" class="brand-highlight">View all</a>
+          </div>
+
+          <div class="row g-3">
+            {% for job in recommended_jobs %}
+            <div class="col-md-6">
+              <div class="job-card">
+
+                <div class="job-title">{{ job.title }}</div>
+                <div class="job-company">{{ job.company_name }}</div>
+                <div class="job-location">{{ job.location }}</div>
+
+                {% if job.id in applied_ids %}
+                  <span class="badge bg-success mt-2">Applied</span>
+                {% else %}
+                  <a href="{% url 'job_detail' job.id %}" class="job-link mt-2 d-inline-block">
+                    View job
+                  </a>
+                {% endif %}
+
+              </div>
+            </div>
+            {% empty %}
+              <p class="text-muted">No matching jobs found. Update your skills.</p>
+            {% endfor %}
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endif %}
+
+{% if not user.is_authenticated and cta %}
+<section class="cta-section text-center py-5 mt-5">
+  <div class="container">
+
+    <h2 class="fw-bold mb-3">{{ cta.title }}</h2>
+
+    {% if cta.subtitle %}
+      <p class="mb-4 text-light opacity-75">
+        {{ cta.subtitle }}
+      </p>
     {% endif %}
+
+    <a href="{% url 'register' %}" class="btn btn-light btn-lg px-5">
+      {{ cta.button_text }}
+    </a>
+
   </div>
 </section>
+{% endif %}
+
+
+
+<style>
+
+/* BRAND COLORS */
+:root{
+  --primary:#1d8094;
+  --primary-dark:#063f4a;
+  --primary-hover:#166978;
+}
+.brand-highlight {
+  color: var(--primary-dark);
+}
+
+
+/* BUTTONS */
+.homebutton{
+  background:var(--primary);
+  border:var(--primary);
+  color:#fff;
+}
+.homebutton:hover{
+  background:var(--primary-hover);
+  color:#fff;
+}
+.homebutton-outline{
+  color:var(--primary-dark);
+  border:2px solid var(--primary-dark);
+  background:transparent;
+}
+.homebutton-outline:hover{
+  background:var(--primary-dark);
+  color:#fff;
+}
+
+/* SERVICES */
+.services-section{background:#f8fafc;}
+
+.service-card-link{text-decoration:none;color:inherit;display:block;}
+
+.service-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 34px 30px;
+  border: 3px solid #e5e7eb;
+  transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
+  position: relative;
+  overflow: hidden;
+
+  /* Important fix */
+  will-change: transform;
+}
+
+/* top accent line */
+.service-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;   /* sticks to top but keeps radius */
+  height: 4px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  transition: width .35s ease;
+}
+
+/* hover */
+.service-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.12);
+}
+
+/* animate line */
+.service-card:hover::before {
+  width: 100%;
+}
+
+.service-card:hover .service-title{color:var(--primary-dark);}
+
+.service-title{font-weight:600;margin-bottom:12px;color:#111827;}
+.service-text{color:#6b7280;font-size:.97rem;line-height:1.7;}
+
+/* STATS */
+.stats-section{background:var(--primary);color:#fff;}
+.stat-number{font-size:2.4rem;font-weight:700;}
+.stat-label{opacity:.9;font-size:.95rem;}
+
+
+/* DASHBOARD PREVIEW */
+.dashboard-preview { background:#f8fafc; }
+/* PROFILE CARD */
+.profile-card{
+  background:#fff;
+  border-radius:18px;
+  padding:28px;
+  box-shadow:0 10px 25px rgba(0,0,0,.06);
+}
+
+/* REAL PROGRESS CIRCLE */
+.progress-wrapper{
+  display:flex;
+  justify-content:center;
+}
+
+.progress-circle{
+  width:110px;
+  height:110px;
+  border-radius:50%;
+  background:
+    conic-gradient(var(--primary) calc(var(--progress) * 1%), #e5e7eb 0);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  color:var(--primary-dark);
+  position:relative;
+}
+
+.progress-circle::after{
+  content:"";
+  position:absolute;
+  width:85px;
+  height:85px;
+  background:#fff;
+  border-radius:50%;
+}
+
+.progress-circle span{
+  position:relative;
+  z-index:2;
+  font-size:18px;
+}
+
+/* JOB BOX */
+.jobs-box{
+  background:#fff;
+  border-radius:18px;
+  padding:24px;
+  box-shadow:0 10px 25px rgba(0,0,0,.06);
+}
+
+.job-card{
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:16px;
+  transition:.25s;
+}
+.job-card:hover{
+  border-color:var(--primary);
+  transform:translateY(-3px);
+}
+
+.job-title{font-weight:600;}
+.job-company{font-size:.9rem;color:#6b7280;}
+.job-location{font-size:.85rem;color:#6b7280;margin-bottom:6px;}
+
+.job-link{
+  color:var(--primary-dark);
+  font-size:.85rem;
+  text-decoration:none;
+}
+.job-link:hover{text-decoration:underline;}
+
+
+/* BOTTOM CTA */
+.cta-section{
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color:white;
+}
+
+.cta-section .btn{
+  font-weight:600;
+  border-radius:50px;
+  padding:12px 28px;
+}
+
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+
+  /* BLOCK NAV FOR GUEST */
+  document.querySelectorAll(".guest-protect").forEach(link=>{
+    if(link.dataset.auth!=="True"){
+      link.addEventListener("click",e=>e.preventDefault());
+    }
+  });
+
+  /* COUNTER ANIMATION */
+  const counters=document.querySelectorAll(".stat-number");
+  const animate=c=>{
+    const target=+c.dataset.target;
+    const suffix=c.dataset.suffix||"";
+    let count=0,step=target/60;
+    const update=()=>{
+      count+=step;
+      if(count<target){c.textContent=Math.floor(count)+suffix;requestAnimationFrame(update);}
+      else c.textContent=target+suffix;
+    };
+    update();
+  };
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){animate(e.target);observer.unobserve(e.target);}});
+  },{threshold:.6});
+  counters.forEach(c=>observer.observe(c));
+
+});
+</script>
 
 {% endblock %}
-

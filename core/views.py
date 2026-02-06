@@ -1,7 +1,80 @@
 from django.shortcuts import render
+from django.db.models import Q
+from .models import (
+    HomeHero,
+    HomeFeature,
+    FeatureSection,
+    SiteStatistic,
+    HomeCTA,
+)
+
+from jobs.utils import visible_jobs_for_user
+from jobs.models import JobApplication
+
 
 def public_home(request):
-    return render(request, 'core/home.html')
+
+    # ---------------- HERO ----------------
+    hero = HomeHero.objects.filter(is_active=True).first()
+
+    # ---------------- SERVICES SECTION ----------------
+    feature_section = FeatureSection.objects.filter(is_active=True).first()
+
+    if feature_section:
+        features = feature_section.features.filter(is_active=True).order_by("order")
+    else:
+        features = []
+
+    # ---------------- STATS & CTA ----------------
+    stats = SiteStatistic.objects.filter(is_active=True)
+    cta = HomeCTA.objects.filter(is_active=True).first()
+
+    context = {
+        "hero": hero,
+        "feature_section": feature_section,
+        "features": features,
+        "stats": stats,
+        "cta": cta,
+    }
+
+    # ======================================================
+    # DASHBOARD PREVIEW (ONLY FOR LOGGED IN USERS)
+    # ======================================================
+    if request.user.is_authenticated:
+
+        profile = getattr(request.user, "profile", None)
+
+        recommended_jobs = []
+        applied_ids = []
+
+        if profile:
+            jobs_qs = visible_jobs_for_user(request.user)
+
+            # ---------- Skill Matching ----------
+            if profile.skills:
+                skills = [s.strip() for s in profile.skills.split(",") if s.strip()]
+
+                skill_query = Q()
+                for skill in skills:
+                    skill_query |= Q(skills__icontains=skill) | Q(title__icontains=skill)
+
+                jobs_qs = jobs_qs.filter(skill_query)
+
+            recommended_jobs = jobs_qs.order_by("-created_at")[:6]
+
+            # ---------- Already Applied Jobs ----------
+            applied_ids = list(
+                JobApplication.objects.filter(user=request.user)
+                .values_list("job_id", flat=True)
+            )
+
+        context.update({
+            "profile": profile,
+            "recommended_jobs": recommended_jobs,
+            "applied_ids": applied_ids,
+        })
+
+    return render(request, "core/home.html", context)
 
 from accounts.decorators import staff_required
 from django.contrib.auth import get_user_model
@@ -123,14 +196,34 @@ def training_detail(request, training_id):
 
 
 #Public view pages
+from .models import ServicePage
+
 def services_view(request):
-    return render(request, "core/services.html")
+    page = ServicePage.objects.filter(is_active=True).prefetch_related("services").first()
+
+    return render(request, "core/services.html", {
+        "page": page
+    })
+
+
+from .models import PricingPage
 
 def pricing_view(request):
-    return render(request, "core/pricing.html")
+    page = PricingPage.objects.filter(is_active=True)\
+        .prefetch_related("plans__features")\
+        .first()
+
+    return render(request, "core/pricing.html", {
+        "page": page
+    })
+
+
+from .models import AboutPage
 
 def about_view(request):
-    return render(request, "core/about.html")
+    about = AboutPage.objects.filter(is_active=True).first()
+    return render(request, "core/about.html", {"about": about})
+
 
 
 

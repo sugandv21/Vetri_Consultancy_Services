@@ -49,7 +49,6 @@ urlpatterns = [
      path("about/", about_view, name="about"),
     path("contact/", contact_view, name="contact"),
     
-    # core/urls.py
     path(
     "admin/enrollment/<int:enrollment_id>/edit/",
     views_admin.edit_enrollment,

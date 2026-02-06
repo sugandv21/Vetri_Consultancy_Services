@@ -1,0 +1,98 @@
+[
+  {
+    "model": "core.pricingpage",
+    "pk": 1,
+    "fields": {
+      "title": "Pricing Plans",
+      "subtitle": "Choose a plan that fits your career goals",
+      "is_active": true
+    }
+  },
+
+  {
+    "model": "core.pricingplan",
+    "pk": 1,
+    "fields": {
+      "page": 1,
+      "name": "Free",
+      "price": "₹0",
+      "description": "Perfect to get started",
+      "badge": "",
+      "button_text": "Current Plan",
+      "is_current": true,
+      "is_highlighted": false,
+      "order": 1,
+      "is_active": true
+    }
+  },
+
+  {
+    "model": "core.pricingfeature",
+    "pk": 1,
+    "fields": { "plan": 1, "text": "Job Search", "included": true, "order": 1 }
+  },
+  {
+    "model": "core.pricingfeature",
+    "pk": 2,
+    "fields": { "plan": 1, "text": "Apply for Jobs", "included": true, "order": 2 }
+  },
+  {
+    "model": "core.pricingfeature",
+    "pk": 3,
+    "fields": { "plan": 1, "text": "Profile Creation", "included": true, "order": 3 }
+  },
+  {
+    "model": "core.pricingfeature",
+    "pk": 4,
+    "fields": { "plan": 1, "text": "AI Guidance", "included": false, "order": 4 }
+  },
+  {
+    "model": "core.pricingfeature",
+    "pk": 5,
+    "fields": { "plan": 1, "text": "Priority Support", "included": false, "order": 5 }
+  },
+
+
+  {
+    "model": "core.pricingplan",
+    "pk": 2,
+    "fields": {
+      "page": 1,
+      "name": "Pro",
+      "price": "₹999",
+      "description": "One-time / yearly",
+      "badge": "Most Popular",
+      "button_text": "Upgrade to Pro",
+      "is_current": false,
+      "is_highlighted": true,
+      "order": 2,
+      "is_active": true
+    }
+  },
+
+  {
+    "model": "core.pricingfeature",
+    "pk": 6,
+    "fields": { "plan": 2, "text": "Everything in Free", "included": true, "order": 1 }
+  },
+  {
+    "model": "core.pricingfeature",
+    "pk": 7,
+    "fields": { "plan": 2, "text": "AI Career Guidance", "included": true, "order": 2 }
+  },
+  {
+    "model": "core.pricingfeature",
+    "pk": 8,
+    "fields": { "plan": 2, "text": "Resume Assistance", "included": true, "order": 3 }
+  },
+  {
+    "model": "core.pricingfeature",
+    "pk": 9,
+    "fields": { "plan": 2, "text": "Training Priority Access", "included": true, "order": 4 }
+  },
+  {
+    "model": "core.pricingfeature",
+    "pk": 10,
+    "fields": { "plan": 2, "text": "Priority Support", "included": true, "order": 5 }
+  }
+]

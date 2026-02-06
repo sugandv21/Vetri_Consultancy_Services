@@ -1,0 +1,78 @@
+[
+  {
+    "model": "core.servicepage",
+    "pk": 1,
+    "fields": {
+      "title": "Our Services",
+      "subtitle": "Helping candidates build careers and companies hire better talent",
+      "is_active": true
+    }
+  },
+
+  {
+    "model": "core.serviceitem",
+    "pk": 1,
+    "fields": {
+      "page": 1,
+      "name": "Job Placement",
+      "description": "We connect skilled candidates with top companies across industries.",
+      "order": 1,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.serviceitem",
+    "pk": 2,
+    "fields": {
+      "page": 1,
+      "name": "Training Programs",
+      "description": "Industry-focused training to upgrade skills and improve employability.",
+      "order": 2,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.serviceitem",
+    "pk": 3,
+    "fields": {
+      "page": 1,
+      "name": "Resume Assistance",
+      "description": "Professional resume guidance to stand out in the hiring process.",
+      "order": 3,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.serviceitem",
+    "pk": 4,
+    "fields": {
+      "page": 1,
+      "name": "AI Career Guidance",
+      "description": "Get instant help and career guidance using our AI assistant.",
+      "order": 4,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.serviceitem",
+    "pk": 5,
+    "fields": {
+      "page": 1,
+      "name": "Employer Services",
+      "description": "Hire verified candidates, post jobs, and manage applications easily.",
+      "order": 5,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.serviceitem",
+    "pk": 6,
+    "fields": {
+      "page": 1,
+      "name": "Career Tracking",
+      "description": "Track applications, saved jobs, and training progress in one place.",
+      "order": 6,
+      "is_active": true
+    }
+  }
+]

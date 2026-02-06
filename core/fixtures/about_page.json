@@ -1,0 +1,15 @@
+[
+  {
+    "model": "core.aboutpage",
+    "pk": 1,
+    "fields": {
+      "title": "About Us",
+      "subtitle": "Connecting talent with opportunity",
+      "section_title": "Who We Are",
+      "content_1": "VCS is a professional consultancy platform focused on helping candidates build successful careers and enabling companies to hire skilled talent efficiently.",
+      "content_2": "We provide job placement support, skill-based training programs, resume assistance, and AI-powered career guidance to make the hiring process faster and smarter.",
+      "content_3": "Our mission is to bridge the gap between talent and opportunity through technology, training, and trusted connections.",
+      "is_active": true
+    }
+  }
+]

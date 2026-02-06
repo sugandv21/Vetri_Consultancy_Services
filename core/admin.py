@@ -34,4 +34,77 @@ class ContactMessageAdmin(admin.ModelAdmin):
         return False  # admin cannot manually create
 
 
+from .models import HomeHero
 
+@admin.register(HomeHero)
+class HomeHeroAdmin(admin.ModelAdmin):
+    list_display = ("title", "is_active", "updated_at")
+    list_editable = ("is_active",)
+
+from .models import FeatureSection, HomeFeature
+
+
+@admin.register(FeatureSection)
+class FeatureSectionAdmin(admin.ModelAdmin):
+    list_display = ("title", "is_active")
+
+
+@admin.register(HomeFeature)
+class HomeFeatureAdmin(admin.ModelAdmin):
+    list_display = ("title", "section", "link_type", "order", "is_active")
+    list_editable = ("order", "is_active")
+    list_filter = ("section", "is_active")
+
+
+
+from .models import SiteStatistic
+
+@admin.register(SiteStatistic)
+class SiteStatisticAdmin(admin.ModelAdmin):
+    list_display = ("label", "value", "suffix", "order", "is_active")
+    list_editable = ("order", "is_active")
+
+
+from .models import HomeCTA
+
+@admin.register(HomeCTA)
+class HomeCTAAdmin(admin.ModelAdmin):
+    list_display = ("title", "is_active")
+    list_editable = ("is_active",)
+
+from .models import AboutPage
+
+@admin.register(AboutPage)
+class AboutPageAdmin(admin.ModelAdmin):
+    list_display = ("title", "is_active")
+    list_editable = ("is_active",)
+
+
+from .models import ServicePage, ServiceItem
+
+class ServiceItemInline(admin.TabularInline):
+    model = ServiceItem
+    extra = 1
+
+@admin.register(ServicePage)
+class ServicePageAdmin(admin.ModelAdmin):
+    list_display = ["title", "is_active"]
+    inlines = [ServiceItemInline]
+
+from .models import PricingPage, PricingPlan, PricingFeature
+
+class PricingFeatureInline(admin.TabularInline):
+    model = PricingFeature
+    extra = 1
+
+class PricingPlanInline(admin.StackedInline):
+    model = PricingPlan
+    extra = 1
+
+@admin.register(PricingPage)
+class PricingPageAdmin(admin.ModelAdmin):
+    inlines = [PricingPlanInline]
+
+@admin.register(PricingPlan)
+class PricingPlanAdmin(admin.ModelAdmin):
+    inlines = [PricingFeatureInline]
