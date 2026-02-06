@@ -206,6 +206,10 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # EMAIL_HOST_USER = "suganyasdv16@gmail.com"
 # EMAIL_HOST_PASSWORD = "duczripxqitpjvbu"
 # RESEND EMAIL CONFIG
+CSRF_TRUSTED_ORIGINS = [
+    "https://vetri-consultancy-services.onrender.com"
+]
+
 RESEND_API_KEY = "re_PxjLxsCL_QJntNtKmB6v25kYhSygkdrHx"
 DEFAULT_FROM_EMAIL = "Vetri Consultancy <onboarding@resend.dev>"
 
@@ -227,6 +231,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
 
 
 
