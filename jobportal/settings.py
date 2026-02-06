@@ -207,7 +207,8 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # EMAIL_HOST_PASSWORD = "duczripxqitpjvbu"
 # RESEND EMAIL CONFIG
 RESEND_API_KEY = "re_PxjLxsCL_QJntNtKmB6v25kYhSygkdrHx"
-DEFAULT_FROM_EMAIL = "suganyasdv16@gmail.com"
+DEFAULT_FROM_EMAIL = "Vetri Consultancy <onboarding@resend.dev>"
+
 # EMAIL_TIMEOUT = 20
 
 # EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
@@ -226,6 +227,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
 
 
 
