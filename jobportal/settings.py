@@ -155,7 +155,8 @@ ACCOUNT_SIGNUP_FIELDS = [
 
 
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
+# LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_REDIRECT_URL = 'public_home'
 LOGOUT_REDIRECT_URL = 'login'
 
 
@@ -231,6 +232,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
 
 
 
