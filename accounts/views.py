@@ -140,13 +140,13 @@ def profile_wizard(request):
 
         profile.save()
 
-        # ✅ Check completion AFTER save
+        #  Check completion AFTER save
         completion = profile.completion_percentage()
 
-        # ✅ Send email only ONCE
+        #  Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
            
-            safe_send_mail(
+            sent = safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
@@ -157,9 +157,9 @@ def profile_wizard(request):
                 recipient_list=[request.user.email],
             )
 
-
-            profile.completion_email_sent = True
-            profile.save(update_fields=["completion_email_sent"])
+            if sent:
+                profile.completion_email_sent = True
+                profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("dashboard")
@@ -199,7 +199,7 @@ def my_profile(request):
         # Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
            
-            safe_send_mail(
+            sent = safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
@@ -210,8 +210,9 @@ def my_profile(request):
                 recipient_list=[request.user.email],
             )
 
-            profile.completion_email_sent = True
-            profile.save(update_fields=["completion_email_sent"])
+            if sent:
+                profile.completion_email_sent = True
+                profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("my_profile")
@@ -471,4 +472,5 @@ def dashboard(request):
     }
 
     return render(request, "accounts/dashboard.html", context)
+
 
