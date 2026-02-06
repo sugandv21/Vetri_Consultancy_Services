@@ -2,7 +2,6 @@ import os
 import re
 from openai import OpenAI, OpenAIError
 
-# SAFE READ-ONLY IMPORTS
 from jobs.utils import visible_jobs_for_user
 from django.db.models import Q
 
@@ -47,6 +46,33 @@ def format_ai_response(text: str) -> str:
 # -------------------------------------------------
 def get_ai_help(user, question, page=None):
     try:
+        profile = user.profile
+        question_lower = question.lower()
+
+        # -------------------------------------------------
+        # REAL BUSINESS RULE (NO AI) — APPLY JOB BLOCK
+        # -------------------------------------------------
+        apply_keywords = [
+            "can't apply",
+            "cannot apply",
+            "cant apply",
+            "why cant i apply",
+            "why can't i apply",
+            "not able to apply",
+            "unable to apply"
+        ]
+
+        if any(k in question_lower for k in apply_keywords):
+            percent = profile.completion_percentage()
+
+            if percent < 100:
+                return f"You cannot apply because your profile is {percent}% complete. Please complete your profile to 100% before applying."
+            else:
+                return "You can apply for jobs. If you still cannot apply, the job may be restricted or expired."
+
+        # -------------------------------------------------
+        # NORMAL AI FLOW
+        # -------------------------------------------------
         api_key = os.getenv("OPENAI_API_KEY")
         base_url = os.getenv("OPENAI_BASE_URL")
         model = os.getenv("AI_MODEL", "llama-3.1-8b-instant")
@@ -58,8 +84,6 @@ def get_ai_help(user, question, page=None):
             api_key=api_key,
             base_url=base_url,
         )
-
-        profile = user.profile
 
         context = f"""
 You are an AI assistant inside a job portal web application.
@@ -90,15 +114,12 @@ Rules:
             max_tokens=200,
         )
 
-        # -------- CLEAN AI OUTPUT --------
+        # Clean formatted output
         ai_text = format_ai_response(response.choices[0].message.content)
 
-        # ---------------------------------------------------
+        # -------------------------------------------------
         # ADD REAL MATCHING JOBS (same logic as search_jobs)
-        # ---------------------------------------------------
-
-        question_lower = question.lower()
-
+        # -------------------------------------------------
         keywords = [
             "match",
             "matching job",
@@ -138,6 +159,7 @@ Rules:
     except OpenAIError as e:
         print("AI ERROR:", e)
         return "⚠️ AI assistant is temporarily unavailable."
+
 
 
 
@@ -188,4 +210,5 @@ Rules:
 #     except OpenAIError as e:
 #         print("AI ERROR:", e)
 #         return "⚠️ AI assistant is temporarily unavailable."
+
 
