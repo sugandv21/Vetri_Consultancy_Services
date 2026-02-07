@@ -7,7 +7,7 @@ from accounts.decorators import admin_required
 from .decorators import staff_required
 from django.utils import timezone
 from datetime import timedelta
-
+from accounts.utils.email import safe_send_mail
 
 # ---------------- LOGIN ----------------
 def login_user(request):
@@ -242,23 +242,21 @@ def my_profile(request):
 
         # Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-            send_mail(
+           
+            sent = safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs, save opportunities, "
-                    "and track your applications from your dashboard.\n\n"
-                    "Warm regards,\n"
+                    "You can now apply for jobs and track applications.\n\n"
                     "Vetri Consultancy Services"
                 ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
-                fail_silently=False,
             )
 
-            profile.completion_email_sent = True
-            profile.save(update_fields=["completion_email_sent"])
+            if sent:
+                profile.completion_email_sent = True
+                profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("my_profile")
@@ -271,7 +269,6 @@ def my_profile(request):
             "completion": profile.completion_percentage()
         }
     )
-
 
 #setting
 @login_required
@@ -464,7 +461,6 @@ from jobs.models import JobApplication
 def update_application_status(request, app_id):
     application = get_object_or_404(JobApplication, id=app_id)
     old_status = application.status
-
     new_status = request.POST.get("status")
 
     if new_status not in dict(JobApplication.STATUS_CHOICES):
@@ -474,7 +470,7 @@ def update_application_status(request, app_id):
     application.status = new_status
     application.save()
 
-    # Send email ONLY when moved to INTERVIEW
+    # send mail ONLY when moved to INTERVIEW
     if old_status != "INTERVIEW" and new_status == "INTERVIEW":
         candidate = application.user
         job = application.job
@@ -482,26 +478,31 @@ def update_application_status(request, app_id):
         subject = "🎉 Shortlisted for Screening Interview"
         message = (
             f"Dear {candidate.profile.full_name or 'Candidate'},\n\n"
-            f"We are pleased to inform you that you have been shortlisted "
-            f"for a screening interview for the position of "
+            f"You have been shortlisted for a screening interview for "
             f"{job.title} at {job.company_name}.\n\n"
-            "You will receive the interview meeting link shortly.\n\n"
-            "Please start preparing and give it your best.\n\n"
-            "Wishing you all the very best!\n\n"
+            "Prepare well. Meeting link will be shared soon.\n\n"
             "Regards,\n"
             "Vetri Consultancy Services"
         )
 
-        send_mail(
+        sent = safe_send_mail(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[candidate.email],
-            fail_silently=True,
         )
 
-    messages.success(request, "Application status updated.")
+        if sent:
+            messages.success(request, "Application status updated & email sent.")
+        else:
+            messages.warning(request, "Status updated but email failed.")
+
+    else:
+        messages.success(request, "Application status updated.")
+
     return redirect("candidate_detail", user_id=application.user.id)
+
+
+
 
 
 
@@ -530,4 +531,5 @@ def dashboard(request):
     }
 
     return render(request, "accounts/dashboard.html", context)
+
 
