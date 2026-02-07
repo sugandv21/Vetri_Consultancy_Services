@@ -6,63 +6,73 @@
 {% if page %}
 
   <!-- HEADER -->
+
   <div class="text-center mb-5">
     <h2 class="fw-bold page-title">{{ page.title }}</h2>
     <p class="page-subtitle">{{ page.subtitle }}</p>
   </div>
 
   <!-- PRICING -->
+
   <div class="row g-4 justify-content-center">
 
-  {% for plan in page.plans.all %}
-  {% if plan.is_active %}
+{% for plan in page.plans.all %}
+{% if plan.is_active %}
 
-    <div class="col-12 col-md-6 col-lg-4">
+<div class="col-12 col-md-6 col-lg-4">
 
-      <div class="card pricing-card h-100 shadow-sm {% if plan.is_highlighted %}featured-plan{% endif %}">
+  <div class="card pricing-card h-100 shadow-sm {% if plan.is_highlighted %}featured-plan{% endif %}">
 
-        {% if plan.badge %}
-        <div class="text-center mt-3">
-          <span class="badge brand-badge">{{ plan.badge }}</span>
-        </div>
+    {% if plan.badge %}
+    <div class="text-center mt-3">
+      <span class="badge brand-badge">{{ plan.badge }}</span>
+    </div>
+    {% endif %}
+
+    <div class="card-body text-center">
+
+      <h5 class="card-title fw-semibold">{{ plan.name }}</h5>
+
+      <h2 class="my-3 plan-price">
+        {{ plan.price }}
+      </h2>
+
+      <p class="text-muted small">{{ plan.description }}</p>
+
+      <ul class="list-unstyled my-4">
+        {% for feature in plan.features.all %}
+          <li class="{% if not feature.included %}text-muted{% endif %}">
+            {% if feature.included %}✔{% else %}✖{% endif %}
+            {{ feature.text }}
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% if plan.is_current %}
+        <span class="btn current-plan-btn">
+          Current Plan
+        </span>
+      {% else %}
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'settings' %}" class="btn brand-btn fw-semibold">
+                {{ plan.button_text }}
+            </a>
+        {% else %}
+            <a href="{% url 'login' %}?next={% url 'settings' %}" class="btn brand-btn fw-semibold">
+                {{ plan.button_text }}
+            </a>
         {% endif %}
 
-        <div class="card-body text-center">
-
-          <h5 class="card-title fw-semibold">{{ plan.name }}</h5>
-
-          <h2 class="my-3 plan-price">
-            {{ plan.price }}
-          </h2>
-
-          <p class="text-muted small">{{ plan.description }}</p>
-
-          <ul class="list-unstyled my-4">
-            {% for feature in plan.features.all %}
-              <li class="{% if not feature.included %}text-muted{% endif %}">
-                {% if feature.included %}✔{% else %}✖{% endif %}
-                {{ feature.text }}
-              </li>
-            {% endfor %}
-          </ul>
-
-          {% if plan.is_current %}
-            <span class="btn current-plan-btn">
-              Current Plan
-            </span>
-          {% else %}
-            <a href="{% url 'login' %}" class="btn brand-btn fw-semibold">
-              {{ plan.button_text }}
-            </a>
-          {% endif %}
-
-        </div>
-      </div>
+      {% endif %}
 
     </div>
+  </div>
 
-  {% endif %}
-  {% endfor %}
+</div>
+
+{% endif %}
+{% endfor %}
 
   </div>
 
