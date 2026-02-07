@@ -63,7 +63,21 @@ from .models import SiteStatistic
 class SiteStatisticAdmin(admin.ModelAdmin):
     list_display = ("label", "value", "suffix", "order", "is_active")
     list_editable = ("order", "is_active")
+    
+from .models import FAQ
+@admin.register(FAQ)
+class FAQAdmin(admin.ModelAdmin):
+    list_display = ("question", "order", "is_active")
+    list_editable = ("order", "is_active")
+    search_fields = ("question", "answer")
 
+from .models import Testimonial
+
+@admin.register(Testimonial)
+class TestimonialAdmin(admin.ModelAdmin):
+    list_display = ("name", "company", "is_active", "created_at")
+    list_filter = ("is_active", "company")
+    search_fields = ("name", "company", "message")
 
 from .models import HomeCTA
 

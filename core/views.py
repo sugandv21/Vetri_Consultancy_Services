@@ -6,6 +6,8 @@ from .models import (
     FeatureSection,
     SiteStatistic,
     HomeCTA,
+    FAQ,
+    Testimonial,
 )
 
 from jobs.utils import visible_jobs_for_user
@@ -13,6 +15,9 @@ from jobs.models import JobApplication
 
 
 def public_home(request):
+    # BLOCK ADMIN FROM PUBLIC PAGE
+    if request.user.is_authenticated and request.user.is_staff:
+        return redirect("admin_dashboard")
 
     # ---------------- HERO ----------------
     hero = HomeHero.objects.filter(is_active=True).first()
@@ -25,9 +30,11 @@ def public_home(request):
     else:
         features = []
 
-    # ---------------- STATS & CTA ----------------
     stats = SiteStatistic.objects.filter(is_active=True)
     cta = HomeCTA.objects.filter(is_active=True).first()
+    faqs = FAQ.objects.filter(is_active=True).order_by("order")
+    
+    testimonials = Testimonial.objects.filter(is_active=True).order_by("-created_at")[:6]
 
     context = {
         "hero": hero,
@@ -35,12 +42,15 @@ def public_home(request):
         "features": features,
         "stats": stats,
         "cta": cta,
+        "faqs": faqs,
+        "testimonials": testimonials
     }
+
 
     # ======================================================
     # DASHBOARD PREVIEW (ONLY FOR LOGGED IN USERS)
     # ======================================================
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and not request.user.is_staff:
 
         profile = getattr(request.user, "profile", None)
 
