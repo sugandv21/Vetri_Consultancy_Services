@@ -1,0 +1,202 @@
+[
+  {
+    "model": "jobs.job",
+    "pk": 1,
+    "fields": {
+      "title": "PHP Developer",
+      "company_name": "TechNova Solutions",
+      "location": "Chennai",
+      "experience_min": 1,
+      "experience_max": 3,
+      "visibility": "FREE",
+      "job_type": "FT",
+      "description": "Develop backend APIs using Laravel and MySQL.",
+      "skills": "PHP, Laravel, MySQL, REST API",
+      "deadline": "2026-03-01",
+      "tag_fresher": true,
+      "status": "PUBLISHED",
+      "created_by": 1,
+      "created_at": "2026-02-06T10:00:00Z"
+    }
+  },
+  {
+    "model": "jobs.job",
+    "pk": 2,
+    "fields": {
+      "title": "Frontend Developer",
+      "company_name": "PixelCraft",
+      "location": "Bangalore",
+      "experience_min": 2,
+      "experience_max": 5,
+      "visibility": "FREE",
+      "job_type": "FT",
+      "description": "Build responsive UI using React.",
+      "skills": "HTML, CSS, JavaScript, React",
+      "deadline": "2026-03-10",
+      "tag_fresher": false,
+      "status": "PUBLISHED",
+      "created_by": 1,
+      "created_at": "2026-02-06T10:05:00Z"
+    }
+  },
+  {
+    "model": "jobs.job",
+    "pk": 3,
+    "fields": {
+      "title": "Python Developer",
+      "company_name": "DataBridge AI",
+      "location": "Hyderabad",
+      "experience_min": 0,
+      "experience_max": 2,
+      "visibility": "PRO",
+      "job_type": "FT",
+      "description": "Work on Django backend and APIs.",
+      "skills": "Python, Django, PostgreSQL",
+      "deadline": "2026-02-25",
+      "tag_fresher": true,
+      "status": "PUBLISHED",
+      "created_by": 1,
+      "created_at": "2026-02-06T10:10:00Z"
+    }
+  },
+  {
+    "model": "jobs.job",
+    "pk": 4,
+    "fields": {
+      "title": "Full Stack Web Developer",
+      "company_name": "WebNest",
+      "location": "Remote",
+      "experience_min": 1,
+      "experience_max": 4,
+      "visibility": "FREE",
+      "job_type": "CT",
+      "description": "Work on MERN stack applications.",
+      "skills": "MongoDB, Express, React, Node.js",
+      "deadline": "2026-03-05",
+      "tag_fresher": false,
+      "status": "PUBLISHED",
+      "created_by": 1,
+      "created_at": "2026-02-06T10:15:00Z"
+    }
+  },
+  {
+    "model": "jobs.job",
+    "pk": 5,
+    "fields": {
+      "title": "UI/UX Designer",
+      "company_name": "DesignHive",
+      "location": "Mumbai",
+      "experience_min": 0,
+      "experience_max": 2,
+      "visibility": "FREE",
+      "job_type": "IN",
+      "description": "Design web & mobile interfaces.",
+      "skills": "Figma, Adobe XD, Prototyping",
+      "deadline": "2026-03-15",
+      "tag_fresher": true,
+      "status": "PUBLISHED",
+      "created_by": 1,
+      "created_at": "2026-02-06T10:20:00Z"
+    }
+  },
+{
+  "model": "jobs.job",
+  "pk": 11,
+  "fields": {
+    "title": "React Developer",
+    "company_name": "CodeCanvas",
+    "location": "Chennai",
+    "experience_min": 1,
+    "experience_max": 3,
+    "visibility": "FREE",
+    "job_type": "FT",
+    "description": "Develop SPA applications using React and APIs.",
+    "skills": "React, JavaScript, HTML, CSS",
+    "deadline": "2026-03-25",
+    "tag_fresher": false,
+    "status": "PUBLISHED",
+    "created_by": 1,
+    "created_at": "2026-02-06T11:00:00Z"
+  }
+},
+{
+  "model": "jobs.job",
+  "pk": 12,
+  "fields": {
+    "title": "Django Backend Developer",
+    "company_name": "SoftOrbit",
+    "location": "Coimbatore",
+    "experience_min": 0,
+    "experience_max": 2,
+    "visibility": "FREE",
+    "job_type": "FT",
+    "description": "Build REST APIs using Django Rest Framework.",
+    "skills": "Python, Django, DRF, PostgreSQL",
+    "deadline": "2026-03-28",
+    "tag_fresher": true,
+    "status": "PUBLISHED",
+    "created_by": 1,
+    "created_at": "2026-02-06T11:05:00Z"
+  }
+},
+{
+  "model": "jobs.job",
+  "pk": 13,
+  "fields": {
+    "title": "Node.js Developer",
+    "company_name": "NextGen Tech",
+    "location": "Bangalore",
+    "experience_min": 2,
+    "experience_max": 4,
+    "visibility": "PRO",
+    "job_type": "FT",
+    "description": "Backend development using Node.js and MongoDB.",
+    "skills": "Node.js, Express, MongoDB, APIs",
+    "deadline": "2026-03-30",
+    "tag_fresher": false,
+    "status": "PUBLISHED",
+    "created_by": 1,
+    "created_at": "2026-02-06T11:10:00Z"
+  }
+},
+{
+  "model": "jobs.job",
+  "pk": 14,
+  "fields": {
+    "title": "QA Automation Tester",
+    "company_name": "TestWorks",
+    "location": "Hyderabad",
+    "experience_min": 1,
+    "experience_max": 3,
+    "visibility": "FREE",
+    "job_type": "CT",
+    "description": "Automation testing using Selenium and PyTest.",
+    "skills": "Selenium, Python, Automation Testing",
+    "deadline": "2026-03-18",
+    "tag_fresher": false,
+    "status": "PUBLISHED",
+    "created_by": 1,
+    "created_at": "2026-02-06T11:15:00Z"
+  }
+},
+{
+  "model": "jobs.job",
+  "pk": 15,
+  "fields": {
+    "title": "Data Scientist Intern",
+    "company_name": "AI Labs",
+    "location": "Remote",
+    "experience_min": 0,
+    "experience_max": 1,
+    "visibility": "FREE",
+    "job_type": "IN",
+    "description": "Work on ML models and data preprocessing.",
+    "skills": "Python, Pandas, Machine Learning",
+    "deadline": "2026-03-22",
+    "tag_fresher": true,
+    "status": "PUBLISHED",
+    "created_by": 1,
+    "created_at": "2026-02-06T11:20:00Z"
+  }
+}
+]

@@ -1,153 +1,203 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
+{% with request.GET.urlencode as query_params %}
+
 <h3 class="mb-3 text-center text-md-start">Search Jobs</h3>
 
 <form method="get" class="row g-2 mb-4">
-  <!-- Location -->
+
   <div class="col-12 col-md-4">
-    <input
-      class="form-control"
-      name="location"
-      placeholder="Location"
-      value="{{ request.GET.location }}"
-    >
+    <input class="form-control"
+           name="location"
+           placeholder="Location"
+           value="{{ request.GET.location }}">
   </div>
 
-  <!-- Job Type -->
   <div class="col-12 col-md-3">
     <select class="form-control" name="job_type">
       <option value="">Job Type</option>
-      <option value="FT" {% if request.GET.job_type == "FT" %}selected{% endif %}>
-        Full-time
-      </option>
-      <option value="IN" {% if request.GET.job_type == "IN" %}selected{% endif %}>
-        Internship
-      </option>
-      <option value="CT" {% if request.GET.job_type == "CT" %}selected{% endif %}>
-        Contract
-      </option>
+      <option value="FT" {% if request.GET.job_type == "FT" %}selected{% endif %}>Full-time</option>
+      <option value="IN" {% if request.GET.job_type == "IN" %}selected{% endif %}>Internship</option>
+      <option value="CT" {% if request.GET.job_type == "CT" %}selected{% endif %}>Contract</option>
     </select>
   </div>
 
-  <!-- Experience -->
   <div class="col-12 col-md-3">
-    <input
-      type="number"
-      class="form-control"
-      name="exp"
-      placeholder="Experience (years)"
-      value="{{ request.GET.exp }}"
-      min="0"
-    >
+    <input type="number"
+           class="form-control"
+           name="exp"
+           placeholder="Experience (years)"
+           value="{{ request.GET.exp }}"
+           min="0">
   </div>
 
-  <!-- Buttons -->
   <div class="col-12 col-md-2 d-grid gap-2">
-    <button class="btn btn-primary">
-      Filter
-    </button>
-
-    <a href="{% url 'search_jobs' %}" class="btn btn-outline-secondary">
-      Reset
-    </a>
-
-    <a href="{% url 'search_jobs' %}?match=1"
-       class="btn btn-success">
-      Matching Jobs
-    </a>
+    <button class="btn btn-primary">Filter</button>
+    <a href="{% url 'search_jobs' %}" class="btn btn-outline-secondary">Reset</a>
+    <a href="{% url 'search_jobs' %}?match=1" class="btn btn-success">Matching Jobs</a>
   </div>
+
 </form>
 
 {% if is_matching %}
-  <div class="alert alert-success text-center">
-    Showing jobs matching your profile skills
-  </div>
+
+<div class="alert alert-success text-center">
+  Showing jobs matching your profile skills
+</div>
 {% endif %}
 
 <div class="row">
   {% for job in jobs %}
-    <div class="col-12 col-md-6 col-lg-4 mb-3">
-      <div class="card h-100 shadow-sm">
-        <div class="card-body d-flex flex-column">
+  <div class="col-12 col-md-6 col-lg-4 mb-3">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column">
 
-          <h5 class="card-title">
-            <a href="{% url 'job_detail' job.id %}">
-              {{ job.title }}
-            </a>
-          </h5>
+    <h5 class="card-title">
+      <a href="{% url 'job_detail' job.id %}">
+        {{ job.title }}
+      </a>
+    </h5>
 
-          <p class="mb-1">
-            {{ job.company_name }}
-          </p>
+    <p class="mb-1">{{ job.company_name }}</p>
+    <p class="text-muted mb-1">{{ job.location }}</p>
 
-          <p class="text-muted mb-1">
-            {{ job.location }}
-          </p>
+    <p class="mb-3">
+      Experience: {{ job.experience_min }} – {{ job.experience_max }} yrs
+    </p>
 
-          <p class="mb-3">
-            Experience: {{ job.experience_min }} – {{ job.experience_max }} yrs
-          </p>
-
-          <div class="mt-auto">
-            {% if job.visibility == "PRO" and not request.user.is_pro %}
-              <span class="badge bg-warning">PRO Job</span>
-              <p class="text-muted small mt-2">
-                Upgrade to PRO to apply
-              </p>
-            {% else %}
-              <div class="d-flex flex-column flex-md-row gap-2">
-                <a href="{% url 'save_job' job.id %}"
-                  class="btn btn-outline-secondary btn-sm flex-md-fill">
-                  Save
-                </a>
-
-                <a href="{% url 'apply_job' job.id %}"
-                  class="btn btn-primary btn-sm flex-md-fill">
-                  Apply
-                </a>
-              </div>
-            {% endif %}
-          </div>
-
+    <div class="mt-auto">
+      {% if job.visibility == "PRO" and not request.user.is_pro %}
+        <span class="badge bg-warning">PRO Job</span>
+        <p class="text-muted small mt-2">Upgrade to PRO to apply</p>
+      {% else %}
+        <div class="d-flex flex-column flex-md-row gap-2">
+          <a href="{% url 'save_job' job.id %}" class="btn btn-outline-secondary btn-sm flex-md-fill">Save</a>
+          <a href="{% url 'apply_job' job.id %}" class="btn btn-primary btn-sm flex-md-fill">Apply</a>
         </div>
-      </div>
+      {% endif %}
     </div>
+
+  </div>
+</div>
+
+  </div>
   {% empty %}
     <p class="text-center">No jobs available.</p>
   {% endfor %}
 </div>
 
-{% if jobs.paginator.num_pages > 1 %}
-<nav>
+<nav class="mt-4">
   <ul class="pagination justify-content-center flex-wrap">
 
-    {% if jobs.has_previous %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?page={{ jobs.previous_page_number }}">
-          Previous
-        </a>
-      </li>
-    {% endif %}
+{% if jobs.has_previous %}
+  <li class="page-item">
+    <a class="page-link"
+       href="?{{ query_params }}&page={{ jobs.previous_page_number }}">
+      Previous
+    </a>
+  </li>
+{% else %}
+  <li class="page-item disabled">
+    <span class="page-link">Previous</span>
+  </li>
+{% endif %}
 
-    <li class="page-item active">
-      <span class="page-link">
-        {{ jobs.number }} / {{ jobs.paginator.num_pages }}
-      </span>
-    </li>
+<li class="page-item active">
+  <span class="page-link">
+    Page {{ jobs.number }} of {{ jobs.paginator.num_pages }}
+  </span>
+</li>
 
-    {% if jobs.has_next %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?page={{ jobs.next_page_number }}">
-          Next
-        </a>
-      </li>
-    {% endif %}
+{% if jobs.has_next %}
+  <li class="page-item">
+    <a class="page-link"
+       href="?{{ query_params }}&page={{ jobs.next_page_number }}">
+      Next
+    </a>
+  </li>
+{% else %}
+  <li class="page-item disabled">
+    <span class="page-link">Next</span>
+  </li>
+{% endif %}
+
 
   </ul>
 </nav>
-{% endif %}
+
+{% endwith %}
+
+<style>
+
+/* === JOB CARD BORDER DESIGN === */
+.card {
+    position: relative;
+    border: none !important;
+    border-radius: 14px;
+    background: #fff;
+    transition: transform .25s ease, box-shadow .25s ease;
+    overflow: hidden;
+}
+
+/* gradient border */
+.card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1.5px; /* border thickness */
+    border-radius: 14px;
+    background: linear-gradient(135deg,#4f46e5,#06b6d4,#22c55e);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* hover animation */
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+/* title hover color */
+.card-title a {
+    text-decoration: none;
+    color: #111;
+    transition: color .25s ease;
+    font-weight: 600;
+}
+
+.card-title a:hover {
+    color: #4f46e5;
+}
+
+/* subtle separator inside card */
+.card-body p {
+    margin-bottom: 6px;
+}
+
+/* PRO badge improvement */
+.badge.bg-warning {
+    background: linear-gradient(45deg,#f59e0b,#facc15);
+    color: #000;
+    font-weight: 600;
+}
+
+/* buttons nicer spacing */
+.card .btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* pagination highlight */
+.page-item.active .page-link {
+    background: linear-gradient(135deg,#4f46e5,#06b6d4);
+    border: none;
+}
+
+</style>
 
 {% endblock %}

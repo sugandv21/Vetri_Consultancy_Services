@@ -4,6 +4,7 @@ from accounts.decorators import staff_required, admin_required
 from django.contrib.auth.decorators import login_required
 from .models import Job, SavedJob, JobApplication
 from django.shortcuts import get_object_or_404
+from jobs.services.quota import can_apply
 
 @staff_required
 def create_job(request):
@@ -163,21 +164,12 @@ def saved_jobs(request):
     jobs = SavedJob.objects.filter(user=request.user)
     return render(request, "jobs/saved_jobs.html", {"jobs": jobs})
 
-#apply job
-# @login_required
-# def apply_job(request, job_id):
-#     job = get_object_or_404(visible_jobs_for_user(request.user), id=job_id)
 
-#     JobApplication.objects.get_or_create(user=request.user, job=job)
-#     SavedJob.objects.filter(user=request.user, job=job).delete()
-
-#     messages.success(request, "Application submitted.")
-#     return redirect("applications")
 @login_required
 def apply_job(request, job_id):
     profile = request.user.profile
 
-    #  Block apply if profile not 100% complete
+    # 1. Profile completion check
     if profile.completion_percentage() < 100:
         messages.warning(
             request,
@@ -185,17 +177,29 @@ def apply_job(request, job_id):
         )
         return redirect("my_profile")
 
+    # 2️. QUOTA CHECK (NEW — revenue protection)
+    allowed, used, limit = can_apply(request.user)
+
+    if not allowed:
+        messages.error(
+            request,
+            f"Monthly application limit reached ({limit}). Upgrade your plan to continue applying."
+        )
+        return redirect("pricing")   # your subscription page
+
+    # 3️. Get job
     job = get_object_or_404(
         visible_jobs_for_user(request.user),
         id=job_id
     )
 
+    # 4️. Apply
     JobApplication.objects.get_or_create(
         user=request.user,
         job=job
     )
 
-    # Remove from saved jobs after applying
+    # 5️. Remove from saved jobs
     SavedJob.objects.filter(
         user=request.user,
         job=job
@@ -210,4 +214,3 @@ def apply_job(request, job_id):
 def applications(request):
     applications = JobApplication.objects.filter(user=request.user)
     return render(request, "jobs/applications.html", {"applications": applications})
-
