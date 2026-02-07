@@ -2,25 +2,39 @@
 {% block content %}
 
 <div class="card shadow-sm">
-  <div class="card-header bg-primary text-white">
-    🤖 AI Help Assistant
+  <div class="card-header bg-chatbot text-white">
+    AI Help Assistant
   </div>
 
   <div class="card-body" style="height: 350px; overflow-y: auto;" id="chat-box">
     <div class="text-muted mb-2">
-      Ask me how to use the platform 👇
+      Ask me how to use the platform 
     </div>
   </div>
 
   <div class="card-footer">
     <div class="input-group">
       <input type="text" id="chat-input" class="form-control" placeholder="How do I apply for a job?">
-      <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+      <button class="btn btn-chatbot" onclick="sendMessage()">Send</button>
     </div>
   </div>
 </div>
 
 <script>
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.innerText = text;
+  return div.innerHTML;
+}
+
+function formatReply(text) {
+  // escape HTML first (prevent injection)
+  text = escapeHtml(text);
+
+  // convert line breaks to <br>
+  return text.replace(/\n/g, "<br>");
+}
+
 function sendMessage() {
   const input = document.getElementById("chat-input");
   const chatBox = document.getElementById("chat-box");
@@ -28,7 +42,13 @@ function sendMessage() {
 
   if (!message) return;
 
-  chatBox.innerHTML += `<div class="mb-2"><strong>You:</strong> ${message}</div>`;
+  // user message
+  chatBox.innerHTML += `
+    <div class="mb-2">
+      <strong>You:</strong> ${escapeHtml(message)}
+    </div>
+  `;
+
   input.value = "";
 
   fetch("{% url 'ai_chatbot' %}", {
@@ -44,10 +64,34 @@ function sendMessage() {
   })
   .then(res => res.json())
   .then(data => {
-    chatBox.innerHTML += `<div class="mb-3 text-success"><strong>AI:</strong> ${data.reply}</div>`;
+    const formatted = formatReply(data.reply);
+
+    chatBox.innerHTML += `
+      <div class="mb-3 text-success ai-message">
+        <strong>AI:</strong><br>
+        ${formatted}
+      </div>
+    `;
+
     chatBox.scrollTop = chatBox.scrollHeight;
   });
 }
 </script>
+
+<style>
+    .ai-message {
+  line-height: 1.7;
+  white-space: normal;
+}
+.bg-chatbot {
+   background-color: #1d8094;
+}
+.btn-chatbot{
+  background-color: #05333c;
+  box-shadow:0 10px 25px rgba(31, 31, 31, 0.06);
+  color:white
+}
+
+</style>
 
 {% endblock %}
