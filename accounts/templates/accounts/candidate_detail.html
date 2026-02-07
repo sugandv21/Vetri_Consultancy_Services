@@ -1,5 +1,4 @@
-{% extends "accounts/base.html" %}
-{% block content %}
+{% extends "accounts/base.html" %} {% block content %}
 
 <h3 class="mb-4">Candidate Details</h3>
 
@@ -8,40 +7,55 @@
 ====================== -->
 <div class="card shadow-sm mb-4">
   <div class="card-body">
-
     <h5 class="mb-3">Profile Information</h5>
 
     <p><strong>Email:</strong> {{ candidate.email }}</p>
-    <p><strong>Full Name:</strong> {{ candidate.profile.full_name|default:"—" }}</p>
+    <p>
+      <strong>Full Name:</strong> {{ candidate.profile.full_name|default:"—" }}
+    </p>
 
     <p>
       <strong>Experience:</strong>
-      {% if candidate.profile.experience is not None %}
-        {{ candidate.profile.experience }} years
-      {% else %}
-        —
-      {% endif %}
+      {% if candidate.profile.experience is not None %} {{
+      candidate.profile.experience }} years {% else %} — {% endif %}
     </p>
 
-    <p><strong>Location:</strong> {{ candidate.profile.location|default:"—" }}</p>
+    <p>
+      <strong>Location:</strong> {{ candidate.profile.location|default:"—" }}
+    </p>
     <p><strong>Skills:</strong> {{ candidate.profile.skills|default:"—" }}</p>
 
     <p>
       <strong>Subscription:</strong>
-      <span class="badge bg-{% if candidate.is_pro %}success{% else %}secondary{% endif %}">
-        {{ candidate.subscription_type }}
+
+      <!-- PLAN -->
+      <span
+        class="badge {% if candidate.plan == 'FREE' %}bg-secondary {% elif candidate.plan == 'PRO' %}bg-info {% elif candidate.plan == 'PRO_PLUS' %}bg-success {% endif %}"
+      >
+        {{ candidate.plan }}
+      </span>
+
+      <!-- STATUS -->
+      <span
+        class="badge {% if candidate.plan_status == 'ACTIVE' %}bg-success {% elif candidate.plan_status == 'EXPIRED' %}bg-danger {% else %}bg-warning text-dark {% endif %}"
+      >
+        {{ candidate.plan_status }}
       </span>
     </p>
 
-    {% if candidate.profile.resume %}
-      <p>
-        <strong>Resume:</strong>
-        <a href="{{ candidate.profile.resume.url }}" target="_blank">
-          View Resume
-        </a>
-      </p>
+    <!-- Expiry Date -->
+    {% if candidate.plan != 'FREE' and candidate.plan_end %}
+    <p class="text-muted small">
+      Valid till: {{ candidate.plan_end|date:"d M Y, h:i A" }}
+    </p>
+    {% endif %} {% if candidate.profile.resume %}
+    <p>
+      <strong>Resume:</strong>
+      <a href="{{ candidate.profile.resume.url }}" target="_blank">
+        View Resume
+      </a>
+    </p>
     {% endif %}
-
   </div>
 </div>
 
@@ -52,7 +66,6 @@
 
 <div class="card shadow-sm mb-4">
   <div class="card-body p-0">
-
     <table class="table table-striped mb-0 align-middle">
       <thead class="table-dark">
         <tr>
@@ -70,57 +83,55 @@
           <td>{{ forloop.counter }}</td>
 
           <!-- Job Title -->
-          <td>
-            {{ app.job.title }}
-          </td>
+          <td>{{ app.job.title }}</td>
 
           <!-- Company Name -->
-          <td>
-            {{ app.job.company_name }}
-          </td>
+          <td>{{ app.job.company_name }}</td>
 
           <!-- Status Update -->
           <td>
-            <form method="post"
-                  action="{% url 'update_application_status' app.id %}"
-                  class="d-flex gap-2 align-items-center">
+            <form
+              method="post"
+              action="{% url 'update_application_status' app.id %}"
+              class="d-flex gap-2 align-items-center"
+            >
               {% csrf_token %}
-              <select name="status"
-                      class="form-select form-select-sm">
+              <select name="status" class="form-select form-select-sm">
                 {% for key, label in app.STATUS_CHOICES %}
-                  <option value="{{ key }}"
-                    {% if app.status == key %}selected{% endif %}>
-                    {{ label }}
-                  </option>
+                <option
+                  value="{{ key }}"
+                  {%
+                  if
+                  app.status=""
+                  ="key"
+                  %}selected{%
+                  endif
+                  %}
+                >
+                  {{ label }}
+                </option>
                 {% endfor %}
               </select>
-              <button type="submit"
-                      class="btn btn-sm btn-primary">
+              <button type="submit" class="btn btn-sm btn-primary">
                 Update
               </button>
             </form>
           </td>
 
           <!-- Applied Date -->
-          <td>
-            {{ app.applied_at|date:"d M Y" }}
-          </td>
+          <td>{{ app.applied_at|date:"d M Y" }}</td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5"
-              class="text-center py-3 text-muted">
+          <td colspan="5" class="text-center py-3 text-muted">
             No job applications found.
           </td>
         </tr>
         {% endfor %}
       </tbody>
-
     </table>
-
   </div>
 </div>
-
 
 <!-- =====================
      TRAINING ENROLLMENTS
@@ -129,7 +140,6 @@
 
 <div class="card shadow-sm mb-4">
   <div class="card-body p-0">
-
     <table class="table table-striped mb-0 align-middle">
       <thead class="table-dark">
         <tr>
@@ -154,9 +164,7 @@
         </tr>
         {% endfor %}
       </tbody>
-
     </table>
-
   </div>
 </div>
 

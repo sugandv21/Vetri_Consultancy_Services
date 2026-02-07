@@ -10,26 +10,60 @@
 
     <p><strong>Email:</strong> {{ user.email }}</p>
 
-    <p>
-      <strong>Subscription:</strong>
+    <!-- PLAN DISPLAY -->
+    <div class="mb-2">
+      <strong>Current Plan:</strong>
 
-      <span class="badge bg-{% if user.is_pro %}success{% else %}secondary{% endif %}">
-        {{ user.subscription_type }}
+      <span class="badge 
+        {% if user.plan == 'FREE' %}bg-secondary
+        {% elif user.plan == 'PRO' %}bg-info
+        {% elif user.plan == 'PRO_PLUS' %}bg-success
+        {% endif %}
+      ">
+        {{ user.plan }}
       </span>
 
-      {% if not user.is_pro %}
-        {% comment %} <span class="text-muted ms-2 fst-italic btn btn-warning">
-          Upgrade to Pro
-        </span> {% endcomment %}
-        <form method="post" action="{% url 'upgrade_to_pro' %}" class="d-inline">
-          {% csrf_token %}
-          <button class="btn btn-warning ms-2">
-            Upgrade to Pro
-          </button>
-        </form>
+      <span class="badge 
+        {% if user.plan_status == 'ACTIVE' %}bg-success
+        {% elif user.plan_status == 'EXPIRED' %}bg-danger
+        {% else %}bg-warning text-dark
+        {% endif %}
+      ">
+        {{ user.plan_status }}
+      </span>
+    </div>
 
+    <!-- EXPIRY DATE -->
+    {% if user.plan != 'FREE' and user.plan_end %}
+      <p class="text-muted small mb-2">
+        Valid till: {{ user.plan_end|date:"M d, Y" }}
+      </p>
+    {% endif %}
+
+    <!-- EXPIRED MESSAGE -->
+    {% if user.plan_status == 'EXPIRED' %}
+      <div class="alert alert-warning py-2">
+        Your subscription expired. Upgrade to continue premium features.
+      </div>
+    {% endif %}
+
+    <!-- UPGRADE BUTTONS -->
+    <div class="mt-2">
+      {% if user.plan == 'FREE' %}
+        <a href="{% url 'upgrade_to_pro' %}" class="btn btn-primary btn-sm">
+          Upgrade to Pro
+        </a>
+
+        <a href="{% url 'upgrade_to_pro_plus' %}" class="btn btn-dark btn-sm">
+          Go Pro Plus
+        </a>
+
+      {% elif user.plan == 'PRO' %}
+        <a href="{% url 'upgrade_to_pro_plus' %}" class="btn btn-dark btn-sm">
+          Upgrade to Pro Plus
+        </a>
       {% endif %}
-    </p>
+    </div>
 
   </div>
 </div>
@@ -56,5 +90,9 @@
     </form>
   </div>
 </div>
+
+{% comment %} {% if user.is_staff %}
+<span class="badge bg-dark">ADMIN</span>
+{% endif %} {% endcomment %}
 
 {% endblock %}

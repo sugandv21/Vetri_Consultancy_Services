@@ -1,9 +1,11 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 
+from django.contrib.auth.models import BaseUserManager
 
-# ---------------- USER MANAGER ----------------
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -27,41 +29,93 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-# ---------------- USER MODEL ----------------
+#subscription section
 class User(AbstractUser):
-    username = None  # remove username
+    username = None
     email = models.EmailField(unique=True)
+    full_name = models.CharField(max_length=100, blank=True)
 
-    # optional (Google login etc.)
-    full_name = models.CharField(max_length=100, blank=True, null=True, default="")
-
+    # ---------------------------
+    # PLAN TYPES (What they bought)
+    # ---------------------------
     FREE = "FREE"
     PRO = "PRO"
+    PRO_PLUS = "PRO_PLUS"
 
-    SUBSCRIPTION_CHOICES = [
+    PLAN_CHOICES = [
         (FREE, "Free"),
         (PRO, "Pro"),
+        (PRO_PLUS, "Pro Plus"),
     ]
 
-    subscription_type = models.CharField(
-        max_length=10,
-        choices=SUBSCRIPTION_CHOICES,
+    plan = models.CharField(
+        max_length=20,
+        choices=PLAN_CHOICES,
         default=FREE
     )
+
+    # ---------------------------
+    # PLAN STATUS (Billing state)
+    # ---------------------------
+    ACTIVE = "ACTIVE"
+    EXPIRED = "EXPIRED"
+    CANCELLED = "CANCELLED"
+    TRIAL = "TRIAL"
+
+    PLAN_STATUS = [
+        (ACTIVE, "Active"),
+        (EXPIRED, "Expired"),
+        (CANCELLED, "Cancelled"),
+        (TRIAL, "Trial"),
+    ]
+
+    plan_status = models.CharField(
+        max_length=20,
+        choices=PLAN_STATUS,
+        default=TRIAL
+    )
+
+    # ---------------------------
+    # BILLING DATES
+    # ---------------------------
+    plan_start = models.DateTimeField(null=True, blank=True)
+    plan_end = models.DateTimeField(null=True, blank=True)
+
+    # ---------------------------
+    # USAGE TRACKING (QUOTAS RESET MONTHLY)
+    # ---------------------------
+    ai_requests_used = models.IntegerField(default=0)
+    job_applications_used = models.IntegerField(default=0)
+    mentor_sessions_used = models.IntegerField(default=0)
+
+    usage_reset_date = models.DateTimeField(default=timezone.now)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = UserManager()
 
+    # ---------------------------
+    # HELPERS
+    # ---------------------------
     def is_pro(self):
-        return self.subscription_type == self.PRO
+        return self.plan in [self.PRO, self.PRO_PLUS] and self.plan_status == self.ACTIVE
+
+    def is_pro_plus(self):
+        return self.plan == self.PRO_PLUS and self.plan_status == self.ACTIVE
+
+    def can_use_ai(self):
+        if self.plan == self.FREE:
+            return False
+        if self.plan == self.PRO:
+            return self.ai_requests_used < 50
+        return True  # unlimited for pro plus
 
     def __str__(self):
-        return self.email or "User"
+        return self.email
 
 
-# ---------------- PROFILE MODEL ----------------
+
 class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -70,56 +124,67 @@ class Profile(models.Model):
     )
 
     # Basic info
-    full_name = models.CharField(max_length=100, blank=True, null=True, default="")
-    mobile_number = models.CharField(max_length=15, blank=True, null=True, default="")
+    full_name = models.CharField(max_length=100, blank=True)
+    mobile_number = models.CharField(max_length=15, blank=True)
 
     # Professional info
     experience = models.IntegerField(null=True, blank=True)
-    location = models.CharField(max_length=100, blank=True, null=True, default="")
-    skills = models.CharField(max_length=255, blank=True, null=True, default="")
+    location = models.CharField(max_length=100, blank=True)
+    skills = models.CharField(max_length=255, blank=True)
 
     # Resume
-    resume = models.FileField(upload_to="resumes/", blank=True, null=True)
+    resume = models.FileField(
+        upload_to="resumes/",
+        blank=True,
+        null=True
+    )
 
-    # Track one-time profile completion email
+    # ✅ Track one-time profile completion email
     completion_email_sent = models.BooleanField(default=False)
 
-    # -------- PROFILE COMPLETION (SAFE) --------
     def completion_percentage(self):
         """
-        Calculates profile completion percentage safely.
-        Never crashes in production.
+        Calculates profile completion percentage accurately.
+        Safe for Google login users and normal signup users.
         """
-        try:
-            fields = [
-                self.full_name.strip() if self.full_name else None,
-                self.mobile_number.strip() if self.mobile_number else None,
-                self.location.strip() if self.location else None,
-                self.skills.strip() if self.skills else None,
-                self.experience if self.experience is not None else None,
-                self.resume.name if getattr(self.resume, "name", None) else None,
-            ]
 
-            filled = sum(1 for f in fields if f not in [None, "", 0])
-            total = len(fields) or 1
-            return int((filled / total) * 100)
+        filled = 0
+        total = 6  # total number of profile fields
 
-        except Exception:
-            return 0
+        if self.full_name and self.full_name.strip():
+            filled += 1
+
+        if self.mobile_number and self.mobile_number.strip():
+            filled += 1
+
+        # experience can be 0, so check None only
+        if self.experience is not None:
+            filled += 1
+
+        if self.location and self.location.strip():
+            filled += 1
+
+        if self.skills and self.skills.strip():
+            filled += 1
+
+        # FileField must be checked via name
+        if self.resume and self.resume.name:
+            filled += 1
+
+        return int((filled / total) * 100)
 
     def __str__(self):
-        try:
-            return f"{self.user.email} Profile"
-        except Exception:
-            return "Profile"
+        return f"{self.user.email} Profile"
 
-    # Debug helper (unchanged)
-    def debug_completion(self):
-        return {
-            "full_name": bool(self.full_name and self.full_name.strip()),
-            "mobile_number": bool(self.mobile_number and self.mobile_number.strip()),
-            "experience": self.experience is not None,
-            "location": bool(self.location and self.location.strip()),
-            "skills": bool(self.skills and self.skills.strip()),
-            "resume": bool(self.resume and self.resume.name),
-        }
+    
+def debug_completion(self):
+    return {
+        "full_name": bool(self.full_name and self.full_name.strip()),
+        "mobile_number": bool(self.mobile_number and self.mobile_number.strip()),
+        "experience": self.experience is not None,
+        "location": bool(self.location and self.location.strip()),
+        "skills": bool(self.skills and self.skills.strip()),
+        "resume": bool(self.resume and self.resume.name),
+    }
+
+

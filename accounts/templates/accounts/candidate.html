@@ -50,11 +50,42 @@
           {{ user.profile.skills|default:"—" }}
         </td>
 
+      
         <td data-label="Subscription">
-          <span class="badge bg-{% if user.is_pro %}success{% else %}secondary{% endif %}">
-            {{ user.subscription_type }}
+
+          <!-- PLAN -->
+          <span class="badge
+            {% if user.plan == 'FREE' %}bg-secondary
+            {% elif user.plan == 'PRO' %}bg-info
+            {% elif user.plan == 'PRO_PLUS' %}bg-success
+            {% endif %}
+          ">
+            {{ user.plan }}
           </span>
+
+          <!-- STATUS -->
+          <span class="badge
+            {% if user.plan_status == 'ACTIVE' %}bg-success
+            {% elif user.plan_status == 'EXPIRED' %}bg-danger
+            {% else %}bg-warning text-dark
+            {% endif %}
+          ">
+            {{ user.plan_status }}
+          </span>
+
+          <!-- EXPIRY DATE -->
+          {% if user.plan != 'FREE' and user.plan_end %}
+            <div class="small text-muted">
+              Till: {{ user.plan_end|date:"d M Y" }}
+            </div>
+          {% endif %}
+
         </td>
+
+
+      
+
+
 
         <td data-label="Joined">
           {{ user.date_joined|date:"d M Y" }}

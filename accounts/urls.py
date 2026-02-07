@@ -27,6 +27,8 @@ urlpatterns = [
 
     path("payment/", views.payment, name="payment"),
     path("upgrade/pro/", views.upgrade_to_pro, name="upgrade_to_pro"),
+    path("upgrade/pro/plus", views.upgrade_to_pro_plus, name="upgrade_to_pro_plus"),
+
     path("dashboard/", views.dashboard, name="dashboard"),
 
 ]

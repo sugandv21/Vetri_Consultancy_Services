@@ -2,16 +2,14 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import User
+from .models import User, Profile
 from accounts.decorators import admin_required
-from django.contrib.auth.decorators import login_required
-from .models import Profile
 from .decorators import staff_required
+from django.utils import timezone
+from datetime import timedelta
 
-@admin_required
-def post_job(request):
-    return render(request, "jobs/post_job.html")
 
+# ---------------- LOGIN ----------------
 def login_user(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -30,7 +28,7 @@ def login_user(request):
         login(request, user)
         messages.success(request, "Login successful.")
 
-        # 🔥 ROLE BASED REDIRECT
+        # ROLE BASED REDIRECT
         if user.is_staff:     # admin / consultant
             return redirect("admin_dashboard")
         else:                 # candidate
@@ -38,8 +36,8 @@ def login_user(request):
 
     return render(request, "accounts/login.html")
 
-from django.contrib.auth import authenticate, login
 
+# ---------------- REGISTER ----------------
 def register_user(request):
     if request.method == "POST":
         full_name = request.POST.get("full_name")
@@ -47,8 +45,8 @@ def register_user(request):
         password = request.POST.get("password")
         confirm = request.POST.get("confirm_password")
         mobile = request.POST.get("mobile_number")
-        subscription = request.POST.get("subscription", User.FREE)
 
+        # Validation
         if not all([full_name, email, password, confirm, mobile]):
             messages.error(request, "All fields are required.")
             return redirect("register")
@@ -61,50 +59,34 @@ def register_user(request):
             messages.error(request, "Email already registered.")
             return redirect("register")
 
+        # CREATE USER → ALWAYS FREE TRIAL
         user = User.objects.create_user(
             email=email,
             password=password,
-            subscription_type=subscription,
+            full_name=full_name,
+            plan=User.FREE,
+            plan_status=User.ACTIVE,   # Free is permanent active plan
+            plan_start=timezone.now(),
+            plan_end=None,             # No expiry for free users
+            usage_reset_date=timezone.now(),
         )
 
-        # Profile already created by signal
+        # Profile created by signal
         profile = user.profile
         profile.full_name = full_name
         profile.mobile_number = mobile
-        profile.save()        
+        profile.save()
 
-        #  Authenticate user FIRST
-        user = authenticate(request, email=email, password=password)
+        # IMPORTANT: specify backend (because Google auth also exists)
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
 
-        #  Then login (no backend error)
-        if user is not None:
-            login(request, user)
-
-        if subscription == User.PRO:
-            return redirect("payment")
-
-        return redirect("profile_wizard")
+        return redirect("my_profile")
 
     return render(request, "accounts/register.html")
 
 
-
-
-@login_required
-def payment(request):
-    # Block FREE users
-    if request.user.subscription_type != User.PRO:
-        return redirect("dashboard")
-
-    if request.method == "POST":
-        # Fake payment success
-        messages.success(request, "Payment successful! Welcome to Pro 🎉")
-        return redirect("profile_wizard")
-
-    return render(request, "accounts/payment.html")
-
-
-
+# ---------------- LOGOUT ----------------
 def logout_user(request):
     logout(request)
     messages.success(request, "You have logged out successfully.")
@@ -112,14 +94,74 @@ def logout_user(request):
 
 
 
+@admin_required
+def post_job(request):
+    return render(request, "jobs/post_job.html")
+
+@login_required
+def payment(request):
+    selected_plan = request.session.get("selected_plan")
+
+    if not selected_plan:
+        messages.error(request, "No plan selected.")
+        return redirect("settings")
+
+    # Plan pricing
+    if selected_plan == User.PRO:
+        amount = 8999
+        plan_name = "Pro"
+
+    elif selected_plan == User.PRO_PLUS:
+        amount = 29999
+        plan_name = "Pro Plus"
+
+    else:
+        messages.error(request, "Invalid plan.")
+        return redirect("settings")
+
+    # Simulated payment success
+    if request.method == "POST":
+        user = request.user
+
+        user.plan = selected_plan
+        user.plan_status = User.ACTIVE
+        user.plan_start = timezone.now()
+        # user.plan_end = timezone.now() + timedelta(days=30)
+        # user.plan_end = timezone.now() + timedelta(hours=1)
+        user.plan_end = timezone.now() + timedelta(minutes=2)
 
 
-#from django.core.mail import send_mail
-from accounts.utils.email import safe_send_mail
+
+        user.save()
+
+        # clear session
+        del request.session["selected_plan"]
+
+        messages.success(request, f"Payment successful! Welcome to {plan_name} ")
+        return redirect("dashboard")
+
+    return render(request, "accounts/payment.html", {
+        "amount": amount,
+        "plan_name": plan_name
+    })
+
+
+
+
+
+
+from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect, render
+
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+
 
 @login_required
 def profile_wizard(request):
@@ -140,26 +182,28 @@ def profile_wizard(request):
 
         profile.save()
 
-        #  Check completion AFTER save
+        # ✅ Check completion AFTER save
         completion = profile.completion_percentage()
 
-        #  Send email only ONCE
+        # ✅ Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-           
-            sent = safe_send_mail(
+            send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs and track applications.\n\n"
+                    "You can now apply for jobs, save opportunities, "
+                    "and track your applications from your dashboard.\n\n"
+                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,  # IMPORTANT
             )
 
-            if sent:
-                profile.completion_email_sent = True
-                profile.save(update_fields=["completion_email_sent"])
+            profile.completion_email_sent = True
+            profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("dashboard")
@@ -198,21 +242,23 @@ def my_profile(request):
 
         # Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-           
-            sent = safe_send_mail(
+            send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs and track applications.\n\n"
+                    "You can now apply for jobs, save opportunities, "
+                    "and track your applications from your dashboard.\n\n"
+                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,
             )
 
-            if sent:
-                profile.completion_email_sent = True
-                profile.save(update_fields=["completion_email_sent"])
+            profile.completion_email_sent = True
+            profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("my_profile")
@@ -249,20 +295,19 @@ def settings_view(request):
 #upgrade to pro
 @login_required
 def upgrade_to_pro(request):
-    if request.method == "POST":
-        user = request.user
+    """
+    Step 1 of upgrade:
+    User chooses plan → store intent → go to payment
+    DOES NOT activate subscription
+    """
+    request.session["selected_plan"] = User.PRO
+    return redirect("payment")
 
-        # Already pro? it skips
-        if user.subscription_type == User.PRO:
-            return redirect("dashboard")
+@login_required
+def upgrade_to_pro_plus(request):
+    request.session["selected_plan"] = User.PRO_PLUS
+    return redirect("payment")
 
-        # Mark as PRO and payment follow
-        user.subscription_type = User.PRO
-        user.save(update_fields=["subscription_type"])
-
-        return redirect("payment")
-
-    return redirect("settings")
 
 #canditate list 
 
@@ -319,6 +364,10 @@ def admin_dashboard(request):
         }
     )
 # #candidate resume view:
+# @login_required
+# def resume_view(request):
+#     profile = request.user.profile
+#     return render(request, "accounts/resume.html", {"profile": profile})
 
 from jobs.models import JobApplication
 from accounts.decorators import staff_required
@@ -349,15 +398,21 @@ def candidate_detail(request, user_id):
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
+
 @login_required
 def ai_chat_page(request):
 
-    # block FREE users
-    if request.user.subscription_type != User.PRO:
+    # allow only active paid users or admin
+    if not (
+        request.user.is_staff or
+        (request.user.plan in [User.PRO, User.PRO_PLUS] and request.user.plan_status == User.ACTIVE)
+    ):
         messages.warning(request, "AI Assistant is a PRO feature. Please upgrade your plan.")
-        return redirect("/auth/settings/?upgrade=1")
+        return redirect("settings")
 
     return render(request, "accounts/ai_chatbox.html")
+
+
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -365,18 +420,21 @@ from django.views.decorators.csrf import csrf_exempt
 from accounts.ai_helper import get_ai_help
 import json
 
+
 @csrf_exempt
 @require_POST
 def ai_chatbot(request):
 
-    if not request.user.is_authenticated:
-        return JsonResponse({"reply": "Please login to use the assistant."})
-
-    # block free users
-    if request.user.subscription_type != User.PRO:
+           
+        # block free users
+    if not (
+        request.user.plan in [User.PRO, User.PRO_PLUS]
+        and request.user.plan_status == User.ACTIVE
+    ):
         return JsonResponse({
             "reply": "This feature is available only for PRO users. Upgrade your plan."
         })
+
 
     data = json.loads(request.body)
     message = data.get("message")
@@ -385,6 +443,7 @@ def ai_chatbot(request):
     reply = get_ai_help(request.user, message, page)
 
     return JsonResponse({"reply": reply})
+
 
 
 #email update
@@ -399,11 +458,13 @@ from django.conf import settings
 from accounts.decorators import staff_required
 from jobs.models import JobApplication
 
+
 @staff_required
 @require_POST
 def update_application_status(request, app_id):
     application = get_object_or_404(JobApplication, id=app_id)
     old_status = application.status
+
     new_status = request.POST.get("status")
 
     if new_status not in dict(JobApplication.STATUS_CHOICES):
@@ -413,7 +474,7 @@ def update_application_status(request, app_id):
     application.status = new_status
     application.save()
 
-    # send mail ONLY when moved to INTERVIEW
+    # Send email ONLY when moved to INTERVIEW
     if old_status != "INTERVIEW" and new_status == "INTERVIEW":
         candidate = application.user
         job = application.job
@@ -421,29 +482,26 @@ def update_application_status(request, app_id):
         subject = "🎉 Shortlisted for Screening Interview"
         message = (
             f"Dear {candidate.profile.full_name or 'Candidate'},\n\n"
-            f"You have been shortlisted for a screening interview for "
+            f"We are pleased to inform you that you have been shortlisted "
+            f"for a screening interview for the position of "
             f"{job.title} at {job.company_name}.\n\n"
-            "Prepare well. Meeting link will be shared soon.\n\n"
+            "You will receive the interview meeting link shortly.\n\n"
+            "Please start preparing and give it your best.\n\n"
+            "Wishing you all the very best!\n\n"
             "Regards,\n"
             "Vetri Consultancy Services"
         )
 
-        sent = safe_send_mail(
+        send_mail(
             subject=subject,
             message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[candidate.email],
+            fail_silently=True,
         )
 
-        if sent:
-            messages.success(request, "Application status updated & email sent.")
-        else:
-            messages.warning(request, "Status updated but email failed.")
-
-    else:
-        messages.success(request, "Application status updated.")
-
+    messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
-
 
 
 
@@ -472,6 +530,4 @@ def dashboard(request):
     }
 
     return render(request, "accounts/dashboard.html", context)
-
-
 
