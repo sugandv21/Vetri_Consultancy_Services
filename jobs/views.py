@@ -183,7 +183,7 @@ def apply_job(request, job_id):
             request,
             "Please complete your profile (100%) before applying for jobs."
         )
-        return redirect("profile_wizard")
+        return redirect("my_profile")
 
     job = get_object_or_404(
         visible_jobs_for_user(request.user),
@@ -210,3 +210,4 @@ def apply_job(request, job_id):
 def applications(request):
     applications = JobApplication.objects.filter(user=request.user)
     return render(request, "jobs/applications.html", {"applications": applications})
+
