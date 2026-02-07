@@ -34,7 +34,7 @@ def login_user(request):
         if user.is_staff:     # admin / consultant
             return redirect("admin_dashboard")
         else:                 # candidate
-            return redirect("dashboard")
+            return redirect("public_home")
 
     return render(request, "accounts/login.html")
 
@@ -472,5 +472,6 @@ def dashboard(request):
     }
 
     return render(request, "accounts/dashboard.html", context)
+
 
 
