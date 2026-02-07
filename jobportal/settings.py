@@ -128,8 +128,14 @@ USE_I18N = True
 USE_TZ = True
 
 SITE_ID = 1
+LOGIN_URL = 'account_login'
+LOGIN_REDIRECT_URL = 'public_home'
+LOGOUT_REDIRECT_URL = 'account_login'
 
-SITE_ID = 1
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -154,9 +160,9 @@ ACCOUNT_SIGNUP_FIELDS = [
 
 
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
-LOGOUT_REDIRECT_URL = 'login'
+# LOGIN_URL = 'login'
+# LOGIN_REDIRECT_URL = 'dashboard'
+# LOGOUT_REDIRECT_URL = 'login'
 
 
 # Tell allauth to auto-create and auto-login social users
@@ -231,6 +237,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
 
 
 
