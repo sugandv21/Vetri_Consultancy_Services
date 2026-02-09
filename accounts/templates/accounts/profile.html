@@ -96,7 +96,6 @@
 
 </div>
 
-{% comment %} 
 {% for review in profile.resume_reviews.all|dictsortreversed:"created_at" %}
 <div class="card mb-3 shadow-sm">
   <div class="card-body">
@@ -116,7 +115,7 @@
 
 {% empty %}
 <p class="text-muted">No feedback generated yet.</p>
-{% endfor %} {% endcomment %}
+{% endfor %}
 
 
 <style>
@@ -143,3 +142,4 @@
 </style> 
 
 {% endblock %}
+
