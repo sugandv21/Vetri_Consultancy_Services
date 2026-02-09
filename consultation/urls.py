@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import views_admin
+app_name = "consultation" 
 
 urlpatterns = [
     #user
@@ -13,3 +14,4 @@ urlpatterns = [
     path("admin/schedule/<int:session_id>/", views_admin.schedule_session, name="schedule_session"),
     path("admin/complete/<int:session_id>/", views_admin.mark_completed, name="mark_completed"),
 ]
+
