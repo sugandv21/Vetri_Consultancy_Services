@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'core',
     'jobs',
+    'consultation',
 ]
 
 
@@ -236,6 +237,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
 
 
 
