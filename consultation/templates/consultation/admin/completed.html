@@ -1,0 +1,23 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3>Completed Sessions</h3>
+
+<table class="table">
+<tr>
+  <th>User</th>
+  <th>Topic</th>
+  <th>Date</th>
+</tr>
+
+{% for s in sessions %}
+<tr>
+  <td>{{ s.user.email }}</td>
+  <td>{{ s.topic }}</td>
+  <td>{{ s.scheduled_at }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">Session Requests</h3>
+
+<table class="table table-bordered align-middle">
+<thead class="table-dark">
+<tr>
+  <th>User</th>
+  <th>Plan</th>
+  <th>Topic</th>
+  <th>Message</th>
+  <th>Requested At</th>
+  <th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+{% for s in sessions %}
+
+<tr class="{% if s.user.plan == 'PRO_PLUS' %}table-danger fw-bold{% endif %}">
+
+  <td>{{ s.user.email }}</td>
+
+  <td>
+    {% if s.user.plan == "PRO_PLUS" %}
+        <span class="badge bg-danger">PRO PLUS</span>
+    {% elif s.user.plan == "PRO" %}
+        <span class="badge bg-info text-dark">PRO</span>
+    {% else %}
+        <span class="badge bg-secondary">FREE</span>
+    {% endif %}
+  </td>
+
+  <td>{{ s.topic }}</td>
+
+  <td>{{ s.message }}</td>
+
+  <td>
+    {{ s.created_at|date:"d M Y" }} <br>
+    <small class="text-muted">{{ s.created_at|time:"h:i A" }}</small>
+  </td>
+
+  <td>
+    <a href="{% url 'schedule_session' s.id %}" class="btn btn-sm btn-primary">
+      Schedule
+    </a>
+  </td>
+
+</tr>
+
+{% empty %}
+<tr>
+<td colspan="6" class="text-center text-muted">No session requests</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

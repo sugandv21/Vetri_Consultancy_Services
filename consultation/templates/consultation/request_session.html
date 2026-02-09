@@ -1,0 +1,46 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container py-4">
+
+  <h3 class="mb-4">Request Consultant Session</h3>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label">Session Topic</label>
+          <input type="text"
+                 name="topic"
+                 class="form-control"
+                 placeholder="Example: Resume review, Interview preparation"
+                 required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Describe your requirement</label>
+          <textarea name="message"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Explain what help you need from consultant"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          Submit Request
+        </button>
+
+        <a href="{% url 'my_sessions' %}" class="btn btn-outline-secondary">
+          My Sessions
+        </a>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3>Scheduled Sessions</h3>
+
+<table class="table">
+<tr>
+  <th>User</th>
+  <th>Date</th>
+  <th>Join</th>
+  <th>Complete</th>
+</tr>
+
+{% for s in sessions %}
+<tr>
+  <td>{{ s.user.email }}</td>
+  <td>{{ s.scheduled_at }}</td>
+  <td><a href="{{ s.meeting_link }}" target="_blank">Open</a></td>
+  <td>
+    <a href="{% url 'mark_completed' s.id %}" class="btn btn-success btn-sm">
+      Mark Completed
+    </a>
+  </td>
+</tr>
+{% endfor %}
+
+</table>
+
+{% endblock %}

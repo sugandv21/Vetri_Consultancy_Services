@@ -1,0 +1,18 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3>Schedule Session</h3>
+
+<form method="post">
+  {% csrf_token %}
+
+  <label>Meeting Link</label>
+  <input type="url" name="meeting_link" class="form-control" required>
+
+  <label class="mt-3">Date & Time</label>
+  <input type="datetime-local" name="scheduled_at" class="form-control" required>
+
+  <button class="btn btn-success mt-3">Confirm Schedule</button>
+</form>
+
+{% endblock %}
