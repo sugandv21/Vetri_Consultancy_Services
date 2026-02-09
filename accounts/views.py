@@ -10,6 +10,7 @@ from datetime import timedelta
 from jobs.models import JobApplication
 from django.shortcuts import get_object_or_404
 from accounts.models import Notification
+from accounts.utils.email import safe_send_mail
 
 
 
@@ -181,25 +182,23 @@ def profile_wizard(request):
         # ✅ Check completion AFTER save
         completion = profile.completion_percentage()
 
-        # ✅ Send email only ONCE
+        #  Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-            send_mail(
+           
+            sent = safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs, save opportunities, "
-                    "and track your applications from your dashboard.\n\n"
-                    "Warm regards,\n"
+                    "You can now apply for jobs and track applications.\n\n"
                     "Vetri Consultancy Services"
                 ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
-                fail_silently=False,  # IMPORTANT
             )
 
-            profile.completion_email_sent = True
-            profile.save(update_fields=["completion_email_sent"])
+            if sent:
+                profile.completion_email_sent = True
+                profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("dashboard")
@@ -240,22 +239,20 @@ def my_profile(request):
         # completion email
         completion = profile.completion_percentage()
         if completion == 100 and not profile.completion_email_sent:
-            send_mail(
+             sent = safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
                     "You can now apply for jobs and track applications.\n\n"
-                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
-                fail_silently=False,
             )
 
-            profile.completion_email_sent = True
-            profile.save(update_fields=["completion_email_sent"])
+            if sent:
+                profile.completion_email_sent = True
+                profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("my_profile")
@@ -550,15 +547,20 @@ def update_application_status(request, app_id):
             "Vetri Consultancy Services"
         )
 
-        send_mail(
+        sent = safe_send_mail(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[candidate.email],
-            fail_silently=True,
         )
 
-    messages.success(request, "Application status updated.")
+        if sent:
+            messages.success(request, "Application status updated & email sent.")
+        else:
+            messages.warning(request, "Status updated but email failed.")
+
+    else:
+        messages.success(request, "Application status updated.")
+
     return redirect("candidate_detail", user_id=application.user.id)
 
 
@@ -736,3 +738,4 @@ def generate_advanced_resume_review(request):
     )
 
     return redirect("my_profile")
+
