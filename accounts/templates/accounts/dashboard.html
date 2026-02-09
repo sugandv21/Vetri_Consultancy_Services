@@ -42,6 +42,21 @@
 <div class="container mt-4">
   <h2 class="mb-4">My Dashboard</h2>
 
+
+   {% if notifications %}
+<div class="alert alert-info">
+
+  <strong>Updates:</strong>
+
+  <ul class="mb-0">
+    {% for n in notifications %}
+      <li>{{ n.message }}</li>
+    {% endfor %}
+  </ul>
+
+</div>
+{% endif %}
+
   <div class="row g-3">
 
     <!-- Saved Jobs -->
@@ -73,6 +88,8 @@
             View applications
           </a>
         </div>
+       
+
       </div>
     </div>
 
@@ -166,4 +183,8 @@
   </div>
 
 </div>
+
+<a href="{% url 'my_sessions' %}" class="btn btn-outline-secondary mt-2">
+  View My Sessions
+</a> 
 {% endblock %}

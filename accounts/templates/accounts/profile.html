@@ -19,93 +19,127 @@
 
   <div class="mb-3">
     <label class="form-label">Full Name</label>
-    <input
-      type="text"
-      class="form-control"
-      name="full_name"
-      value="{{ profile.full_name|default:'' }}"
-      required
-    >
+    <input type="text" class="form-control" name="full_name"
+           value="{{ profile.full_name|default:'' }}" required>
   </div>
 
   <div class="mb-3">
     <label class="form-label">Mobile Number</label>
-    <input
-      type="text"
-      class="form-control"
-      name="mobile_number"
-      value="{{ profile.mobile_number|default:'' }}"
-      placeholder="Enter mobile number"
-      required
-    >
+    <input type="text" class="form-control" name="mobile_number"
+           value="{{ profile.mobile_number|default:'' }}"
+           placeholder="Enter mobile number" required>
   </div>
 
-  <!-- Experience -->
   <div class="mb-3">
     <label class="form-label">Experience (years)</label>
-    <input
-      type="number"
-      class="form-control"
-      name="experience"
-      value="{{ profile.experience|default_if_none:'' }}"
-      min="0"
-      required
-    >
+    <input type="number" class="form-control" name="experience"
+           value="{{ profile.experience|default_if_none:'' }}" min="0" required>
   </div>
 
-  <!-- Location -->
   <div class="mb-3">
     <label class="form-label">Location</label>
-    <input
-      type="text"
-      class="form-control"
-      name="location"
-      value="{{ profile.location|default:'' }}"
-      required
-    >
+    <input type="text" class="form-control" name="location"
+           value="{{ profile.location|default:'' }}" required>
   </div>
 
-  <!-- Skills -->
   <div class="mb-3">
     <label class="form-label">Skills</label>
-    <input
-      type="text"
-      class="form-control"
-      name="skills"
-      value="{{ profile.skills|default:'' }}"
-      placeholder="Python, Django, REST"
-      required
-    >
+    <input type="text" class="form-control" name="skills"
+           value="{{ profile.skills|default:'' }}"
+           placeholder="Python, Django, REST" required>
   </div>
 
   <!-- Resume -->
   <div class="mb-3">
     <label class="form-label">Resume (PDF / DOC)</label>
-    <input
-      type="file"
-      class="form-control"
-      name="resume"
-      accept=".pdf,.doc,.docx"
-      required
-    >
+    <input type="file" class="form-control" name="resume"
+           accept=".pdf,.doc,.docx">
 
     {% if profile.resume %}
       <small class="text-success d-block mt-1">
         Uploaded:
-        <a href="{{ profile.resume.url }}" target="_blank">
-          View Resume
-        </a>
+        <a href="{{ profile.resume.url }}" target="_blank">View Resume</a>
       </small>
     {% else %}
-      <small class="text-muted">
-        No resume uploaded yet
-      </small>
+      <small class="text-muted">No resume uploaded yet</small>
     {% endif %}
   </div>
 
-  <button class="btn btn-primary">
-    Save Profile
-  </button>
+  <button class="btn btn-primary">Save Profile</button>
 </form>
+
+
+<!-- ================= Resume AI Section ================= -->
+
+<hr class="my-4">
+
+<h4 class="mb-3">Resume Feedback</h4>
+
+<div class="mb-3">
+
+  {% if request.user.plan == "FREE" %}
+    <a href="{% url 'settings' %}" class="btn btn-outline-warning">
+      Upgrade to get AI Resume Feedback
+    </a>
+
+  {% elif request.user.plan == "PRO" %}
+    <a href="{% url 'generate_resume_review' %}" class="btn btn-outline-primary">
+      Get Resume Suggestions
+    </a>
+
+  {% elif request.user.plan == "PRO_PLUS" %}
+    <a href="{% url 'generate_advanced_resume_review' %}" class="btn btn-success">
+      Get Expert Resume Optimization
+    </a>
+
+  {% endif %}
+
+</div>
+
+{% comment %} 
+{% for review in profile.resume_reviews.all|dictsortreversed:"created_at" %}
+<div class="card mb-3 shadow-sm">
+  <div class="card-body">
+
+    <div class="d-flex justify-content-between">
+      <strong>{{ review.get_review_type_display }}</strong>
+      <small class="text-muted">{{ review.created_at }}</small>
+    </div>
+
+   <div class="ai-feedback">
+    {{ review.feedback|linebreaks }}
+  </div>
+
+
+  </div>
+</div>
+
+{% empty %}
+<p class="text-muted">No feedback generated yet.</p>
+{% endfor %} {% endcomment %}
+
+
+<style>
+.ai-feedback{
+    background:#f8fafc;
+    border-left:4px solid #0ea5e9;
+    padding:16px;
+    border-radius:12px;
+    line-height:1.6;
+}
+
+.ai-feedback ul{
+    margin-top:10px;
+    padding-left:20px;
+}
+
+.ai-feedback strong{
+    color:#0f172a;
+}
+
+.ai-feedback p{
+    margin-bottom:8px;
+}
+</style> 
 
 {% endblock %}

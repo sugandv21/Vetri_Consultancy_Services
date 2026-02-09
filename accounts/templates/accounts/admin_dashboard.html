@@ -2,6 +2,29 @@
 {% block content %}
 
 <h3 class="mb-4">Admin Dashboard</h3>
+{% if notifications %}
+<div class="alert alert-danger shadow-sm">
+  <strong>🚨 Priority Alerts</strong>
+  <ul class="mb-0">
+    {% for n in notifications %}
+      <li>{{ n.message }} <small class="text-muted">({{ n.created_at|timesince }} ago)</small></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+
+{% if new_app_count > 0 %}
+<div class="alert alert-warning shadow-sm">
+  <strong>New Applications ({{ new_app_count }})</strong>
+  <ul class="mb-0">
+    {% for n in recent_notifications %}
+      <li>{{ n.message }} <small class="text-muted">({{ n.created_at|timesince }} ago)</small></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
 
 <div class="row">
 

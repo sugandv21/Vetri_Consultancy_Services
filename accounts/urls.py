@@ -30,6 +30,9 @@ urlpatterns = [
     path("upgrade/pro/plus", views.upgrade_to_pro_plus, name="upgrade_to_pro_plus"),
 
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("resume/review/", views.generate_resume_review, name="generate_resume_review"),
+    path("resume/advanced/", views.generate_advanced_resume_review, name="generate_advanced_resume_review"),
+
 
 ]
 

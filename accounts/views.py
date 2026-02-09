@@ -7,7 +7,11 @@ from accounts.decorators import admin_required
 from .decorators import staff_required
 from django.utils import timezone
 from datetime import timedelta
-from accounts.utils.email import safe_send_mail
+from jobs.models import JobApplication
+from django.shortcuts import get_object_or_404
+from accounts.models import Notification
+
+
 
 # ---------------- LOGIN ----------------
 def login_user(request):
@@ -126,9 +130,9 @@ def payment(request):
         user.plan = selected_plan
         user.plan_status = User.ACTIVE
         user.plan_start = timezone.now()
-        # user.plan_end = timezone.now() + timedelta(days=30)
+        user.plan_end = timezone.now() + timedelta(days=30)
         # user.plan_end = timezone.now() + timedelta(hours=1)
-        user.plan_end = timezone.now() + timedelta(minutes=2)
+        # user.plan_end = timezone.now() + timedelta(minutes=2)
 
 
 
@@ -146,21 +150,13 @@ def payment(request):
     })
 
 
-
-
-
-
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.shortcuts import redirect, render
-
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.db.models import Count
+from django.db.models.functions import TruncWeek
 
 
 @login_required
@@ -217,11 +213,15 @@ def profile_wizard(request):
         }
     )
 
+from django.db.models import Count
+from django.db.models.functions import ExtractWeek
+from jobs.models import JobApplication
 
 @login_required
 def my_profile(request):
     profile = request.user.profile
 
+    # -------------------- HANDLE FORM SUBMIT --------------------
     if request.method == "POST":
         profile.full_name = request.POST.get("full_name")
         profile.mobile_number = request.POST.get("mobile_number", "").strip()
@@ -237,38 +237,64 @@ def my_profile(request):
 
         profile.save()
 
-        # Check completion AFTER save
+        # completion email
         completion = profile.completion_percentage()
-
-        # Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-           
-            sent = safe_send_mail(
+            send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
                     "You can now apply for jobs and track applications.\n\n"
+                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,
             )
 
-            if sent:
-                profile.completion_email_sent = True
-                profile.save(update_fields=["completion_email_sent"])
+            profile.completion_email_sent = True
+            profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("my_profile")
+
+    # -------------------- ANALYTICS (ONLY FOR PAGE LOAD) --------------------
+    responses = (
+        JobApplication.objects
+        .filter(
+            user=request.user,
+            status__in=["IN_REVIEW", "INTERVIEW", "CLOSED"]
+        )
+        .annotate(week=ExtractWeek("applied_at"))
+        .values("week")
+        .annotate(total=Count("id"))
+        .order_by("week")
+    )
+
+    chart_labels = []
+    chart_data = []
+
+    for row in responses:
+        chart_labels.append(f"Week {row['week']}")
+        chart_data.append(row["total"])
+
+    # -----------------------------------------------------------------------
 
     return render(
         request,
         "accounts/profile.html",
         {
             "profile": profile,
-            "completion": profile.completion_percentage()
+            "completion": profile.completion_percentage(),
+            "plan": request.user.plan,
+            "chart_labels": chart_labels,
+            "chart_data": chart_data,
         }
     )
+
+
 
 #setting
 @login_required
@@ -335,8 +361,12 @@ from core.models import Enrollment   # adjust import if Enrollment is in another
 #admin dashboard
 from jobs.models import Job, JobApplication
 from core.models import Training, Enrollment, TrainingEnquiry
+from accounts.models import Notification
+
+
 @staff_required
 def admin_dashboard(request):
+
     total_candidates = User.objects.filter(is_staff=False).count()
     total_jobs = Job.objects.count()
     pending_jobs = Job.objects.filter(status="PENDING").count()
@@ -345,6 +375,24 @@ def admin_dashboard(request):
     total_trainings = Training.objects.count()
     total_enrollments = Enrollment.objects.count()
     total_enquiries = TrainingEnquiry.objects.count()
+
+    one_day_ago = timezone.now() - timedelta(hours=24)
+
+    # ---------------- NEW JOB APPLICATION ALERTS (GLOBAL) ----------------
+    job_notifications = Notification.objects.filter(
+        user__isnull=True,
+        is_read=False,
+        created_at__gte=one_day_ago
+    ).order_by("-created_at")
+
+    new_app_count = job_notifications.count()
+    recent_notifications = job_notifications[:5]
+
+    # ---------------- PRIORITY SESSION ALERTS (PER ADMIN) ----------------
+    notifications = request.user.notifications.filter(
+        is_read=False,
+        created_at__gte=one_day_ago
+    ).order_by("-created_at")
 
     return render(
         request,
@@ -358,17 +406,21 @@ def admin_dashboard(request):
             "total_trainings": total_trainings,
             "total_enrollments": total_enrollments,
             "total_enquiries": total_enquiries,
+
+            # TWO TYPES PASSED
+            "new_app_count": new_app_count,
+            "recent_notifications": recent_notifications,
+            "notifications": notifications,
         }
     )
+
 # #candidate resume view:
 # @login_required
 # def resume_view(request):
 #     profile = request.user.profile
 #     return render(request, "accounts/resume.html", {"profile": profile})
 
-from jobs.models import JobApplication
-from accounts.decorators import staff_required
-from django.shortcuts import get_object_or_404
+
 
 @staff_required
 def candidate_detail(request, user_id):
@@ -454,6 +506,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from accounts.decorators import staff_required
 from jobs.models import JobApplication
+from accounts.models import Notification
 
 
 @staff_required
@@ -461,6 +514,7 @@ from jobs.models import JobApplication
 def update_application_status(request, app_id):
     application = get_object_or_404(JobApplication, id=app_id)
     old_status = application.status
+
     new_status = request.POST.get("status")
 
     if new_status not in dict(JobApplication.STATUS_CHOICES):
@@ -469,8 +523,16 @@ def update_application_status(request, app_id):
 
     application.status = new_status
     application.save()
+    
+    
+    Notification.objects.create(
+        user=application.user,
+        title="Application Status Updated",
+        message=f"Your application for {application.job.title} is now {new_status}."
+    )
 
-    # send mail ONLY when moved to INTERVIEW
+
+    # Send email ONLY when moved to INTERVIEW
     if old_status != "INTERVIEW" and new_status == "INTERVIEW":
         candidate = application.user
         job = application.job
@@ -478,31 +540,26 @@ def update_application_status(request, app_id):
         subject = "🎉 Shortlisted for Screening Interview"
         message = (
             f"Dear {candidate.profile.full_name or 'Candidate'},\n\n"
-            f"You have been shortlisted for a screening interview for "
+            f"We are pleased to inform you that you have been shortlisted "
+            f"for a screening interview for the position of "
             f"{job.title} at {job.company_name}.\n\n"
-            "Prepare well. Meeting link will be shared soon.\n\n"
+            "You will receive the interview meeting link shortly.\n\n"
+            "Please start preparing and give it your best.\n\n"
+            "Wishing you all the very best!\n\n"
             "Regards,\n"
             "Vetri Consultancy Services"
         )
 
-        sent = safe_send_mail(
+        send_mail(
             subject=subject,
             message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[candidate.email],
+            fail_silently=True,
         )
 
-        if sent:
-            messages.success(request, "Application status updated & email sent.")
-        else:
-            messages.warning(request, "Status updated but email failed.")
-
-    else:
-        messages.success(request, "Application status updated.")
-
+    messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
-
-
-
 
 
 
@@ -511,7 +568,7 @@ from core.models import Enrollment
 from jobs.models import JobApplication, Job
 from jobs.models import SavedJob, JobApplication
 from core.models import Enrollment
-
+from collections import OrderedDict
 @login_required
 def dashboard(request):
 
@@ -519,17 +576,163 @@ def dashboard(request):
     if request.user.is_staff:
         return redirect("admin_dashboard")
 
-    enrollments = Enrollment.objects.filter(
-        user=request.user
-    ).select_related("training")
+    user = request.user
+    profile = user.profile
 
+    # ---------------- DATA ----------------
+    enrollments = Enrollment.objects.filter(user=user).select_related("training")
+    one_day_ago = timezone.now() - timedelta(hours=24)
+
+    notifications = user.notifications.filter(
+        is_read=False,
+        created_at__gte=one_day_ago
+    ).order_by("-created_at")[:5]
+
+
+    applications = JobApplication.objects.filter(user=user)
+    interviews = applications.filter(status="INTERVIEW")
+    
+    # ---------------- RESPONSE ANALYTICS (LAST 4 WEEKS RANGE) ----------------
+    
+
+    today = timezone.now().date()
+
+    # Build last 4 weeks (Mon → Sun)
+    week_ranges = []
+    week_map = OrderedDict()
+
+    for i in range(3, -1, -1):
+        start = today - timedelta(days=today.weekday(), weeks=i)
+        end = start + timedelta(days=6)
+        label = f"{start.strftime('%d %b')} - {end.strftime('%d %b')}"
+        week_ranges.append((start, end, label))
+        week_map[label] = 0
+
+    # Fetch responded applications
+    responses = JobApplication.objects.filter(
+        user=user,
+        status__in=["IN_REVIEW", "INTERVIEW", "CLOSED"]
+    )
+
+    # Count responses per week range
+    for app in responses:
+        applied_date = app.applied_at.date()
+        for start, end, label in week_ranges:
+            if start <= applied_date <= end:
+                week_map[label] += 1
+
+    chart_labels = list(week_map.keys())
+    chart_data = list(week_map.values())
+    # -------------------------------------------------------------------------
+
+
+
+    # consultant sessions used this month
+    sessions_used = user.sessions.filter(status="COMPLETED").count()
+
+    # resume optimization usage
+    resume_used = profile.resume_reviews.count()
+
+    # ---------------- PLAN LIMITS ----------------
+    if user.plan == "FREE":
+        job_limit = 20
+        resume_limit = 0
+        session_limit = 0
+
+    elif user.plan == "PRO":
+        job_limit = 100
+        resume_limit = 1
+        session_limit = 1
+
+    else:  # PRO_PLUS
+        job_limit = None   # unlimited
+        resume_limit = None
+        session_limit = 4
+
+    # ---------------- CONTEXT ----------------
     context = {
-        "saved_jobs_count": SavedJob.objects.filter(user=request.user).count(),
-        "applications_count": JobApplication.objects.filter(user=request.user).count(),
+        "plan": user.plan,
+
+        "saved_jobs_count": SavedJob.objects.filter(user=user).count(),
+
+        "applications_count": applications.count(),
+        "job_limit": job_limit,
+
+        "interviews_count": interviews.count(),
+
+        "resume_used": resume_used,
+        "resume_limit": resume_limit,
+
+        "sessions_used": sessions_used,
+        "session_limit": session_limit,
+
+        "completion": profile.completion_percentage(),
+
         "enrolled_trainings_count": enrollments.count(),
         "enrollments": enrollments,
+
+        "notifications": notifications,
+        "chart_labels": chart_labels,
+        "chart_data": chart_data,
+
     }
 
     return render(request, "accounts/dashboard.html", context)
 
 
+
+#resume_review
+from .resume_ai import generate_resume_suggestions
+from .models import ResumeReview
+#pro user -not pdf
+@login_required
+def generate_resume_review(request):
+
+    user = request.user
+
+    if user.plan not in [User.PRO, User.PRO_PLUS]:
+        messages.warning(request, "Upgrade to PRO to use resume suggestions.")
+        return redirect("settings")
+
+    profile = user.profile
+
+    feedback = generate_resume_suggestions(profile)
+
+    ResumeReview.objects.update_or_create(
+        profile=profile,
+        review_type="BASIC",
+        defaults={"feedback": feedback}
+    )
+
+    return redirect("my_profile")
+
+
+#pro plus user
+from .resume_parser import extract_text
+
+@login_required
+def generate_advanced_resume_review(request):
+
+    user = request.user
+
+    if user.plan != User.PRO_PLUS:
+        messages.warning(request, "Only Pro Plus users allowed.")
+        return redirect("settings")
+
+    profile = user.profile
+
+    if not profile.resume:
+        messages.error(request, "Upload resume first.")
+        return redirect("my_profile")
+
+    resume_text = extract_text(profile.resume.path)
+
+    feedback = generate_resume_suggestions(profile, resume_text)
+
+    ResumeReview.objects.update_or_create(
+        profile=profile,
+        review_type="ADVANCED",
+        defaults={"feedback": feedback}
+    )
+
+    return redirect("my_profile")

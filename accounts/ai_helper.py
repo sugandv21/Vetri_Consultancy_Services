@@ -95,9 +95,19 @@ def get_ai_help(user, question, page=None):
         # -------------------------------------------------
         # LOCATION JOB SEARCH (NO AI)
         # -------------------------------------------------
-        location = extract_location_from_db(question)
-        if location:
-            try:
+       
+        try:
+            location = extract_location_from_db(question_lower)
+
+            # profile based location queries
+            if not location and profile and profile.location:
+                if any(x in question_lower for x in [
+                    "my location", "near me", "nearby",
+                    "around me", "based on my location"
+                ]):
+                    location = profile.location
+
+            if location:
                 jobs = visible_jobs_for_user(user).filter(location__icontains=location)[:10]
 
                 if jobs.exists():
@@ -106,9 +116,40 @@ def get_ai_help(user, question, page=None):
                 else:
                     return f"No jobs found in {location}."
 
-            except Exception as e:
-                print("LOCATION SEARCH ERROR:", e)
-                return "Unable to fetch jobs right now."
+        except Exception as e:
+            print("LOCATION SEARCH ERROR:", e)
+            
+        # -------------------------------------------------
+        # SKILL JOB SEARCH (PRIORITY AFTER LOCATION)
+        # -------------------------------------------------
+        if profile and profile.skills:
+            if any(x in question_lower for x in [
+                "based on my skill",
+                "based on my skills",
+                "according to my skill",
+                "according to my skills",
+                "matching my skills",
+                "jobs for my skills"
+            ]):
+                try:
+                    skills_list = [s.strip() for s in profile.skills.split(",") if s.strip()]
+
+                    query = Q()
+                    for skill in skills_list:
+                        query |= Q(skills__icontains=skill) | Q(title__icontains=skill)
+
+                    jobs = visible_jobs_for_user(user).filter(query).order_by("-created_at")[:5]
+
+                    if jobs.exists():
+                        job_lines = "\n".join([f"• {job.title} — {job.location}" for job in jobs])
+                        return f"Jobs matching your skills:\n\n{job_lines}"
+                    else:
+                        return "No matching jobs found. Try adding more skills to your profile."
+
+                except Exception as e:
+                    print("SKILL SEARCH ERROR:", e)
+
+
 
         # -------------------------------------------------
         # AI CONFIG

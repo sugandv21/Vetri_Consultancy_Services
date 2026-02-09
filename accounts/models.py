@@ -188,3 +188,54 @@ def debug_completion(self):
     }
 
 
+#resume review
+class ResumeReview(models.Model):
+
+    BASIC = "BASIC"
+    ADVANCED = "ADVANCED"
+
+    REVIEW_TYPE = [
+        (BASIC, "Pro Suggestion"),
+        (ADVANCED, "Pro Plus Optimization"),
+    ]
+
+    profile = models.ForeignKey(
+        "accounts.Profile",
+        on_delete=models.CASCADE,
+        related_name="resume_reviews"
+    )
+
+    review_type = models.CharField(max_length=20, choices=REVIEW_TYPE)
+    feedback = models.TextField()
+    created_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("profile", "review_type")
+
+    def __str__(self):
+        return f"{self.profile.user.email} - {self.review_type}"
+
+
+#notfication
+class Notification(models.Model):
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True
+    )
+
+
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+
+    is_read = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.title}"
+
+

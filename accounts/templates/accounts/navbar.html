@@ -155,9 +155,41 @@
             class="nav-link {% if url_name == 'admin_enquiries' %}active{% endif %}"
             href="{% url 'admin_enquiries' %}"
           >
-            Enquiries
+            Training Enquiries
           </a>
         </li>
+        {% if user.is_staff %}
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+              Consultations
+            </a>
+
+            <ul class="dropdown-menu">
+
+              <li>
+                <a class="dropdown-item" href="{% url 'admin_session_requests' %}">
+                  Session Requests
+                </a>
+              </li>
+
+              <li>
+                <a class="dropdown-item" href="{% url 'admin_session_scheduled' %}">
+                  Scheduled Sessions
+                </a>
+              </li>
+
+              <li>
+                <a class="dropdown-item" href="{% url 'admin_session_completed' %}">
+                  Completed Sessions
+                </a>
+              </li>
+
+            </ul>
+          </li>
+
+        {% endif %}
+
       </ul>
 
       <!-- ================= CANDIDATE ================= -->
@@ -208,19 +240,47 @@
           </a>
         </li>
 
-        {% comment %}
-        <li class="nav-item">
-          <a
-            class="nav-link {% if url_name == 'chatbot' %}active{% endif %}"
-            id="chatbotLink"
-            href="{% if not user.is_authenticated %}{% url 'login' %}
-           {% else %}{% url 'ai_chat_page' %}{% endif %}"
-          >
-            🤖 AI Assistant
-          </a>
-        </li>
-        {% endcomment %}
+      <li class="nav-item dropdown">
 
+  <a class="nav-link dropdown-toggle"
+     href="#"
+     id="consultDropdown"
+     role="button"
+     data-bs-toggle="dropdown"
+     aria-expanded="false">
+    Consultant
+  </a>
+
+  <ul class="dropdown-menu" aria-labelledby="consultDropdown">
+
+    {% if user.plan == "FREE" %}
+      <li>
+        <a class="dropdown-item text-warning" href="{% url 'settings' %}">
+          Talk to Consultant (Upgrade Required)
+        </a>
+      </li>
+
+    {% else %}
+      <li>
+        <a class="dropdown-item" href="{% url 'consultant_sessions' %}">
+          Talk to Consultant
+        </a>
+      </li>
+
+      <li>
+        <a class="dropdown-item" href="{% url 'my_sessions' %}">
+          My Sessions
+        </a>
+      </li>
+    {% endif %}
+
+  </ul>
+
+</li> 
+
+  </li>
+
+       
         <li class="nav-item">
           <a
             class="nav-link {% if url_name == 'pricing' %}active{% endif %}"
