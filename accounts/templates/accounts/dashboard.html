@@ -1,192 +1,310 @@
 {% extends "accounts/base.html" %}
-
 {% block content %}
+
 <style>
 /* Mobile-only table stacking */
 @media (max-width: 767px) {
-  .responsive-table thead {
-    display: none;
+  .responsive-table thead { display:none; }
+  .responsive-table, .responsive-table tbody,
+  .responsive-table tr, .responsive-table td {
+    display:block; width:100%;
   }
-
-  .responsive-table,
-  .responsive-table tbody,
-  .responsive-table tr,
-  .responsive-table td {
-    display: block;
-    width: 100%;
-  }
-
   .responsive-table tr {
-    margin-bottom: 1rem;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 10px;
-    background: #fff;
+    margin-bottom:1rem; border:1px solid #dee2e6;
+    border-radius:8px; padding:10px; background:#fff;
   }
-
-  .responsive-table td {
-    border: none;
-    padding: 6px 0;
-  }
-
+  .responsive-table td { border:none; padding:6px 0; }
   .responsive-table td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    display: block;
-    margin-bottom: 2px;
-    color: #6c757d;
+    content:attr(data-label); font-weight:600;
+    display:block; margin-bottom:2px; color:#6c757d;
   }
+}
+
+.locked{
+  opacity:.35;
+  pointer-events:none;
 }
 </style>
 
 <div class="container mt-4">
-  <h2 class="mb-4">My Dashboard</h2>
 
+<h2 class="mb-4">My Dashboard</h2>
 
-   {% if notifications %}
+<!-- PLAN BADGE -->
+<div class="mb-3 text-end">
+  <span class="badge bg-dark">{{ plan|title }} Plan</span>
+</div>
+
+<!-- NOTIFICATIONS -->
+{% if notifications %}
 <div class="alert alert-info">
-
-  <strong>Updates:</strong>
-
-  <ul class="mb-0">
-    {% for n in notifications %}
-      <li>{{ n.message }}</li>
-    {% endfor %}
-  </ul>
-
+<strong>Updates:</strong>
+<ul class="mb-0">
+{% for n in notifications %}
+<li>{{ n.message }}</li>
+{% endfor %}
+</ul>
 </div>
 {% endif %}
 
-  <div class="row g-3">
+<!-- MAIN CARDS -->
+<div class="row g-3">
 
-    <!-- Saved Jobs -->
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card text-center shadow-sm h-100 border-primary">
-        <div class="card-body bg-primary bg-opacity-10 p-3 p-md-4">
-          <h5 class="card-title text-primary">Saved Jobs</h5>
-          <p class="fw-bold text-primary fs-1 fs-md-2">
-            {{ saved_jobs_count }}
-          </p>
-          <a href="{% url 'saved_jobs' %}"
-             class="btn btn-outline-primary btn-sm w-100 w-md-auto">
-            View saved jobs
-          </a>
-        </div>
-      </div>
-    </div>
+<!-- Saved Jobs -->
+<div class="col-12 col-md-6 col-lg-4">
+<div class="card text-center shadow-sm h-100 border-primary">
+<div class="card-body bg-primary bg-opacity-10">
+<h5 class="text-primary">Saved Jobs</h5>
+<p class="fw-bold fs-1 text-primary">{{ saved_jobs_count }}</p>
+<a href="{% url 'saved_jobs' %}" class="btn btn-outline-primary btn-sm">View</a>
+</div>
+</div>
+</div>
 
-    <!-- Applications -->
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card text-center shadow-sm h-100 border-success">
-        <div class="card-body bg-success bg-opacity-10 p-3 p-md-4">
-          <h5 class="card-title text-success">Applications</h5>
-          <p class="fw-bold text-success fs-1 fs-md-2">
-            {{ applications_count }}
-          </p>
-          <a href="{% url 'applications' %}"
-             class="btn btn-outline-success btn-sm w-100 w-md-auto">
-            View applications
-          </a>
-        </div>
-       
+<!-- Applications -->
+<div class="col-12 col-md-6 col-lg-4">
+<div class="card text-center shadow-sm h-100 border-success">
+<div class="card-body bg-success bg-opacity-10">
+<h5 class="text-success">Applications</h5>
 
-      </div>
-    </div>
+<p class="fw-bold fs-1 text-success">
+{% if plan == "FREE" %}
+  {{ applications_count }} / 20
+{% elif plan == "PRO" %}
+  {{ applications_count }} / 100
+{% else %}
+  {{ applications_count }}
+{% endif %}
+</p>
 
-    <!-- Trainings Enrolled -->
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card text-center shadow-sm h-100 border-warning">
-        <div class="card-body bg-warning bg-opacity-10 p-3 p-md-4">
-          <h5 class="card-title text-warning">Trainings Enrolled</h5>
-          <p class="fw-bold text-warning fs-1 fs-md-2">
-            {{ enrolled_trainings_count }}
-          </p>
-          <a href="{% url 'training_list' %}"
-             class="btn btn-outline-warning btn-sm w-100 w-md-auto">
-            View trainings
-          </a>
-        </div>
-      </div>
-    </div>
+<a href="{% url 'applications' %}" class="btn btn-outline-success btn-sm">View</a>
+</div>
+</div>
+</div>
 
-  </div>
+<!-- Interviews -->
+<div class="col-12 col-md-6 col-lg-4">
+<div class="card text-center shadow-sm h-100 border-info">
+<div class="card-body bg-info bg-opacity-10">
+<h5 class="text-info">Upcoming Interviews</h5>
+<p class="fw-bold fs-1 text-info">{{ interviews_count }}</p>
+</div>
+</div>
+</div>
 
-  <!-- MY TRAININGS SECTION -->
-  <h4 class="mt-5">My Trainings</h4>
+<!-- Resume Optimization -->
+<div class="col-12 col-md-6 col-lg-4">
+<div class="card text-center shadow-sm h-100 border-secondary">
+<div class="card-body bg-secondary bg-opacity-10">
+<h5 class="text-secondary">Resume Optimization</h5>
 
-  <div class="table-responsive">
-    <table class="table table-bordered align-middle responsive-table">
-      <thead class="table-light">
-        <tr>
-          <th>Training</th>
-          <th>Mentor</th>
-          <th>Training Link</th>
-          <th>Timing</th>
-          <th>Certificate</th>
-        </tr>
-      </thead>
+{% if plan == "FREE" %}
+<a href="{% url 'settings' %}" class="btn btn-warning btn-sm">
+Upgrade to Continue
+</a>
 
-      <tbody>
-        {% for e in enrollments %}
-        <tr>
-          <td data-label="Training">
-            {{ e.training.title }}
-          </td>
+{% elif plan == "PRO" %}
+{% if resume_used >= 1 %}
+Used — <a href="{% url 'settings' %}">Upgrade to Pro Plus</a>
+{% else %}
+Available (1 left)
+{% endif %}
 
-          <td data-label="Mentor">
-            {{ e.mentor_name|default:"Not assigned" }}<br>
-            <small class="text-muted">{{ e.mentor_email }}</small>
-          </td>
-
-          <td data-label="Training Link">
-            {% if e.training_link %}
-              <a href="{{ e.training_link }}"
-                target="_blank"
-                class="btn btn-sm btn-primary w-100 w-md-auto">
-                Join
-              </a>
-            {% else %}
-              <span class="text-muted">Link not shared</span>
-            {% endif %}
-          </td>
-
-          <td data-label="Timing">
-            {{ e.course_timing|default:"To be announced" }}
-          </td>
-
-          <td data-label="Certificate">
-            {% if not e.is_completed %}
-              <span class="text-muted">
-                Available after course completion
-              </span>
-            {% elif e.is_completed and not e.certificate %}
-              <span class="text-warning">
-                Certificate uploading soon
-              </span>
-            {% else %}
-              <a href="{{ e.certificate.url }}"
-                 class="btn btn-sm btn-success w-100 w-md-auto">
-                Download
-              </a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" class="text-center text-muted py-4">
-            No trainings enrolled.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+{% else %}
+Used {{ resume_used }} times
+{% endif %}
 
 </div>
-<!-- 
-<a href="{% url 'my_sessions' %}" class="btn btn-outline-secondary mt-2">
-  View My Sessions
-</a>  -->
+</div>
+</div>
+
+<!-- Consultation -->
+<div class="col-12 col-md-6 col-lg-4">
+<div class="card text-center shadow-sm h-100 border-dark">
+<div class="card-body bg-dark bg-opacity-10">
+<h5 class="text-dark">Consultant Sessions</h5>
+
+{% if plan == "FREE" %}
+<a href="{% url 'settings' %}" class="btn btn-warning btn-sm">
+Upgrade to Continue
+</a>
+
+{% elif plan == "PRO" %}
+{% if sessions_used >= 1 %}
+Used — <a href="{% url 'settings' %}">Upgrade to Pro Plus</a>
+{% else %}
+Available (1 left)
+{% endif %}
+
+{% else %}
+Used {{ sessions_used }} sessions
+{% endif %}
+
+<br><br>
+<a href="{% url 'my_sessions' %}" class="btn btn-outline-secondary btn-sm">
+View My Sessions
+</a>
+
+</div>
+</div>
+</div>
+
+<!-- Trainings -->
+<div class="col-12 col-md-6 col-lg-4">
+<div class="card text-center shadow-sm h-100 border-warning">
+<div class="card-body bg-warning bg-opacity-10">
+<h5 class="text-warning">Trainings Enrolled</h5>
+<p class="fw-bold fs-1 text-warning">{{ enrolled_trainings_count }}</p>
+<a href="{% url 'training_list' %}" class="btn btn-outline-warning btn-sm">View</a>
+</div>
+</div>
+</div>
+
+</div>
+
+<!-- PROFILE COMPLETION -->
+<div class="card mt-4 shadow-sm">
+<div class="card-body">
+<h5>Profile Completion</h5>
+<div class="progress">
+<div class="progress-bar bg-success" style="width: {{ completion }}%">
+{{ completion }}%
+</div>
+</div>
+</div>
+</div>
+
+<!-- SKILLS MILESTONE 
+<div class="card mt-4 shadow-sm">
+<div class="card-body">
+<h5>Skill Milestone</h5>
+<p class="text-muted">Keep applying & learning to unlock badges.</p>
+</div>
+</div>-->
+
+<!-- APPLICATION RESPONSE (PRO PLUS ONLY) -->
+<div class="card mt-4 shadow-sm">
+<div class="card-body">
+
+<h5>Application Response Analytics</h5>
+
+{% if plan == "PRO_PLUS" %}
+
+<canvas id="responseChart"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    const labels = {{ chart_labels|safe }};
+    const dataValues = {{ chart_data|safe }};
+
+    console.log("Labels:", labels);
+    console.log("Data:", dataValues);
+
+    if(labels.length === 0){
+        labels.push("Week 1","Week 2","Week 3","Week 4");
+        dataValues.push(0,0,0,0);
+    }
+
+    const ctx = document.getElementById('responseChart').getContext('2d');
+
+    new Chart(ctx,{
+        type:'line',
+        data:{
+            labels: labels,
+            datasets:[{
+                label:'Application Status Response',
+                data: dataValues,
+                borderWidth:2,
+                tension:0.3,
+                fill:false
+            }]
+        },
+        options:{
+            responsive:true,
+            scales:{
+                y:{
+                    beginAtZero:true,
+                    ticks:{ precision:0 }
+                }
+            }
+        }
+    });
+
+});
+</script>
+
+
+{% else %}
+
+<div class="text-center p-5 locked">
+<h6>Available in Pro Plus</h6>
+<a href="{% url 'settings' %}" class="btn btn-warning mt-2">
+Upgrade to Unlock
+</a>
+</div>
+
+{% endif %}
+
+</div>
+</div>
+
+
+<!-- TRAININGS TABLE (UNCHANGED) -->
+<h4 class="mt-5">My Trainings</h4>
+
+<div class="table-responsive">
+<table class="table table-bordered align-middle responsive-table">
+<thead class="table-light">
+<tr>
+<th>Training</th>
+<th>Mentor</th>
+<th>Training Link</th>
+<th>Timing</th>
+<th>Certificate</th>
+</tr>
+</thead>
+
+<tbody>
+{% for e in enrollments %}
+<tr>
+<td data-label="Training">{{ e.training.title }}</td>
+
+<td data-label="Mentor">
+{{ e.mentor_name|default:"Not assigned" }}<br>
+<small class="text-muted">{{ e.mentor_email }}</small>
+</td>
+
+<td data-label="Training Link">
+{% if e.training_link %}
+<a href="{{ e.training_link }}" target="_blank" class="btn btn-sm btn-primary">Join</a>
+{% else %}
+<span class="text-muted">Link not shared</span>
+{% endif %}
+</td>
+
+<td data-label="Timing">{{ e.course_timing|default:"To be announced" }}</td>
+
+<td data-label="Certificate">
+{% if not e.is_completed %}
+<span class="text-muted">Available after course completion</span>
+{% elif e.is_completed and not e.certificate %}
+<span class="text-warning">Certificate uploading soon</span>
+{% else %}
+<a href="{{ e.certificate.url }}" class="btn btn-sm btn-success">Download</a>
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="5" class="text-center text-muted py-4">No trainings enrolled.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+</div>
 {% endblock %}
-
-
