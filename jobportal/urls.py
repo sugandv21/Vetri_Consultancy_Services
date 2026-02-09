@@ -25,6 +25,7 @@ urlpatterns = [
     path('auth/', include('accounts.urls')), 
     path('admin/', admin.site.urls),
     path('jobs/', include('jobs.urls')),
+    path("consultation/", include(("consultation.urls", "consultation"), namespace="consultation")),
 
 ]
 
@@ -33,4 +34,5 @@ if settings.DEBUG:
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT
     )
+
 
