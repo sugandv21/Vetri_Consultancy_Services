@@ -164,6 +164,7 @@ def saved_jobs(request):
     jobs = SavedJob.objects.filter(user=request.user)
     return render(request, "jobs/saved_jobs.html", {"jobs": jobs})
 
+from accounts.models import Notification
 
 @login_required
 def apply_job(request, job_id):
@@ -194,10 +195,24 @@ def apply_job(request, job_id):
     )
 
     # 4️. Apply
-    JobApplication.objects.get_or_create(
+    # JobApplication.objects.get_or_create(
+    #     user=request.user,
+    #     job=job
+    # )
+    application, created = JobApplication.objects.get_or_create(
         user=request.user,
         job=job
     )
+    
+   
+    # Notify admin ONLY when new application created
+    if created:
+        Notification.objects.create(
+            user=None,  # admin notification
+            title="New Job Application",
+            message=f"{request.user.profile.full_name or request.user.email} applied for {job.title}"
+        )
+
 
     # 5️. Remove from saved jobs
     SavedJob.objects.filter(
