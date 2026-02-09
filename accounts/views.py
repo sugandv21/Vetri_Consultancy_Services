@@ -182,9 +182,9 @@ def profile_wizard(request):
         # ✅ Check completion AFTER save
         completion = profile.completion_percentage()
 
-        #  Send email only ONCE
+        # Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-           
+
             sent = safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
@@ -211,6 +211,7 @@ def profile_wizard(request):
             "completion": profile.completion_percentage()
         }
     )
+
 
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek
@@ -239,7 +240,7 @@ def my_profile(request):
         # completion email
         completion = profile.completion_percentage()
         if completion == 100 and not profile.completion_email_sent:
-             sent = safe_send_mail(
+            sent = safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
@@ -290,7 +291,6 @@ def my_profile(request):
             "chart_data": chart_data,
         }
     )
-
 
 
 #setting
@@ -520,14 +520,12 @@ def update_application_status(request, app_id):
 
     application.status = new_status
     application.save()
-    
-    
+
     Notification.objects.create(
         user=application.user,
         title="Application Status Updated",
         message=f"Your application for {application.job.title} is now {new_status}."
     )
-
 
     # Send email ONLY when moved to INTERVIEW
     if old_status != "INTERVIEW" and new_status == "INTERVIEW":
@@ -557,12 +555,10 @@ def update_application_status(request, app_id):
             messages.success(request, "Application status updated & email sent.")
         else:
             messages.warning(request, "Status updated but email failed.")
-
     else:
         messages.success(request, "Application status updated.")
 
     return redirect("candidate_detail", user_id=application.user.id)
-
 
 
 from django.contrib.auth.decorators import login_required
@@ -738,4 +734,5 @@ def generate_advanced_resume_review(request):
     )
 
     return redirect("my_profile")
+
 
