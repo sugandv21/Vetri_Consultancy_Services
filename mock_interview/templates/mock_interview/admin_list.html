@@ -1,0 +1,72 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">Manage Mock Interviews</h3>
+
+<table class="table table-bordered table-hover align-middle">
+
+<thead class="table-dark">
+<tr>
+  <th>ID</th>
+  <th>Candidate</th>
+  <th>Preferred Slot</th>
+  <th>Confirmed Time</th>
+  <th>Status</th>
+  <th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+{% for i in interviews %}
+<tr>
+
+  <td>{{ i.id }}</td>
+
+  <td>{{ i.candidate }}</td>
+
+  <!-- Candidate request -->
+  <td>
+    {{ i.preferred_date }} <br>
+    <small class="text-muted">{{ i.get_preferred_time_display }}</small>
+  </td>
+
+  <!-- Admin confirmed -->
+  <td>
+    {% if i.scheduled_datetime %}
+        {{ i.scheduled_datetime }}
+    {% else %}
+        <span class="text-warning">Not scheduled</span>
+    {% endif %}
+  </td>
+
+  <!-- Status -->
+  <td>
+    <span class="badge
+      {% if i.status == 'pending' %}bg-secondary
+      {% elif i.status == 'scheduled' %}bg-success
+      {% else %}bg-primary{% endif %}">
+      {{ i.status|title }}
+    </span>
+  </td>
+
+  <!-- Actions -->
+  <td>
+    <a class="btn btn-sm btn-primary"
+       href="{% url 'admin_mock_update' i.id %}">
+       Manage
+    </a>
+
+    {% if i.status == "scheduled" or i.status == "completed" %}
+    <a class="btn btn-sm btn-success"
+       href="{% url 'mock_feedback' i.id %}">
+       Feedback
+    </a>
+    {% endif %}
+  </td>
+
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

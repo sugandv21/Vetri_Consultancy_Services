@@ -1,0 +1,33 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">Submit Interview Feedback</h3>
+
+<form method="post" class="card p-4 shadow-sm">
+{% csrf_token %}
+
+<div class="mb-3">
+<label>Rating (1-5)</label>
+<input type="number" name="rating" min="1" max="5" class="form-control" required>
+</div>
+
+<div class="mb-3">
+<label>Strengths</label>
+<textarea name="strengths" class="form-control" rows="3" required></textarea>
+</div>
+
+<div class="mb-3">
+<label>Improvements</label>
+<textarea name="improvements" class="form-control" rows="3" required></textarea>
+</div>
+
+<div class="mb-3">
+<label>Notes</label>
+<textarea name="notes" class="form-control" rows="3"></textarea>
+</div>
+
+<button class="btn btn-primary">Submit Feedback</button>
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">My Mock Interviews</h3>
+
+{% for i in interviews %}
+<div class="card mb-3 p-3 shadow-sm">
+
+  <div class="d-flex justify-content-between align-items-center">
+
+    <!-- LEFT SIDE -->
+    <div>
+
+      <strong>Preferred Slot:</strong><br>
+      {{ i.preferred_date }} — {{ i.get_preferred_time_display }}
+
+      <br><br>
+
+      {% if i.scheduled_datetime %}
+        <strong>Confirmed Time:</strong><br>
+        {{ i.scheduled_datetime }}
+      {% else %}
+        <span class="text-warning">Waiting for admin confirmation</span>
+      {% endif %}
+
+      <br><br>
+
+      <strong>Status:</strong>
+      <span class="badge 
+        {% if i.status == 'pending' %}bg-secondary
+        {% elif i.status == 'scheduled' %}bg-success
+        {% else %}bg-primary{% endif %}">
+        {{ i.status|title }}
+      </span>
+
+    </div>
+
+
+    <!-- RIGHT SIDE ACTIONS -->
+    <div class="text-end">
+
+      {% if i.meeting_link and i.status == "scheduled" %}
+        <a class="btn btn-success btn-sm"
+           href="{% url 'join_mock' i.id %}">
+           Join Interview
+        </a>
+      {% endif %}
+
+      {% if i.status == "completed" %}
+        <a class="btn btn-primary btn-sm"
+           href="{% url 'mock_report' i.id %}">
+           View Report
+        </a>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+</div>
+
+{% empty %}
+<p>No interviews requested yet.</p>
+{% endfor %}
+
+{% endblock %}

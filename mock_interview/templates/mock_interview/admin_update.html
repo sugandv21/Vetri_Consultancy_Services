@@ -1,0 +1,87 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container" style="max-width:700px;">
+
+  <div class="card shadow-sm p-4">
+
+    <h3 class="mb-4">Manage Interview</h3>
+
+    <!-- Candidate Request Info -->
+    <div class="mb-4">
+      <h5>Candidate Request</h5>
+      <p>
+        <strong>Candidate:</strong> {{ interview.candidate }} <br>
+        <strong>Preferred Date:</strong> {{ interview.preferred_date }} <br>
+        <strong>Preferred Slot:</strong> {{ interview.get_preferred_time_display }}
+      </p>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- Assign Consultant -->
+      <div class="mb-3">
+        <label class="form-label">Assign Consultant</label>
+        <select name="consultant" class="form-control">
+          <option value="">Select Consultant</option>
+          {% for c in consultants %}
+            <option value="{{ c.id }}"
+              {% if interview.consultant and interview.consultant.id == c.id %}selected{% endif %}>
+              {{ c }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Confirmed DateTime -->
+      <div class="mb-3">
+        <label class="form-label">Confirmed Interview Time</label>
+        <input type="datetime-local"
+               name="scheduled_datetime"
+               class="form-control"
+               value="{{ interview.scheduled_datetime|date:'Y-m-d\\TH:i' }}">
+      </div>
+
+      <!-- Meeting Link -->
+      <div class="mb-3">
+        <label class="form-label">Microsoft Teams / Meet Link</label>
+        <input type="url"
+               name="meeting_link"
+               class="form-control"
+               value="{{ interview.meeting_link }}">
+      </div>
+
+      <!-- Status -->
+      <div class="mb-3">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-control">
+
+          <option value="pending"
+            {% if interview.status == "pending" %}selected{% endif %}>
+            Pending
+          </option>
+
+          <option value="scheduled"
+            {% if interview.status == "scheduled" %}selected{% endif %}>
+            Scheduled
+          </option>
+
+          <option value="completed"
+            {% if interview.status == "completed" %}selected{% endif %}>
+            Completed
+          </option>
+
+        </select>
+      </div>
+
+      <button class="btn btn-success w-100">
+        Save Changes
+      </button>
+
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}

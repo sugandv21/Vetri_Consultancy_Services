@@ -1,0 +1,44 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container" style="max-width:600px;">
+
+  <div class="card shadow-sm p-4">
+    <h3 class="mb-4 text-center">Request Mock Interview</h3>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- Preferred Date -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Preferred Date</label>
+        <input type="date"
+               name="preferred_date"
+               class="form-control"
+               required>
+      </div>
+
+      <!-- Preferred Time Slot -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Preferred Time Slot</label>
+        <select name="preferred_time" class="form-control" required>
+          <option value="">Select a slot</option>
+          <option value="morning">Morning (9 AM – 12 PM)</option>
+          <option value="afternoon">Afternoon (12 PM – 4 PM)</option>
+          <option value="evening">Evening (4 PM – 8 PM)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary w-100">
+        Submit Request
+      </button>
+    </form>
+
+    <p class="text-muted mt-3 text-center">
+      Admin will confirm exact interview time and send meeting link.
+    </p>
+
+  </div>
+</div>
+
+{% endblock %}

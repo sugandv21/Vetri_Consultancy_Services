@@ -1,0 +1,23 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">Interview Feedback</h3>
+
+<div class="card p-4 shadow-sm">
+
+  <h4>Rating: ⭐ {{ feedback.rating }}/5</h4>
+
+  <hr>
+
+  <h5>Strengths</h5>
+  <p>{{ feedback.strengths }}</p>
+
+  <h5>Areas to Improve</h5>
+  <p>{{ feedback.improvements }}</p>
+
+  <h5>Additional Notes</h5>
+  <p>{{ feedback.notes }}</p>
+
+</div>
+
+{% endblock %}
