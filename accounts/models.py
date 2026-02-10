@@ -128,7 +128,7 @@ class Profile(models.Model):
     mobile_number = models.CharField(max_length=15, blank=True)
 
     # Professional info
-    experience = models.IntegerField(null=True, blank=True)
+    experience = models.PositiveIntegerField(default=0)
     location = models.CharField(max_length=100, blank=True)
     skills = models.CharField(max_length=255, blank=True)
 
@@ -237,5 +237,6 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.title}"
+
 
 
