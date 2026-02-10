@@ -16,8 +16,7 @@
 
     <p>
       <strong>Experience:</strong>
-      {% if candidate.profile.experience is not None %} {{
-      candidate.profile.experience }} years {% else %} — {% endif %}
+      {{ candidate.profile.experience }} years
     </p>
 
     <p>
@@ -167,3 +166,4 @@
 </a>
 
 {% endblock %}
+
