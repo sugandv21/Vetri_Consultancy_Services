@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'core',
     'jobs',
     'consultation',
+    'mock_interview',
 ]
 
 
@@ -237,6 +238,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
 
 
 
