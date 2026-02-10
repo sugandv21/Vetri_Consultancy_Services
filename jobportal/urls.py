@@ -25,7 +25,8 @@ urlpatterns = [
     path('auth/', include('accounts.urls')), 
     path('admin/', admin.site.urls),
     path('jobs/', include('jobs.urls')),
-    path("consultation/", include("consultation.urls")),
+    path("consultation/", include("consultation.urls")),    
+    path("mock/", include("mock_interview.urls")),
 
 
 ]
@@ -35,4 +36,5 @@ if settings.DEBUG:
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT
     )
+
 
