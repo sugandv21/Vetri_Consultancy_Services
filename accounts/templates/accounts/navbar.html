@@ -188,6 +188,13 @@
             </ul>
           </li>
 
+          <li class="nav-item">
+  <a class="nav-link" href="{% url 'admin_mock_list' %}">
+    Mock Interviews
+  </a>
+</li>
+
+
         {% endif %}
 
       </ul>
@@ -243,24 +250,23 @@
       <li class="nav-item dropdown">
 
   <a class="nav-link dropdown-toggle"
-     href="#"
-     id="consultDropdown"
-     role="button"
-     data-bs-toggle="dropdown"
-     aria-expanded="false">
+     {% if user.plan == "FREE" %}
+        href="{% url 'settings' %}"
+        style="cursor:pointer;"
+     {% else %}
+        href="#"
+        id="consultDropdown"
+        role="button"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+     {% endif %}
+  >
     Consultant
   </a>
 
+  {% if user.plan != "FREE" %}
   <ul class="dropdown-menu" aria-labelledby="consultDropdown">
 
-    {% if user.plan == "FREE" %}
-      <li>
-        <a class="dropdown-item text-warning" href="{% url 'settings' %}">
-          Talk to Consultant (Upgrade Required)
-        </a>
-      </li>
-
-    {% else %}
       <li>
         <a class="dropdown-item" href="{% url 'consultant_sessions' %}">
           Talk to Consultant
@@ -272,11 +278,35 @@
           My Sessions
         </a>
       </li>
-    {% endif %}
 
   </ul>
+  {% endif %}
 
-</li> 
+</li>
+
+
+<li class="nav-item dropdown">
+
+  <a class="nav-link dropdown-toggle"
+     {% if user.plan == "FREE" %}
+        href="{% url 'settings' %}"
+     {% else %}
+        href="#"
+        data-bs-toggle="dropdown"
+     {% endif %}>
+     Mock Interview
+  </a>
+
+  {% if user.plan != "FREE" %}
+  <ul class="dropdown-menu">
+      <li><a class="dropdown-item" href="{% url 'schedule_mock' %}">Request</a></li>
+      <li><a class="dropdown-item" href="{% url 'my_mock_interviews' %}">My Interviews</a></li>
+  </ul>
+  {% endif %}
+
+</li>
+
+
 
   </li>
 
