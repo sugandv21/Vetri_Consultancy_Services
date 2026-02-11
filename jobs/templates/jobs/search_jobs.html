@@ -67,15 +67,29 @@
     </p>
 
     <div class="mt-auto">
-      {% if job.visibility == "PRO" and not request.user.is_pro %}
-        <span class="badge bg-warning">PRO Job</span>
-        <p class="text-muted small mt-2">Upgrade to PRO to apply</p>
+      {% if job.visibility == "FREE" %}
+        <span class="badge plan-free">FREE</span>
+      {% elif job.visibility == "PRO" %}
+        <span class="badge plan-pro">PRO</span>
       {% else %}
-        <div class="d-flex flex-column flex-md-row gap-2">
+        <span class="badge plan-proplus">PRO PLUS</span>
+      {% endif %}
+
+      {% if job.can_apply %}
+        <div class="d-flex flex-column flex-md-row gap-2 mt-2">
           <a href="{% url 'save_job' job.id %}" class="btn btn-outline-secondary btn-sm flex-md-fill">Save</a>
           <a href="{% url 'apply_job' job.id %}" class="btn btn-primary btn-sm flex-md-fill">Apply</a>
         </div>
+      {% else %}
+        {% comment %} <p class="text-muted small mt-2">
+          Upgrade to {{ job.required_plan }} to apply
+        </p> {% endcomment %}
+        <a href="{% url 'settings' %}" class="btn btn-dark btn-sm w-100">
+          Upgrade to {{ job.required_plan }}
+        </a>
       {% endif %}
+
+
     </div>
 
   </div>

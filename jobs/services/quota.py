@@ -1,40 +1,34 @@
 from django.utils import timezone
 from jobs.models import JobApplication
 
-# monthly limits
 LIMITS = {
-    "FREE": 5,
-    "PRO": 10,
-    "PRO_PLUS": None,  # unlimited
+    "FREE": 2,
+    "PRO": 3,
+    "PRO_PLUS": None,
 }
 
 
 def applications_used_this_month(user):
-    now = timezone.now()
-    start_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    now = timezone.localtime()
+    start_month = now.date().replace(day=1)
 
     return JobApplication.objects.filter(
         user=user,
-        applied_at__gte=start_month
+        applied_at__date__gte=start_month
     ).count()
 
 
 def get_active_plan(user):
-    """
-    Billing-safe plan detection.
-    Expired users automatically fallback to FREE.
-    """
     if user.plan_status != "ACTIVE":
         return "FREE"
     return user.plan
 
 
-def can_apply(user):
+def can_apply_quota(user):
     tier = get_active_plan(user)
 
-    limit = LIMITS.get(tier)
+    limit = LIMITS.get(tier, LIMITS["FREE"])
 
-    # unlimited plan
     if limit is None:
         return True, None, None
 

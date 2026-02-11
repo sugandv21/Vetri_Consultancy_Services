@@ -19,6 +19,7 @@ class Job(models.Model):
     VISIBILITY_CHOICES = [
         ('FREE', 'Free'),
         ('PRO', 'Pro'),
+        ('PROPLUS', 'ProPLUS'),
     ]
 
     title = models.CharField(max_length=200)

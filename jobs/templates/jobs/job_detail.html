@@ -11,8 +11,13 @@
 
     <p>{{ job.experience_min }}–{{ job.experience_max }} years</p>
 
-    {% if job.visibility == "PRO" %}
-      <span class="badge bg-warning mb-2">PRO Job</span>
+    <!-- PLAN BADGE -->
+    {% if job.visibility == "FREE" %}
+      <span class="badge plan-free mb-2">FREE Job</span>
+    {% elif job.visibility == "PRO" %}
+      <span class="badge plan-pro mb-2">PRO Job</span>
+    {% elif job.visibility == "PROPLUS" %}
+      <span class="badge plan-proplus mb-2">PRO PLUS Job</span>
     {% endif %}
 
     <hr>
@@ -28,18 +33,7 @@
     <hr>
 
     <!-- ACTIONS -->
-    {% if job.visibility == "PRO" and not request.user.is_pro %}
-
-      <div class="alert alert-warning">
-        This is a <strong>PRO job</strong>.
-        Upgrade your account to apply.
-      </div>
-
-      <a class="btn btn-outline-warning disabled">
-        Upgrade to PRO to Apply
-      </a>
-
-    {% else %}
+    {% if can_apply %}
 
       <a href="{% url 'save_job' job.id %}" class="btn btn-outline-secondary">
         Save
@@ -47,6 +41,17 @@
 
       <a href="{% url 'apply_job' job.id %}" class="btn btn-primary">
         Apply
+      </a>
+
+    {% else %}
+
+      <div class="alert alert-warning">
+        This is a <strong>{{ required_plan }}</strong> job.
+        Upgrade to <strong>{{ required_plan }}</strong> to apply.
+      </div>
+
+      <a href="{% url 'settings' %}" class="btn btn-dark">
+        Upgrade to {{ required_plan }}
       </a>
 
     {% endif %}

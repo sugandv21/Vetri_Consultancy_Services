@@ -4,7 +4,10 @@ from accounts.decorators import staff_required, admin_required
 from django.contrib.auth.decorators import login_required
 from .models import Job, SavedJob, JobApplication
 from django.shortcuts import get_object_or_404
-from jobs.services.quota import can_apply
+from jobs.utils import visible_jobs_for_user, can_user_apply
+from jobs.services.quota import can_apply_quota
+
+
 
 @staff_required
 def create_job(request):
@@ -84,30 +87,28 @@ def reject_job(request, job_id):
 
 #candidate search job
 from django.core.paginator import Paginator
-from .utils import visible_jobs_for_user
 
+from .utils import visible_jobs_for_user, can_user_apply
+
+from django.db.models import Q
 
 @login_required
 def search_jobs(request):
     user = request.user
-    profile = user.profile
+    profile = getattr(user, "profile", None)   # safe profile access
 
+    # show all published jobs (no hiding)
     jobs = visible_jobs_for_user(user)
 
-    # Matching jobs button clicked
-    if request.GET.get("match") == "1":
-        skills = profile.skills
-        role = profile.full_name  # optional if you later add role field
+    # Matching jobs
+    if request.GET.get("match") == "1" and profile and profile.skills:
+        skills_list = [s.strip() for s in profile.skills.split(",")]
 
-        if skills:
-            skills_list = [s.strip() for s in skills.split(",")]
+        query = Q()
+        for skill in skills_list:
+            query |= Q(skills__icontains=skill) | Q(title__icontains=skill)
 
-            from django.db.models import Q
-            query = Q()
-            for skill in skills_list:
-                query |= Q(skills__icontains=skill) | Q(title__icontains=skill)
-
-            jobs = jobs.filter(query)
+        jobs = jobs.filter(query)
 
     # filters
     location = request.GET.get("location")
@@ -129,6 +130,22 @@ def search_jobs(request):
     paginator = Paginator(jobs.order_by("-created_at"), 6)
     page_obj = paginator.get_page(request.GET.get("page"))
 
+    # 🔹 Attach permission to each job
+    job_list = list(page_obj.object_list)
+    for job in job_list:
+        job.can_apply = can_user_apply(user, job)
+
+        # determine upgrade target
+        if job.visibility == "FREE":
+            job.required_plan = None
+        elif job.visibility == "PRO":
+            job.required_plan = "PRO"
+        elif job.visibility == "PROPLUS":
+            job.required_plan = "PROPLUS"
+
+
+    page_obj.object_list = job_list
+
     return render(
         request,
         "jobs/search_jobs.html",
@@ -139,14 +156,24 @@ def search_jobs(request):
     )
 
 
+from .utils import can_user_apply
+from .models import Job
 
 @login_required
 def job_detail(request, job_id):
-    jobs = visible_jobs_for_user(request.user)
-    job = get_object_or_404(jobs, id=job_id)
+    # allow viewing any published job
+    job = get_object_or_404(Job, id=job_id, status="PUBLISHED")
+    can_apply = can_user_apply(request.user, job)
 
-    return render(request, "jobs/job_detail.html", {"job": job})
+    required_plan = None
+    if not can_apply:
+        required_plan = job.visibility
 
+    return render(request, "jobs/job_detail.html", {
+        "job": job,
+        "can_apply": can_apply,
+        "required_plan": required_plan
+    })
 
 #save job
 @login_required
@@ -166,11 +193,20 @@ def saved_jobs(request):
 
 from accounts.models import Notification
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+
+from jobs.models import Job, JobApplication, SavedJob
+from accounts.models import Notification
+
+
 @login_required
 def apply_job(request, job_id):
+
     profile = request.user.profile
 
-    # 1. Profile completion check
+    # 1️⃣ PROFILE COMPLETION CHECK
     if profile.completion_percentage() < 100:
         messages.warning(
             request,
@@ -178,50 +214,46 @@ def apply_job(request, job_id):
         )
         return redirect("my_profile")
 
-    # 2️. QUOTA CHECK (NEW — revenue protection)
-    allowed, used, limit = can_apply(request.user)
+    # 2️⃣ MONTHLY QUOTA CHECK
+    allowed, used, limit = can_apply_quota(request.user)
 
     if not allowed:
         messages.error(
             request,
             f"Monthly application limit reached ({limit}). Upgrade your plan to continue applying."
         )
-        return redirect("pricing")   # your subscription page
+        return redirect("settings")
 
-    # 3️. Get job
-    job = get_object_or_404(
-        visible_jobs_for_user(request.user),
-        id=job_id
-    )
+    # 3️⃣ GET JOB
+    job = get_object_or_404(Job, id=job_id)
 
-    # 4️. Apply
-    # JobApplication.objects.get_or_create(
-    #     user=request.user,
-    #     job=job
-    # )
+    # 4️⃣ APPLY (PREVENT DUPLICATE APPLICATIONS)
     application, created = JobApplication.objects.get_or_create(
         user=request.user,
         job=job
     )
-    
-   
-    # Notify admin ONLY when new application created
-    if created:
-        Notification.objects.create(
-            user=None,  # admin notification
-            title="New Job Application",
-            message=f"{request.user.profile.full_name or request.user.email} applied for {job.title}"
-        )
 
+    if not created:
+        messages.info(request, "You have already applied for this job.")
+        return redirect("applications")
 
-    # 5️. Remove from saved jobs
+    # 5️⃣ ADMIN ALERT (ONLY FIRST TIME APPLY)
+    Notification.objects.create(
+        user=None,  # admin alert
+        title="New Job Application",
+        message=f"{request.user.full_name} applied for {job.title}"
+    )
+
+    # 6️⃣ REMOVE FROM SAVED JOBS (IF EXISTS)
     SavedJob.objects.filter(
         user=request.user,
         job=job
     ).delete()
 
+    # 7️⃣ SUCCESS MESSAGE
     messages.success(request, "Application submitted successfully.")
     return redirect("applications")
+
 
 
 #application page

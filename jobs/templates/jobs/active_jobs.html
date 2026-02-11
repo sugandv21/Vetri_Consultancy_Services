@@ -46,11 +46,17 @@
           {{ job.get_job_type_display }}
         </td>
 
-        <td data-label="Visibility">
-          <span class="badge bg-{% if job.visibility == 'PRO' %}success{% else %}secondary{% endif %}">
-            {{ job.visibility }}
-          </span>
-        </td>
+       <td data-label="Visibility">
+  <span class="badge
+    {% if job.visibility == 'FREE' %}plan-free
+    {% elif job.visibility == 'PRO' %}plan-pro
+    {% elif job.visibility == 'PROPLUS' %}plan-proplus
+    {% endif %}
+  ">
+    {{ job.get_visibility_display }}
+  </span>
+</td>
+
 
         <td data-label="Deadline">
           {{ job.deadline|date:"d M Y" }}
@@ -142,6 +148,21 @@
   }
 
 }
+.plan-free{
+    background:#6c757d;
+    color:#fff;
+}
+
+.plan-pro{
+    background:#1d8094;
+    color:#fff;
+}
+
+.plan-proplus{
+    background:#003b44;
+    color:#fff;
+}
+
 </style>
 
 
