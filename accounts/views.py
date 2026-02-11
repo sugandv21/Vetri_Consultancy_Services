@@ -10,7 +10,7 @@ from datetime import timedelta
 from jobs.models import JobApplication
 from django.shortcuts import get_object_or_404
 from accounts.models import Notification
-from accounts.utils.email import safe_send_mail
+from accounts.models import Payment
 
 
 
@@ -103,46 +103,55 @@ def logout_user(request):
 def post_job(request):
     return render(request, "jobs/post_job.html")
 
+from .models import SubscriptionPricing
+from django.utils import timezone
+from datetime import timedelta
+
 @login_required
 def payment(request):
+
     selected_plan = request.session.get("selected_plan")
 
     if not selected_plan:
         messages.error(request, "No plan selected.")
         return redirect("settings")
 
-    # Plan pricing
-    if selected_plan == User.PRO:
-        amount = 8999
-        plan_name = "Pro"
-
-    elif selected_plan == User.PRO_PLUS:
-        amount = 29999
-        plan_name = "Pro Plus"
-
-    else:
-        messages.error(request, "Invalid plan.")
+    # prevent FREE tampering
+    if selected_plan not in [User.PRO, User.PRO_PLUS]:
+        messages.error(request, "Invalid plan selected.")
         return redirect("settings")
 
-    # Simulated payment success
+    # dynamic pricing from admin
+    pricing = SubscriptionPricing.objects.filter(plan=selected_plan).first()
+
+    if not pricing:
+        messages.error(request, "Pricing not configured. Contact admin.")
+        return redirect("settings")
+
+    amount = pricing.price
+    plan_name = dict(User.PLAN_CHOICES).get(selected_plan, selected_plan)
+
+    # payment success simulation
     if request.method == "POST":
         user = request.user
 
         user.plan = selected_plan
         user.plan_status = User.ACTIVE
         user.plan_start = timezone.now()
-        user.plan_end = timezone.now() + timedelta(days=30)
-        # user.plan_end = timezone.now() + timedelta(hours=1)
-        # user.plan_end = timezone.now() + timedelta(minutes=2)
-
-
-
+        #user.plan_end = timezone.now() + timedelta(days=30)
+        user.plan_end = timezone.now() + timedelta(minutes=2)
         user.save()
 
-        # clear session
-        del request.session["selected_plan"]
+        Payment.objects.create(
+            user=user,
+            payment_type="PLAN",
+            amount=amount,
+            status="SUCCESS"
+        )
 
-        messages.success(request, f"Payment successful! Welcome to {plan_name} ")
+        request.session.pop("selected_plan", None)
+
+        messages.success(request, f"Payment successful! Welcome to {plan_name}")
         return redirect("dashboard")
 
     return render(request, "accounts/payment.html", {
@@ -182,23 +191,25 @@ def profile_wizard(request):
         # ✅ Check completion AFTER save
         completion = profile.completion_percentage()
 
-        # Send email only ONCE
+        # ✅ Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-
-            sent = safe_send_mail(
+            send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs and track applications.\n\n"
+                    "You can now apply for jobs, save opportunities, "
+                    "and track your applications from your dashboard.\n\n"
+                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,  # IMPORTANT
             )
 
-            if sent:
-                profile.completion_email_sent = True
-                profile.save(update_fields=["completion_email_sent"])
+            profile.completion_email_sent = True
+            profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("dashboard")
@@ -211,7 +222,6 @@ def profile_wizard(request):
             "completion": profile.completion_percentage()
         }
     )
-
 
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek
@@ -240,20 +250,22 @@ def my_profile(request):
         # completion email
         completion = profile.completion_percentage()
         if completion == 100 and not profile.completion_email_sent:
-            sent = safe_send_mail(
+            send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
                     "You can now apply for jobs and track applications.\n\n"
+                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,
             )
 
-            if sent:
-                profile.completion_email_sent = True
-                profile.save(update_fields=["completion_email_sent"])
+            profile.completion_email_sent = True
+            profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("my_profile")
@@ -293,9 +305,22 @@ def my_profile(request):
     )
 
 
-#setting
+from django.urls import reverse
+from django.contrib.auth import update_session_auth_hash
+
 @login_required
 def settings_view(request):
+
+    reason = request.GET.get("upgrade_required")
+
+    messages_map = {
+        "mock": "Mock interviews are available only for Pro Plus members.",
+        "consultant": "Consultant sessions require a paid plan.",
+        "resume": "AI resume optimization is available in Pro and Pro Plus plans.",
+    }
+
+    message = messages_map.get(reason)
+
     if request.method == "POST":
         new_password = request.POST.get("new_password")
         confirm_password = request.POST.get("confirm_password")
@@ -303,14 +328,38 @@ def settings_view(request):
         if new_password:
             if new_password != confirm_password:
                 messages.error(request, "Passwords do not match.")
-                return redirect("settings")
+                return redirect(f"{reverse('settings')}?upgrade_required={reason or ''}")
 
             request.user.set_password(new_password)
             request.user.save()
-            messages.success(request, "Password updated successfully.")
-            return redirect("login")
+            update_session_auth_hash(request, request.user)
 
-    return render(request, "accounts/settings.html")
+            messages.success(request, "Password updated successfully.")
+            return redirect("settings")
+
+    payments = Payment.objects.filter(user=request.user).order_by("-created_at")
+
+    return render(request, "accounts/settings.html", {
+        "upgrade_message": message,
+        "payments": payments
+    })
+
+from django.http import HttpResponse
+from .models import Payment
+from .services.invoice import build_invoice
+from django.contrib.auth.decorators import login_required
+
+
+@login_required
+def download_invoice(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id, user=request.user)
+
+    buffer = build_invoice(payment, request.user)
+
+    response = HttpResponse(buffer, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="invoice_{payment.id}.pdf"'
+
+    return response
 
 #upgrade to pro
 @login_required
@@ -364,18 +413,56 @@ from accounts.models import Notification
 @staff_required
 def admin_dashboard(request):
 
-    total_candidates = User.objects.filter(is_staff=False).count()
+    # ---------------- USERS ----------------
+    candidate_users = User.objects.filter(is_staff=False)
+
+    total_candidates = candidate_users.count()
+
+    free_users = candidate_users.filter(plan=User.FREE).count()
+
+    paid_users = candidate_users.exclude(plan=User.FREE).count()
+
+    expired_users = candidate_users.filter(plan_status=User.EXPIRED).count()
+
+    # ---------------- JOBS ----------------
     total_jobs = Job.objects.count()
     pending_jobs = Job.objects.filter(status="PENDING").count()
     active_jobs = Job.objects.filter(status="PUBLISHED").count()
+
+    # ---------------- APPLICATIONS ----------------
     total_applications = JobApplication.objects.count()
+    pending_applications = JobApplication.objects.filter(status="APPLIED").count()
+    interview_applications = JobApplication.objects.filter(status="INTERVIEW").count()
+
+    # ---------------- TRAINING ----------------
     total_trainings = Training.objects.count()
     total_enrollments = Enrollment.objects.count()
     total_enquiries = TrainingEnquiry.objects.count()
 
+    # ---------------- SLA MONITORING ----------------
+    from django.utils import timezone
+    from datetime import timedelta
+
     one_day_ago = timezone.now() - timedelta(hours=24)
 
-    # ---------------- NEW JOB APPLICATION ALERTS (GLOBAL) ----------------
+    last_message = EnquiryMessage.objects.filter(
+        enquiry=OuterRef("pk")
+    ).order_by("-created_at")
+
+    delayed_queryset = TrainingEnquiry.objects.annotate(
+        last_sender=Subquery(last_message.values("sender")[:1]),
+        last_message_time=Subquery(last_message.values("created_at")[:1])
+    ).filter(
+        last_sender__isnull=False,
+        last_message_time__lte=one_day_ago
+    ).exclude(
+        last_sender=request.user.id
+    )
+
+    delayed_enquiries = delayed_queryset.count()
+
+
+    # ---------------- ALERTS ----------------
     job_notifications = Notification.objects.filter(
         user__isnull=True,
         is_read=False,
@@ -385,31 +472,49 @@ def admin_dashboard(request):
     new_app_count = job_notifications.count()
     recent_notifications = job_notifications[:5]
 
-    # ---------------- PRIORITY SESSION ALERTS (PER ADMIN) ----------------
     notifications = request.user.notifications.filter(
         is_read=False,
         created_at__gte=one_day_ago
     ).order_by("-created_at")
+    # ---------------- UNREAD ADMIN ALERTS ----------------
+    unread_notifications = Notification.objects.filter(
+        user__isnull=True,   # admin/global alerts only
+        is_read=False
+    ).count()
 
-    return render(
-        request,
-        "accounts/admin_dashboard.html",
-        {
-            "total_candidates": total_candidates,
-            "total_jobs": total_jobs,
-            "pending_jobs": pending_jobs,
-            "active_jobs": active_jobs,
-            "total_applications": total_applications,
-            "total_trainings": total_trainings,
-            "total_enrollments": total_enrollments,
-            "total_enquiries": total_enquiries,
+    return render(request, "accounts/admin_dashboard.html", {
 
-            # TWO TYPES PASSED
-            "new_app_count": new_app_count,
-            "recent_notifications": recent_notifications,
-            "notifications": notifications,
-        }
-    )
+        # users
+        "total_candidates": total_candidates,
+        "free_users": free_users,
+        "paid_users": paid_users,
+        "expired_users": expired_users,
+
+        # jobs
+        "total_jobs": total_jobs,
+        "pending_jobs": pending_jobs,
+        "active_jobs": active_jobs,
+
+        # applications
+        "total_applications": total_applications,
+        "pending_applications": pending_applications,
+        "interview_applications": interview_applications,
+
+        # training
+        "total_trainings": total_trainings,
+        "total_enrollments": total_enrollments,
+        "total_enquiries": total_enquiries,
+
+        # SLA
+        "delayed_enquiries": delayed_enquiries,
+        "unread_notifications": unread_notifications,
+
+        # alerts
+        "new_app_count": new_app_count,
+        "recent_notifications": recent_notifications,
+        "notifications": notifications,
+    })
+
 
 # #candidate resume view:
 # @login_required
@@ -520,12 +625,14 @@ def update_application_status(request, app_id):
 
     application.status = new_status
     application.save()
-
+    
+    
     Notification.objects.create(
         user=application.user,
         title="Application Status Updated",
         message=f"Your application for {application.job.title} is now {new_status}."
     )
+
 
     # Send email ONLY when moved to INTERVIEW
     if old_status != "INTERVIEW" and new_status == "INTERVIEW":
@@ -545,20 +652,17 @@ def update_application_status(request, app_id):
             "Vetri Consultancy Services"
         )
 
-        sent = safe_send_mail(
+        send_mail(
             subject=subject,
             message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[candidate.email],
+            fail_silently=True,
         )
 
-        if sent:
-            messages.success(request, "Application status updated & email sent.")
-        else:
-            messages.warning(request, "Status updated but email failed.")
-    else:
-        messages.success(request, "Application status updated.")
-
+    messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
+
 
 
 from django.contrib.auth.decorators import login_required
@@ -567,6 +671,8 @@ from jobs.models import JobApplication, Job
 from jobs.models import SavedJob, JobApplication
 from core.models import Enrollment
 from collections import OrderedDict
+
+
 @login_required
 def dashboard(request):
 
@@ -675,7 +781,7 @@ def dashboard(request):
 
     }
 
-    return render(request, "accounts/dashboard.html", context)
+    return render(request, "accounts/updated_dashboard.html", context)
 
 
 
@@ -694,7 +800,8 @@ def generate_resume_review(request):
 
     profile = user.profile
 
-    feedback = generate_resume_suggestions(profile)
+    feedback = generate_resume_suggestions(profile, None, mode="pro")
+
 
     ResumeReview.objects.update_or_create(
         profile=profile,
@@ -707,6 +814,9 @@ def generate_resume_review(request):
 
 #pro plus user
 from .resume_parser import extract_text
+
+from .resume_ai import generate_resume_suggestions
+
 
 @login_required
 def generate_advanced_resume_review(request):
@@ -723,9 +833,16 @@ def generate_advanced_resume_review(request):
         messages.error(request, "Upload resume first.")
         return redirect("my_profile")
 
+    # Extract PDF text
     resume_text = extract_text(profile.resume.path)
 
-    feedback = generate_resume_suggestions(profile, resume_text)
+    # Optional job description from form later
+    job_description = request.POST.get("job_description")
+
+    # Generate ATS analysis
+    feedback = generate_resume_suggestions(profile, resume_text, mode="pro_plus")
+
+
 
     ResumeReview.objects.update_or_create(
         profile=profile,
@@ -733,6 +850,80 @@ def generate_advanced_resume_review(request):
         defaults={"feedback": feedback}
     )
 
+    messages.success(request, "ATS Resume analysis generated.")
     return redirect("my_profile")
 
 
+
+from core.models import TrainingEnquiry
+from accounts.models import Notification
+from django.utils import timezone
+from datetime import timedelta
+# Shows enquiries waiting > 24 hours
+from django.db.models import OuterRef, Subquery
+from django.utils import timezone
+from datetime import timedelta
+from core.models import TrainingEnquiry, EnquiryMessage
+from accounts.decorators import staff_required
+
+
+@staff_required
+def admin_delayed_enquiries(request):
+
+    one_day_ago = timezone.now() - timedelta(hours=24)
+
+    last_message = EnquiryMessage.objects.filter(
+        enquiry=OuterRef("pk")
+    ).order_by("-created_at")
+
+    enquiries = TrainingEnquiry.objects.annotate(
+        last_sender=Subquery(last_message.values("sender")[:1]),
+        last_message_time=Subquery(last_message.values("created_at")[:1])
+    ).filter(
+        last_sender__isnull=False,
+        last_message_time__lte=one_day_ago
+    ).exclude(
+        last_sender=request.user.id
+    ).select_related("user", "training")
+
+    return render(
+        request,
+        "accounts/admin_enquiry_list.html",
+        {
+            "title": "Delayed Enquiries",
+            "enquiries": enquiries
+        }
+    )
+
+
+# Shows admin inbox
+@staff_required
+def admin_unread_alerts(request):
+
+    alerts = Notification.objects.filter(
+        user__isnull=True,   # admin/global alerts only
+        is_read=False
+    ).order_by("-created_at")
+
+    return render(
+        request,
+        "accounts/admin_alerts.html",
+        {
+            "title": "Unread Alerts",
+            "alerts": alerts
+        }
+    )
+
+
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404, redirect
+from accounts.models import Notification
+from accounts.decorators import staff_required
+
+@staff_required
+@require_POST
+def mark_alert_read(request, alert_id):
+    alert = get_object_or_404(Notification, id=alert_id)
+    alert.is_read = True
+    alert.save()
+    return redirect("admin_unread_alerts")

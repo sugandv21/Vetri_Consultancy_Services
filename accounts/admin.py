@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Profile
+from .models import User, Profile, ResumeReview, Notification, Payment
+
 
 
 @admin.register(User)
@@ -60,3 +61,32 @@ class UserAdmin(BaseUserAdmin):
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "mobile_number", "experience", "location")
     search_fields = ("user__email", "mobile_number")
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("user", "title", "is_read", "created_at")
+    list_filter = ("is_read", "created_at")
+    search_fields = ("title", "message", "user__email")
+    ordering = ("-created_at",)
+    
+@admin.register(ResumeReview)
+class ResumeReviewAdmin(admin.ModelAdmin):
+    list_display = ("profile", "review_type", "created_at")
+    list_filter = ("review_type",)
+    search_fields = ("profile__user__email",)
+    ordering = ("-created_at",)
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ("user", "payment_type", "amount", "status", "created_at")
+    list_filter = ("payment_type", "status")
+    search_fields = ("user__email",)
+    ordering = ("-created_at",)
+
+
+from .models import SubscriptionPricing
+
+@admin.register(SubscriptionPricing)
+class SubscriptionPricingAdmin(admin.ModelAdmin):
+    list_display = ("plan", "price")

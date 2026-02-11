@@ -1,30 +1,7 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<style>
-/* Mobile-only table stacking */
-@media (max-width: 767px) {
-  .responsive-table thead { display:none; }
-  .responsive-table, .responsive-table tbody,
-  .responsive-table tr, .responsive-table td {
-    display:block; width:100%;
-  }
-  .responsive-table tr {
-    margin-bottom:1rem; border:1px solid #dee2e6;
-    border-radius:8px; padding:10px; background:#fff;
-  }
-  .responsive-table td { border:none; padding:6px 0; }
-  .responsive-table td::before {
-    content:attr(data-label); font-weight:600;
-    display:block; margin-bottom:2px; color:#6c757d;
-  }
-}
 
-.locked{
-  opacity:.35;
-  pointer-events:none;
-}
-</style>
 
 <div class="container mt-4">
 
@@ -48,24 +25,34 @@
 {% endif %}
 
 <!-- MAIN CARDS -->
-<div class="row g-3">
+<div class="row g-4">
 
 <!-- Saved Jobs -->
 <div class="col-12 col-md-6 col-lg-4">
-<div class="card text-center shadow-sm h-100 border-primary">
-<div class="card-body bg-primary bg-opacity-10">
-<h5 class="text-primary">Saved Jobs</h5>
-<p class="fw-bold fs-1 text-primary">{{ saved_jobs_count }}</p>
-<a href="{% url 'saved_jobs' %}" class="btn btn-outline-primary btn-sm">View</a>
+  <div class="card text-center shadow-sm h-100 border-danger">
+    <div class="card-body bg-danger bg-opacity-10">
+      
+      <h5 class="text-danger">Saved Jobs</h5>
+
+      <p class="fw-bold fs-1 text-danger">
+        {{ saved_jobs_count }}
+      </p>
+
+      <a href="{% url 'saved_jobs' %}" 
+         class="btn btn-outline-danger btn-sm">
+        View
+      </a>
+
+    </div>
+  </div>
 </div>
-</div>
-</div>
+
 
 <!-- Applications -->
 <div class="col-12 col-md-6 col-lg-4">
 <div class="card text-center shadow-sm h-100 border-success">
 <div class="card-body bg-success bg-opacity-10">
-<h5 class="text-success">Applications</h5>
+<h5 class="text-success">Jobs Applied</h5>
 
 <p class="fw-bold fs-1 text-success">
 {% if plan == "FREE" %}
@@ -86,8 +73,9 @@
 <div class="col-12 col-md-6 col-lg-4">
 <div class="card text-center shadow-sm h-100 border-info">
 <div class="card-body bg-info bg-opacity-10">
-<h5 class="text-info">Upcoming Interviews</h5>
+<h5 class="text-info">Interviews Scheduled</h5>
 <p class="fw-bold fs-1 text-info">{{ interviews_count }}</p>
+<p class="fw-bold fs-5 text-info">Upcoming</p>
 </div>
 </div>
 </div>
@@ -307,4 +295,67 @@ Upgrade to Unlock
 </div>
 
 </div>
+<style>
+/* Mobile-only table stacking */
+@media (max-width: 767px) {
+  .responsive-table thead { display:none; }
+  .responsive-table, .responsive-table tbody,
+  .responsive-table tr, .responsive-table td {
+    display:block; width:100%;
+  }
+  .responsive-table tr {
+    margin-bottom:1rem; border:1px solid #dee2e6;
+    border-radius:8px; padding:10px; background:#fff;
+  }
+  .responsive-table td { border:none; padding:6px 0; }
+  .responsive-table td::before {
+    content:attr(data-label); font-weight:600;
+    display:block; margin-bottom:2px; color:#6c757d;
+  }
+}
+
+.locked{
+  opacity:.35;
+  pointer-events:none;
+}
+
+{% comment %} saved Jobs {% endcomment %}
+.dash-card{
+    border:2px solid #003b44;
+    border-radius:12px;
+    transition:.25s;
+    font-size:36px;
+}
+
+.dash-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 10px 25px #1d809455;
+}
+
+.dash-icon{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    background:#e6f4f6;
+    padding:6px;
+}
+
+.big-number{
+    font-size:42px;
+    font-weight:700;
+    color:#003b44;
+}
+
+.btn-dash{
+  background:#003b44;
+    color:white;
+   
+}
+.btn-dash:hover{
+     border:1px solid #003b44;
+    color:#003b44;
+}
+
+
+</style>
 {% endblock %}

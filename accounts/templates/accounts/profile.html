@@ -77,10 +77,10 @@
 
 <div class="mb-3">
 
-  {% if request.user.plan == "FREE" %}
-    <a href="{% url 'settings' %}" class="btn btn-outline-warning">
-      Upgrade to get AI Resume Feedback
-    </a>
+  {% if request.user.plan == "FREE" or request.user.plan_status == "EXPIRED" %}
+  <a href="{% url 'settings' %}?upgrade_required=resume" class="btn btn-outline-warning">
+    Upgrade to get AI Resume Feedback
+  </a>
 
   {% elif request.user.plan == "PRO" %}
     <a href="{% url 'generate_resume_review' %}" class="btn btn-outline-primary">
@@ -115,7 +115,7 @@
 
 {% empty %}
 <p class="text-muted">No feedback generated yet.</p>
-{% endfor %}
+{% endfor %} 
 
 
 <style>
@@ -142,4 +142,3 @@
 </style> 
 
 {% endblock %}
-

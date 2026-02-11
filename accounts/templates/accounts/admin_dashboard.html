@@ -2,6 +2,8 @@
 {% block content %}
 
 <h3 class="mb-4">Admin Dashboard</h3>
+
+<!-- PRIORITY ALERTS -->
 {% if notifications %}
 <div class="alert alert-danger shadow-sm">
   <strong>🚨 Priority Alerts</strong>
@@ -13,7 +15,7 @@
 </div>
 {% endif %}
 
-
+<!-- NEW APPLICATION ALERTS -->
 {% if new_app_count > 0 %}
 <div class="alert alert-warning shadow-sm">
   <strong>New Applications ({{ new_app_count }})</strong>
@@ -25,10 +27,9 @@
 </div>
 {% endif %}
 
-
+<!-- CORE STATS -->
 <div class="row">
 
-  <!-- Candidates -->
   <div class="col-md-3 mb-3">
     <a href="{% url 'candidate_list' %}" class="text-decoration-none">
       <div class="card text-center shadow-sm border-primary h-100">
@@ -40,30 +41,155 @@
     </a>
   </div>
 
-  <!-- Total Jobs -->
   <div class="col-md-3 mb-3">
-    <a href="{% url 'active_jobs' %}" class="text-decoration-none">
-      <div class="card text-center shadow-sm border-info h-100">
-        <div class="card-body bg-info bg-opacity-10">
-          <h6 class="text-info">Total Jobs</h6>
-          <h2 class="fw-bold text-info">{{ total_jobs }}</h2>
+    <div class="card text-center shadow-sm border-info h-100">
+      <div class="card-body bg-info bg-opacity-10">
+        <h6 class="text-info">Total Jobs</h6>
+        <h2 class="fw-bold text-info">{{ total_jobs }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-3">
+    <div class="card text-center shadow-sm border-success h-100">
+      <div class="card-body bg-success bg-opacity-10">
+        <h6 class="text-success">Applications</h6>
+        <h2 class="fw-bold text-success">{{ total_applications }}</h2>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="my-4">
+
+<!-- USER & SUBSCRIPTIONS -->
+<h5 class="mb-3">Users & Subscriptions</h5>
+<div class="row">
+
+  <div class="col-md-3 mb-3">
+    <div class="card text-center border-secondary">
+      <div class="card-body">
+        <h6>Free Users</h6>
+        <h3>{{ free_users }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-3">
+    <div class="card text-center border-success">
+      <div class="card-body">
+        <h6>Paid Users</h6>
+        <h3>{{ paid_users }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-3">
+    <div class="card text-center border-danger">
+      <div class="card-body">
+        <h6>Expired Plans</h6>
+        <h3>{{ expired_users }}</h3>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="my-4">
+
+<!-- QUEUES -->
+<h5 class="mb-3">Candidate Queue</h5>
+<div class="row">
+
+  <div class="col-md-3 mb-3">
+    <div class="card text-center border-warning">
+      <div class="card-body">
+        <h6>Pending Applications</h6>
+        <h3>{{ pending_applications }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-3">
+    <div class="card text-center border-info">
+      <div class="card-body">
+        <h6>Interviews Scheduled</h6>
+        <h3>{{ interview_applications }}</h3>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="my-4">
+
+<!-- TRAINING -->
+<h5 class="mb-3">Training Management</h5>
+<div class="row">
+
+  <div class="col-md-3 mb-3">
+    <div class="card text-center border-dark">
+      <div class="card-body">
+        <h6>Total Trainings</h6>
+        <h3>{{ total_trainings }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-3">
+    <div class="card text-center border-success">
+      <div class="card-body">
+        <h6>Enrollments</h6>
+        <h3>{{ total_enrollments }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 mb-3">
+    <div class="card text-center border-warning">
+      <div class="card-body">
+        <h6>Enquiries</h6>
+        <h3>{{ total_enquiries }}</h3>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="my-4">
+
+<!-- SLA MONITORING -->
+<h5 class="mb-3">SLA Monitoring</h5>
+<div class="row">
+
+  <!-- DELAYED ENQUIRIES -->
+  <div class="col-md-3 mb-3">
+    <a href="{% url 'admin_delayed_enquiries' %}" class="text-decoration-none text-dark">
+      <div class="card text-center border-danger shadow-sm h-100">
+        <div class="card-body">
+          <h6>Delayed Enquiries (>24h)</h6>
+          <h3 class="text-danger">{{ delayed_enquiries }}</h3>
+          <small class="text-muted">Click to respond</small>
         </div>
       </div>
     </a>
   </div>
 
-  <!-- Applications -->
+  <!-- UNREAD ALERTS -->
   <div class="col-md-3 mb-3">
-    <a href="{% url 'candidate_list' %}" class="text-decoration-none">
-      <div class="card text-center shadow-sm border-success h-100">
-        <div class="card-body bg-success bg-opacity-10">
-          <h6 class="text-success">Applications</h6>
-          <h2 class="fw-bold text-success">{{ total_applications }}</h2>
+    <a href="{% url 'admin_unread_alerts' %}" class="text-decoration-none text-dark">
+      <div class="card text-center border-secondary shadow-sm h-100">
+        <div class="card-body">
+          <h6>Unread Alerts</h6>
+          <h3>{{ unread_notifications }}</h3>
+          <small class="text-muted">Open alert inbox</small>
         </div>
       </div>
     </a>
   </div>
 
 </div>
+
 
 {% endblock %}

@@ -110,6 +110,19 @@ class User(AbstractUser):
         if self.plan == self.PRO:
             return self.ai_requests_used < 50
         return True  # unlimited for pro plus
+    
+    def can_get_free_training(self):
+        """
+        Only PRO_PLUS users get 1 free training
+        """
+        if self.plan != self.PRO_PLUS or self.plan_status != self.ACTIVE:
+            return False
+
+        from core.models import Enrollment
+        free_used = Enrollment.objects.filter(user=self).count()
+
+        return free_used == 0
+
 
     def __str__(self):
         return self.email
@@ -129,6 +142,7 @@ class Profile(models.Model):
 
     # Professional info
     experience = models.PositiveIntegerField(default=0)
+
     location = models.CharField(max_length=100, blank=True)
     skills = models.CharField(max_length=255, blank=True)
 
@@ -240,3 +254,46 @@ class Notification(models.Model):
 
 
 
+class Payment(models.Model):
+
+    PAYMENT_TYPE = [
+        ("PLAN", "Subscription Plan"),
+        ("TRAINING", "Training Purchase"),
+    ]
+
+    STATUS = [
+        ("SUCCESS", "Success"),
+        ("FAILED", "Failed"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE)
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS)
+
+    training = models.ForeignKey(
+        "core.Training",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.payment_type} - {self.amount}"
+
+
+class SubscriptionPricing(models.Model):
+
+    PLAN_CHOICES = [
+        ("PRO", "Pro"),
+        ("PRO_PLUS", "Pro Plus"),
+    ]
+
+    plan = models.CharField(max_length=20, choices=PLAN_CHOICES, unique=True)
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.plan} - ₹{self.price}"

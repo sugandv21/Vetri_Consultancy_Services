@@ -32,6 +32,14 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
     path("resume/review/", views.generate_resume_review, name="generate_resume_review"),
     path("resume/advanced/", views.generate_advanced_resume_review, name="generate_advanced_resume_review"),
+    # SLA monitoring
+    path("admin/enquiries/delayed/", views.admin_delayed_enquiries, name="admin_delayed_enquiries"),
+    path("admin/alerts/", views.admin_unread_alerts, name="admin_unread_alerts"),
+    path("admin/alerts/read/<int:alert_id>/", views.mark_alert_read, name="mark_alert_read"),
+    
+    path("invoice/<int:payment_id>/", views.download_invoice, name="download_invoice"),
+
+
 
 
 ]

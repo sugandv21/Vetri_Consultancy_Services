@@ -2,6 +2,12 @@
 {% block content %}
 
 <h3 class="mb-4">Account Settings</h3>
+{% if upgrade_message %}
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+  {{ upgrade_message }} <strong>Please upgrade to continue.</strong>
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
 
 <!-- ACCOUNT INFO -->
 <div class="card mb-4">
@@ -90,6 +96,95 @@
     </form>
   </div>
 </div>
+<!-- BILLING & PAYMENTS -->
+<div class="card mt-4">
+  <div class="card-body">
+    <h6 class="mb-3">Billing & Payments</h6>
+
+    {% if payments %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Invoice</th>
+
+          </tr>
+        </thead>
+        <tbody>
+
+        {% for p in payments %}
+        <tr>
+          <!-- DATE -->
+          <td>{{ p.created_at|date:"M d, Y" }}</td>
+
+          <!-- CATEGORY -->
+          <td>
+            {% if p.payment_type == "PLAN" %}
+              <span class="badge bg-primary">Subscription</span>
+            {% else %}
+              <span class="badge bg-info text-dark">Training</span>
+            {% endif %}
+          </td>
+
+          <!-- DESCRIPTION -->
+          <td>
+            {% if p.payment_type == "PLAN" %}
+              Plan Upgrade ({{ user.plan }})
+            {% elif p.training %}
+              {{ p.training.title }}
+              {% if p.amount == 0 %}
+                <div class="small text-success">PRO PLUS Complimentary Training</div>
+              {% endif %}
+            {% else %}
+              Training Purchase
+            {% endif %}
+          </td>
+
+          <!-- AMOUNT -->
+          <td>
+            {% if p.amount == 0 %}
+              <span class="text-success fw-semibold">FREE</span>
+            {% else %}
+              ₹{{ p.amount }}
+            {% endif %}
+          </td>
+
+          <!-- STATUS -->
+          <td>
+            {% if p.status == "SUCCESS" %}
+              <span class="badge bg-success">Success</span>
+            {% else %}
+              <span class="badge bg-danger">Failed</span>
+            {% endif %}
+          </td>
+
+          <td>
+  {% if p.status == "SUCCESS" %}
+    <a href="{% url 'download_invoice' p.id %}" class="btn btn-sm btn-outline-primary">
+      Download
+    </a>
+  {% else %}
+    -
+  {% endif %}
+</td>
+
+        </tr>
+        {% endfor %}
+
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="text-muted">No transactions yet.</p>
+    {% endif %}
+  </div>
+</div>
+
 
 {% comment %} {% if user.is_staff %}
 <span class="badge bg-dark">ADMIN</span>
