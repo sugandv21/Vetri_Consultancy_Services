@@ -112,42 +112,68 @@ from .models import Training, Enrollment, TrainingEnquiry
 @login_required
 def training_list(request):
     trainings = Training.objects.filter(is_active=True)
-    enrolled_ids = Enrollment.objects.filter(
-        user=request.user
-    ).values_list("training_id", flat=True)
+
+    enrolled_ids = set(
+        Enrollment.objects.filter(user=request.user)
+        .values_list("training_id", flat=True)
+    )
+
+    free_eligible = request.user.can_get_free_training()
 
     return render(request, "core/training_list.html", {
         "trainings": trainings,
-        "enrolled_ids": enrolled_ids
+        "enrolled_ids": enrolled_ids,
+        "free_eligible": free_eligible
     })
+
+
+from accounts.models import Payment
 
 @login_required
 def enroll_training(request, training_id):
+
     if request.method != "POST":
         return redirect("training_detail", training_id=training_id)
 
-    training = get_object_or_404(
-        Training,
-        id=training_id,
-        is_active=True
-    )
+    training = get_object_or_404(Training, id=training_id, is_active=True)
+    user = request.user
 
-    enrollment, created = Enrollment.objects.get_or_create(
-        user=request.user,
+    # Already enrolled
+    if Enrollment.objects.filter(user=user, training=training).exists():
+        messages.info(request, "You are already enrolled in this training.")
+        return redirect("training_detail", training_id=training.id)
+
+    # ---------------- FREE BENEFIT (PRO PLUS FIRST TRAINING) ----------------
+    if user.can_get_free_training():
+
+        Enrollment.objects.create(user=user, training=training)
+
+        # BILLING ENTRY → FREE INVOICE
+        Payment.objects.create(
+            user=user,
+            payment_type="TRAINING",
+            amount=0,
+            status="SUCCESS",
+            training=training
+        )
+
+        messages.success(request, "🎉 Free enrollment applied (PRO PLUS benefit).")
+        return redirect("training_detail", training_id=training.id)
+
+    # ---------------- PAID TRAINING ----------------
+    # (for now simulated payment success)
+
+    Enrollment.objects.create(user=user, training=training)
+
+    Payment.objects.create(
+        user=user,
+        payment_type="TRAINING",
+        amount=training.fee,
+        status="SUCCESS",
         training=training
     )
 
-    if created:
-        messages.success(
-            request,
-            "Payment successful! You are now enrolled 🎉"
-        )
-    else:
-        messages.info(
-            request,
-            "You are already enrolled in this training."
-        )
-
+    messages.success(request, "Payment successful! You are now enrolled 🎉")
     return redirect("training_detail", training_id=training.id)
 
 
@@ -197,11 +223,29 @@ def training_enquiry_chat(request, training_id):
     })
     
 #training_detail
+from core.models import Enrollment
+
 def training_detail(request, training_id):
     training = get_object_or_404(Training, id=training_id)
+
+    free_eligible = False
+    already_enrolled = False
+
+    if request.user.is_authenticated:
+        already_enrolled = Enrollment.objects.filter(
+            user=request.user,
+            training=training
+        ).exists()
+
+        if not already_enrolled:
+            free_eligible = request.user.can_get_free_training()
+
     return render(request, "core/training_detail.html", {
-        "training": training
+        "training": training,
+        "free_eligible": free_eligible,
+        "already_enrolled": already_enrolled,
     })
+
 
 
 
