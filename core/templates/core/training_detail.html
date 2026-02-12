@@ -1,14 +1,14 @@
-{% extends "accounts/base.html" %} {% block content %}
+{% extends "accounts/base.html" %}
+{% block content %}
 
 <div class="container mt-4">
   <div class="row justify-content-center">
     <div class="col-lg-8 col-md-10 col-12">
+
       {% if training.image %}
-      <img
-        src="{{ training.image.url }}"
-        class="img-fluid rounded mb-4 w-100"
-        alt="{{ training.title }}"
-      />
+      <img src="{{ training.image.url }}"
+           class="img-fluid rounded mb-4 w-100"
+           alt="{{ training.title }}">
       {% endif %}
 
       <h2 class="mb-3">{{ training.title }}</h2>
@@ -24,65 +24,38 @@
         </li>
       </ul>
 
-   <div class="d-flex flex-column flex-md-row gap-2">
+      <div class="d-flex flex-column flex-md-row gap-2">
 
-{% if already_enrolled %}
-    <span class="badge bg-success p-2">
-        You are enrolled in this training
-    </span>
+        {# ================= ALREADY ENROLLED ================= #}
+        {% if already_enrolled %}
+          <span class="badge bg-success p-2">
+            You are enrolled in this training
+          </span>
 
-{% elif free_eligible %}
-    <form method="post" action="{% url 'enroll_training' training.id %}">
-        {% csrf_token %}
-        <button class="btn btn-success">
-            Free Enroll (PRO PLUS Benefit)
-        </button>
-    </form>
+        {# ================= FREE BENEFIT ================= #}
+        {% elif free_eligible %}
+          <form method="post" action="{% url 'enroll_training' training.id %}">
+            {% csrf_token %}
+            <button class="btn btn-success">
+              Free Enroll (PRO PLUS Benefit)
+            </button>
+          </form>
 
-{% else %}
-    <button type="button"
-            class="btn btn-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#paymentModal">
-        Pay & Enroll
-    </button>
-{% endif %}
+        {# ================= PAID TRAINING ================= #}
+        {% else %}
+          <a href="{% url 'training_pay' training.id %}"
+             class="btn btn-primary">
+            Pay & Enroll
+          </a>
+        {% endif %}
 
-<a href="{% url 'training_enquiry_chat' training.id %}"
-   class="btn btn-outline-secondary">
-   Enquiry
-</a>
+        <a href="{% url 'training_enquiry_chat' training.id %}"
+           class="btn btn-outline-secondary">
+          Enquiry
+        </a>
 
-</div>
-
-    </div>
-  </div>
-</div>
-
-<!-- ================= Dummy Payment Modal ================= -->
-<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Payment</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-        ></button>
       </div>
 
-      <div class="modal-body">
-        <p><strong>Course:</strong> {{ training.title }}</p>
-        <p><strong>Amount:</strong> ₹{{ training.fee }}</p>
-      </div>
-
-      <div class="modal-footer">
-        <form method="post" action="{% url 'enroll_training' training.id %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-success">Pay & Enroll</button>
-        </form>
-      </div>
     </div>
   </div>
 </div>

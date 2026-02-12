@@ -52,9 +52,12 @@ urlpatterns = [
     path(
     "admin/enrollment/<int:enrollment_id>/edit/",
     views_admin.edit_enrollment,
-    name="edit_enrollment"
+    name="edit_enrollment"  
 ),
-
+ 
+ 
+    path("training/<int:training_id>/pay/", views.training_pay, name="training_pay"),
+    path("training/payment/verify/", views.verify_training_payment, name="verify_training_payment"),
 
     
 

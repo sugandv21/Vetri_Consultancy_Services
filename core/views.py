@@ -143,12 +143,11 @@ def enroll_training(request, training_id):
         messages.info(request, "You are already enrolled in this training.")
         return redirect("training_detail", training_id=training.id)
 
-    # ---------------- FREE BENEFIT (PRO PLUS FIRST TRAINING) ----------------
+    # ---------------- FREE BENEFIT ----------------
     if user.can_get_free_training():
 
         Enrollment.objects.create(user=user, training=training)
 
-        # BILLING ENTRY → FREE INVOICE
         Payment.objects.create(
             user=user,
             payment_type="TRAINING",
@@ -161,20 +160,8 @@ def enroll_training(request, training_id):
         return redirect("training_detail", training_id=training.id)
 
     # ---------------- PAID TRAINING ----------------
-    # (for now simulated payment success)
-
-    Enrollment.objects.create(user=user, training=training)
-
-    Payment.objects.create(
-        user=user,
-        payment_type="TRAINING",
-        amount=training.fee,
-        status="SUCCESS",
-        training=training
-    )
-
-    messages.success(request, "Payment successful! You are now enrolled 🎉")
-    return redirect("training_detail", training_id=training.id)
+    messages.info(request, "Please complete payment to enroll.")
+    return redirect("training_pay", training_id=training.id)
 
 
 @login_required
@@ -300,3 +287,118 @@ def contact_view(request):
         return redirect("contact")
 
     return render(request, "core/contact.html")
+
+
+
+import razorpay
+import json
+from django.conf import settings
+from django.http import JsonResponse
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+
+from .models import Training, Enrollment
+from accounts.models import Payment
+@login_required
+def training_pay(request, training_id):
+
+    training = get_object_or_404(Training, id=training_id, is_active=True)
+
+    # already enrolled safety
+    if Enrollment.objects.filter(user=request.user, training=training).exists():
+        messages.info(request, "You are already enrolled.")
+        return redirect("training_detail", training_id=training.id)
+
+    # free benefit should not go to payment
+    if request.user.can_get_free_training():
+        return redirect("training_detail", training_id=training.id)
+
+    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+    order = client.order.create({
+        "amount": int(training.fee * 100),  # paise
+        "currency": "INR",
+        "payment_capture": 1
+    })
+
+    # store BOTH
+    request.session["training_payment_training"] = training.id
+    request.session["training_payment_order"] = order["id"]
+
+    return render(request, "core/training_payment.html", {
+        "training": training,
+        "order_id": order["id"],
+        "amount_paise": int(training.fee * 100),
+        "razorpay_key": settings.RAZORPAY_KEY_ID,
+    })
+
+
+@csrf_exempt
+@login_required
+def verify_training_payment(request):
+
+    if request.method != "POST":
+        return JsonResponse({"redirect_url": reverse("training_list")})
+
+    data = json.loads(request.body)
+
+    payment_id = data.get("razorpay_payment_id")
+    order_id = data.get("razorpay_order_id")
+    signature = data.get("razorpay_signature")
+
+    stored_order = request.session.get("training_payment_order")
+    training_id = request.session.get("training_payment_training")
+
+    if not stored_order or not training_id:
+        return JsonResponse({"redirect_url": reverse("training_list")})
+
+    # SECURITY: order mismatch protection
+    if order_id != stored_order:
+        return JsonResponse({"redirect_url": reverse("training_list")})
+
+    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+    try:
+        client.utility.verify_payment_signature({
+            "razorpay_payment_id": payment_id,
+            "razorpay_order_id": order_id,
+            "razorpay_signature": signature
+        })
+
+        training = Training.objects.get(id=training_id)
+        user = request.user
+
+        # prevent duplicate enrollment
+        enrollment, created = Enrollment.objects.get_or_create(
+            user=user,
+            training=training,
+            defaults={"enrolled_at": timezone.now()}
+        )
+
+        # record payment only once
+        if created:
+            Payment.objects.create(
+                user=user,
+                payment_type="TRAINING",
+                amount=training.fee,
+                status="SUCCESS",
+                training=training
+            )
+
+        # cleanup session
+        request.session.pop("training_payment_training", None)
+        request.session.pop("training_payment_order", None)
+
+        return JsonResponse({
+            "redirect_url": reverse("training_detail", args=[training.id])
+        })
+
+    except Exception as e:
+        print("PAYMENT VERIFY FAILED:", str(e))
+        return JsonResponse({
+            "redirect_url": reverse("training_detail", args=[training_id])
+        })

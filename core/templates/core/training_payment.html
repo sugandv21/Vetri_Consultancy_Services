@@ -1,0 +1,52 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3>{{ training.title }}</h3>
+<p>Training Fee: ₹{{ training.fee }}</p>
+
+<button id="pay-btn" class="btn btn-success">Proceed to Payment</button>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+var options = {
+    key: "{{ razorpay_key }}",
+
+    // IMPORTANT: must be paise integer from view
+    amount: "{{ amount_paise }}",
+
+    currency: "INR",
+    name: "Vetri Consultancy Services",
+    description: "{{ training.title }}",
+    order_id: "{{ order_id }}",
+
+    handler: function (response) {
+
+        fetch("{% url 'verify_training_payment' %}", {
+            method: "POST",
+
+            // VERY IMPORTANT → keeps user logged in
+            credentials: "same-origin",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(response)
+        })
+        .then(res => res.json())
+        .then(data => {
+            window.location.href = data.redirect_url;
+        });
+    }
+};
+
+var rzp = new Razorpay(options);
+
+document.getElementById("pay-btn").onclick = function(e){
+    rzp.open();
+    e.preventDefault();
+}
+</script>
+
+{% endblock %}
