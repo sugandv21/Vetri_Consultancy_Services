@@ -105,13 +105,22 @@ def post_job(request):
     return render(request, "jobs/post_job.html")
 
 from .models import SubscriptionPricing
-from django.utils import timezone
-from datetime import timedelta
-import razorpay
-import json
-from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse
+from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
+from .models import SubscriptionPricing, Payment, User
+
+import razorpay
+import json
+
+
+@csrf_exempt
 @login_required
 def payment(request):
 
@@ -136,15 +145,16 @@ def payment(request):
 
     # ---------------- HANDLE PAYMENT CONFIRM ----------------
     if request.method == "POST":
-        data = json.loads(request.body)
-
-        razorpay_payment_id = data.get("razorpay_payment_id")
-        razorpay_order_id = data.get("razorpay_order_id")
-        razorpay_signature = data.get("razorpay_signature")
-
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-
         try:
+            data = json.loads(request.body)
+
+            razorpay_payment_id = data.get("razorpay_payment_id")
+            razorpay_order_id = data.get("razorpay_order_id")
+            razorpay_signature = data.get("razorpay_signature")
+
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+            # verify signature
             client.utility.verify_payment_signature({
                 'razorpay_payment_id': razorpay_payment_id,
                 'razorpay_order_id': razorpay_order_id,
@@ -163,24 +173,33 @@ def payment(request):
                 user=user,
                 payment_type="PLAN",
                 amount=amount,
-                status="SUCCESS"
+                status="SUCCESS",
+                razorpay_payment_id=razorpay_payment_id
             )
 
             request.session.pop("selected_plan", None)
-            messages.success(request, f"Payment successful! Welcome to {plan_name}")
+
             return JsonResponse({"redirect_url": reverse("dashboard")})
 
-        except:
+        except Exception as e:
+            print("RAZORPAY VERIFY ERROR:", str(e))
             return JsonResponse({"redirect_url": reverse("settings")})
 
     # ---------------- CREATE ORDER ----------------
-    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    try:
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
-    order = client.order.create({
-        "amount": int(amount * 100),
-        "currency": "INR",
-        "payment_capture": 1
-    })
+        order = client.order.create({
+            "amount": int(amount * 100),  # paisa
+            "currency": "INR",
+            "receipt": f"user_{request.user.id}_{selected_plan}",
+            "payment_capture": 1
+        })
+
+    except Exception as e:
+        print("RAZORPAY ORDER ERROR:", str(e))
+        messages.error(request, "Payment gateway error. Please try again later.")
+        return redirect("settings")
 
     return render(request, "accounts/payment.html", {
         "amount": amount,
@@ -188,6 +207,7 @@ def payment(request):
         "razorpay_key": settings.RAZORPAY_KEY_ID,
         "order_id": order["id"],
     })
+
 
 
 from django.core.mail import send_mail
@@ -971,6 +991,7 @@ def mark_alert_read(request, alert_id):
     alert.is_read = True
     alert.save()
     return redirect("admin_unread_alerts")
+
 
 
 
