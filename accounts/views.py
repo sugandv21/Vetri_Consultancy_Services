@@ -155,11 +155,21 @@ def payment(request):
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
             # verify signature
+           
+            stored_order_id = request.session.get("razorpay_order_id")
+
+            # if session lost, don't verify — avoid false failure
+            if not stored_order_id:
+                print("SESSION ORDER ID MISSING")
+                return JsonResponse({"redirect_url": reverse("settings")})
+            
             client.utility.verify_payment_signature({
                 'razorpay_payment_id': razorpay_payment_id,
-                'razorpay_order_id': razorpay_order_id,
+                'razorpay_order_id': stored_order_id,
                 'razorpay_signature': razorpay_signature
             })
+
+
 
             # PAYMENT VERIFIED → ACTIVATE PLAN
             user = request.user
@@ -178,6 +188,7 @@ def payment(request):
             )
 
             request.session.pop("selected_plan", None)
+            request.session.pop("razorpay_order_id", None)
 
             return JsonResponse({"redirect_url": reverse("dashboard")})
 
@@ -195,6 +206,7 @@ def payment(request):
             "receipt": f"user_{request.user.id}_{selected_plan}",
             "payment_capture": 1
         })
+        request.session["razorpay_order_id"] = order["id"]
 
     except Exception as e:
         print("RAZORPAY ORDER ERROR:", str(e))
@@ -991,6 +1003,7 @@ def mark_alert_read(request, alert_id):
     alert.is_read = True
     alert.save()
     return redirect("admin_unread_alerts")
+
 
 
 
