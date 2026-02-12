@@ -208,7 +208,7 @@ def payment(request):
             user.plan = selected_plan
             user.plan_status = User.ACTIVE
             user.plan_start = timezone.now()
-            user.plan_end = timezone.now() + timedelta(minutes=2)
+            user.plan_end = timezone.now() + timedelta(days=30)
             user.save()
 
             Payment.objects.create(
@@ -1038,3 +1038,4 @@ def mark_alert_read(request, alert_id):
     alert.is_read = True
     alert.save()
     return redirect("admin_unread_alerts")
+
