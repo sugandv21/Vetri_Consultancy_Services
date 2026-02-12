@@ -37,6 +37,24 @@
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
         <script>
+        // get csrf token from cookie (Django recommended method)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        const csrftoken = getCookie('csrftoken');
+        
         var options = {
             "key": "{{ razorpay_key }}",
             "amount": "{{ amount|floatformat:0 }}00",
@@ -44,42 +62,37 @@
             "name": "Vetri Consultancy Services",
             "description": "{{ plan_name }} Subscription",
             "order_id": "{{ order_id }}",
-
+        
             "handler": function (response){
-
-                
-
+        
                 fetch("{% url 'payment' %}", {
                     method: "POST",
-              
                     credentials: "same-origin",
-                
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRFToken": "{{ csrf_token }}"
+                        "X-CSRFToken": csrftoken
                     },
-                
                     body: JSON.stringify(response)
                 })
-
                 .then(res => res.json())
                 .then(data => {
                     window.location.href = data.redirect_url;
                 });
             },
-
+        
             "theme": {
                 "color": "#198754"
             }
         };
-
+        
         var rzp1 = new Razorpay(options);
-
+        
         document.getElementById('rzp-button').onclick = function(e){
             rzp1.open();
             e.preventDefault();
         }
         </script>
+
 
         
 
@@ -94,4 +107,5 @@
 </div>
 
 {% endblock %}
+
 
