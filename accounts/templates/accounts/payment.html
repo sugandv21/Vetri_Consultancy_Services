@@ -47,14 +47,21 @@
 
             "handler": function (response){
 
+                
+
                 fetch("{% url 'payment' %}", {
                     method: "POST",
+              
+                    credentials: "same-origin",
+                
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRFToken": "{{ csrf_token }}"
                     },
+                
                     body: JSON.stringify(response)
                 })
+
                 .then(res => res.json())
                 .then(data => {
                     window.location.href = data.redirect_url;
@@ -87,3 +94,4 @@
 </div>
 
 {% endblock %}
+
