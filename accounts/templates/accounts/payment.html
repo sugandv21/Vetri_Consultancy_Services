@@ -22,12 +22,59 @@
         <h2 class="mb-4">₹{{ amount }}</h2>
 
         <!-- PAYMENT SUBMIT -->
-        <form method="post">
+        {% comment %} <form method="post">
           {% csrf_token %}
           <button type="submit" class="btn btn-success w-100">
             Pay Now
           </button>
-        </form>
+        </form>  {% endcomment %}
+
+
+        <button id="rzp-button" class="btn btn-success w-100">
+          Pay Now
+        </button>
+
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+        <script>
+        var options = {
+            "key": "{{ razorpay_key }}",
+            "amount": "{{ amount|floatformat:0 }}00",
+            "currency": "INR",
+            "name": "Vetri Consultancy Services",
+            "description": "{{ plan_name }} Subscription",
+            "order_id": "{{ order_id }}",
+
+            "handler": function (response){
+
+                fetch("{% url 'payment' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify(response)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    window.location.href = data.redirect_url;
+                });
+            },
+
+            "theme": {
+                "color": "#198754"
+            }
+        };
+
+        var rzp1 = new Razorpay(options);
+
+        document.getElementById('rzp-button').onclick = function(e){
+            rzp1.open();
+            e.preventDefault();
+        }
+        </script>
+
+        
 
         <!-- NOTE -->
         <p class="text-muted mt-3 small">

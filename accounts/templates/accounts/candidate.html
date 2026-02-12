@@ -1,6 +1,36 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
+<form method="get" class="row g-2 mb-3">
+
+  <div class="col-md-3">
+    <select name="plan" class="form-select">
+      <option value="">All Subscriptions</option>
+      <option value="FREE"  {% if request.GET.plan == "FREE" %}selected{% endif %}>Free</option>
+      <option value="PRO"  {% if request.GET.plan == "PRO" %}selected{% endif %}>Pro</option>
+      <option value="PRO_PLUS" {% if request.GET.plan == "PRO_PLUS" %}selected{% endif %}>Pro Plus</option>
+    </select>
+  </div>
+
+  <div class="col-md-3">
+    <select name="stage" class="form-select">
+      <option value="">All Hiring Stages</option>
+      <option value="PENDING" {% if request.GET.stage == "PENDING" %}selected{% endif %}>Pending Applications</option>
+      <option value="INTERVIEW" {% if request.GET.stage == "INTERVIEW" %}selected{% endif %}>Interviews Scheduled</option>
+    </select>
+  </div>
+
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100">Filter</button>
+  </div>
+
+  <div class="col-md-2">
+    <a href="{% url 'candidate_list' %}" class="btn btn-outline-secondary w-100">Reset</a>
+  </div>
+
+</form>
+
+
 <h3 class="mb-4">Candidates</h3>
 
 <div class="card shadow-sm">
