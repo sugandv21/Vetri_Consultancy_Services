@@ -11,7 +11,6 @@ from jobs.models import JobApplication
 from django.shortcuts import get_object_or_404
 from accounts.models import Notification
 from accounts.models import Payment
-from accounts.utils.email import safe_send_mail
 
 
 
@@ -105,19 +104,66 @@ def post_job(request):
     return render(request, "jobs/post_job.html")
 
 from .models import SubscriptionPricing
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
-from django.contrib import messages
-from django.http import JsonResponse
-from django.urls import reverse
-from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
-from .models import SubscriptionPricing, Payment, User
-
 import razorpay
 import json
+from django.conf import settings
+from django.http import JsonResponse
+from django.urls import reverse
+
+
+# @login_required
+# def payment(request):
+
+#     selected_plan = request.session.get("selected_plan")
+
+#     if not selected_plan:
+#         messages.error(request, "No plan selected.")
+#         return redirect("settings")
+
+#     # prevent FREE tampering
+#     if selected_plan not in [User.PRO, User.PRO_PLUS]:
+#         messages.error(request, "Invalid plan selected.")
+#         return redirect("settings")
+
+#     # dynamic pricing from admin
+#     pricing = SubscriptionPricing.objects.filter(plan=selected_plan).first()
+
+#     if not pricing:
+#         messages.error(request, "Pricing not configured. Contact admin.")
+#         return redirect("settings")
+
+#     amount = pricing.price
+#     plan_name = dict(User.PLAN_CHOICES).get(selected_plan, selected_plan)
+
+#     # payment success simulation
+#     if request.method == "POST":
+#         user = request.user
+
+#         user.plan = selected_plan
+#         user.plan_status = User.ACTIVE
+#         user.plan_start = timezone.now()
+#         #user.plan_end = timezone.now() + timedelta(days=30)
+#         user.plan_end = timezone.now() + timedelta(minutes=2)
+#         user.save()
+
+#         Payment.objects.create(
+#             user=user,
+#             payment_type="PLAN",
+#             amount=amount,
+#             status="SUCCESS"
+#         )
+
+#         request.session.pop("selected_plan", None)
+
+#         messages.success(request, f"Payment successful! Welcome to {plan_name}")
+#         return redirect("dashboard")
+
+#     return render(request, "accounts/payment.html", {
+#         "amount": amount,
+#         "plan_name": plan_name
+#     })
 @login_required
 def payment(request):
 
@@ -127,10 +173,59 @@ def payment(request):
         messages.error(request, "No plan selected.")
         return redirect("settings")
 
+    if selected_plan not in [User.PRO, User.PRO_PLUS]:
+        messages.error(request, "Invalid plan selected.")
+        return redirect("settings")
+
     pricing = SubscriptionPricing.objects.filter(plan=selected_plan).first()
+
+    if not pricing:
+        messages.error(request, "Pricing not configured. Contact admin.")
+        return redirect("settings")
+
     amount = pricing.price
     plan_name = dict(User.PLAN_CHOICES).get(selected_plan, selected_plan)
 
+    # ---------------- HANDLE PAYMENT CONFIRM ----------------
+    if request.method == "POST":
+        data = json.loads(request.body)
+
+        razorpay_payment_id = data.get("razorpay_payment_id")
+        razorpay_order_id = data.get("razorpay_order_id")
+        razorpay_signature = data.get("razorpay_signature")
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+        try:
+            client.utility.verify_payment_signature({
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_signature': razorpay_signature
+            })
+
+            # PAYMENT VERIFIED → ACTIVATE PLAN
+            user = request.user
+            user.plan = selected_plan
+            user.plan_status = User.ACTIVE
+            user.plan_start = timezone.now()
+            user.plan_end = timezone.now() + timedelta(minutes=2)
+            user.save()
+
+            Payment.objects.create(
+                user=user,
+                payment_type="PLAN",
+                amount=amount,
+                status="SUCCESS"
+            )
+
+            request.session.pop("selected_plan", None)
+            messages.success(request, f"Payment successful! Welcome to {plan_name}")
+            return JsonResponse({"redirect_url": reverse("dashboard")})
+
+        except:
+            return JsonResponse({"redirect_url": reverse("settings")})
+
+    # ---------------- CREATE ORDER ----------------
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
     order = client.order.create({
@@ -139,83 +234,12 @@ def payment(request):
         "payment_capture": 1
     })
 
-    # store like training flow
-    request.session["subscription_payment_order"] = order["id"]
-    request.session["subscription_selected_plan"] = selected_plan
-
     return render(request, "accounts/payment.html", {
         "amount": amount,
         "plan_name": plan_name,
         "razorpay_key": settings.RAZORPAY_KEY_ID,
         "order_id": order["id"],
     })
-
-
-
-@csrf_exempt
-@login_required
-def verify_subscription_payment(request):
-
-    if request.method != "POST":
-        return JsonResponse({"redirect_url": reverse("settings")})
-
-    try:
-        data = json.loads(request.body)
-
-        razorpay_payment_id = data.get("razorpay_payment_id")
-        razorpay_order_id = data.get("razorpay_order_id")
-        razorpay_signature = data.get("razorpay_signature")
-
-        stored_order = request.session.get("subscription_payment_order")
-        selected_plan = request.session.get("subscription_selected_plan")
-
-        if not stored_order or not selected_plan:
-            print("SESSION LOST")
-            return JsonResponse({"redirect_url": reverse("settings")})
-
-        if razorpay_order_id != stored_order:
-            print("ORDER MISMATCH")
-            return JsonResponse({"redirect_url": reverse("settings")})
-
-        client = razorpay.Client(
-            auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
-        )
-
-        client.utility.verify_payment_signature({
-            "razorpay_payment_id": razorpay_payment_id,
-            "razorpay_order_id": razorpay_order_id,
-            "razorpay_signature": razorpay_signature
-        })
-
-        # prevent duplicate processing
-        payment_obj, created = Payment.objects.get_or_create(
-            razorpay_payment_id=razorpay_payment_id,
-            defaults={
-                "user": request.user,
-                "payment_type": "PLAN",
-                "amount": SubscriptionPricing.objects.get(plan=selected_plan).price,
-                "status": "SUCCESS",
-            }
-        )
-
-        if created:
-            user = request.user
-            user.plan = selected_plan
-            user.plan_status = User.ACTIVE
-            user.plan_start = timezone.now()
-            user.plan_end = timezone.now() + timedelta(days=30)
-            user.save()
-
-        # cleanup
-        request.session.pop("subscription_payment_order", None)
-        request.session.pop("subscription_selected_plan", None)
-
-        return JsonResponse({"redirect_url": reverse("dashboard")})
-
-    except Exception as e:
-        print("VERIFY FAILED:", str(e))
-        return JsonResponse({"redirect_url": reverse("settings")})
-
 
 
 from django.core.mail import send_mail
@@ -246,26 +270,28 @@ def profile_wizard(request):
 
         profile.save()
 
-         # ✅ Check completion AFTER save
+        # ✅ Check completion AFTER save
         completion = profile.completion_percentage()
 
-        # Send email only ONCE
+        # ✅ Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-
-            sent = safe_send_mail(
+            send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs and track applications.\n\n"
+                    "You can now apply for jobs, save opportunities, "
+                    "and track your applications from your dashboard.\n\n"
+                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,  # IMPORTANT
             )
 
-            if sent:
-                profile.completion_email_sent = True
-                profile.save(update_fields=["completion_email_sent"])
+            profile.completion_email_sent = True
+            profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("dashboard")
@@ -303,23 +329,25 @@ def my_profile(request):
 
         profile.save()
 
-       # completion email
+        # completion email
         completion = profile.completion_percentage()
         if completion == 100 and not profile.completion_email_sent:
-            sent = safe_send_mail(
+            send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
                     "You can now apply for jobs and track applications.\n\n"
+                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,
             )
 
-            if sent:
-                profile.completion_email_sent = True
-                profile.save(update_fields=["completion_email_sent"])
+            profile.completion_email_sent = True
+            profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("my_profile")
@@ -433,6 +461,21 @@ def upgrade_to_pro_plus(request):
 
 
 #canditate list 
+
+# @staff_required
+# def candidate_list(request):
+#     candidates = (
+#         User.objects
+#         .filter(is_staff=False)
+#         .select_related("profile")
+#         .order_by("-date_joined")
+#     )
+
+#     return render(
+#         request,
+#         "accounts/candidate.html",
+#         {"candidates": candidates}
+#     )
 @staff_required
 def candidate_list(request):
 
@@ -720,19 +763,15 @@ def update_application_status(request, app_id):
             "Vetri Consultancy Services"
         )
 
-        sent = safe_send_mail(
+        send_mail(
             subject=subject,
             message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[candidate.email],
+            fail_silently=True,
         )
 
-        if sent:
-            messages.success(request, "Application status updated & email sent.")
-        else:
-            messages.warning(request, "Status updated but email failed.")
-    else:
-        messages.success(request, "Application status updated.")
-
+    messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
 
 
@@ -999,11 +1038,3 @@ def mark_alert_read(request, alert_id):
     alert.is_read = True
     alert.save()
     return redirect("admin_unread_alerts")
-
-
-
-
-
-
-
-
