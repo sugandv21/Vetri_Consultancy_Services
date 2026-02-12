@@ -155,19 +155,26 @@ def payment(request):
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
             # verify signature
-           
             stored_order_id = request.session.get("razorpay_order_id")
 
-            # if session lost, don't verify — avoid false failure
+            # session missing → fail safely
             if not stored_order_id:
                 print("SESSION ORDER ID MISSING")
                 return JsonResponse({"redirect_url": reverse("settings")})
             
+            # 🔐 IMPORTANT SECURITY CHECK
+            # Razorpay returned order must match session order
+            if razorpay_order_id != stored_order_id:
+                print("ORDER ID MISMATCH")
+                return JsonResponse({"redirect_url": reverse("settings")})
+            
+            # Now verify signature using Razorpay returned order id
             client.utility.verify_payment_signature({
                 'razorpay_payment_id': razorpay_payment_id,
-                'razorpay_order_id': stored_order_id,
+                'razorpay_order_id': razorpay_order_id,
                 'razorpay_signature': razorpay_signature
             })
+
 
 
 
@@ -1003,6 +1010,7 @@ def mark_alert_read(request, alert_id):
     alert.is_read = True
     alert.save()
     return redirect("admin_unread_alerts")
+
 
 
 
