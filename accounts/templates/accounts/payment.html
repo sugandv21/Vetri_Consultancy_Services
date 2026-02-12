@@ -65,7 +65,7 @@
         
             "handler": function (response){
         
-                fetch("{% url 'payment' %}", {
+                fetch("{% url 'verify_subscription_payment' %}", {
                     method: "POST",
                     credentials: "same-origin",
                     headers: {
@@ -107,5 +107,6 @@
 </div>
 
 {% endblock %}
+
 
 
