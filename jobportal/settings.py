@@ -224,6 +224,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://vetri-consultancy-services.onrender.com"
 ]
 
+# Razorpay Test Keys
+
+RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET")
+
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
     messages.ERROR: "danger",
@@ -239,6 +244,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
 
 
 
