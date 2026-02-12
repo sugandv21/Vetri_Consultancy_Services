@@ -118,12 +118,11 @@ from .models import SubscriptionPricing, Payment, User
 
 import razorpay
 import json
-
-
 @csrf_exempt
 @login_required
 def payment(request):
 
+    # ---------------- PLAN FROM SESSION ----------------
     selected_plan = request.session.get("selected_plan")
 
     if not selected_plan:
@@ -143,7 +142,9 @@ def payment(request):
     amount = pricing.price
     plan_name = dict(User.PLAN_CHOICES).get(selected_plan, selected_plan)
 
-    # ---------------- HANDLE PAYMENT CONFIRM ----------------
+    # ============================================================
+    # 🔵 HANDLE RAZORPAY PAYMENT VERIFY (POST)
+    # ============================================================
     if request.method == "POST":
         try:
             data = json.loads(request.body)
@@ -152,48 +153,57 @@ def payment(request):
             razorpay_order_id = data.get("razorpay_order_id")
             razorpay_signature = data.get("razorpay_signature")
 
-            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            if not razorpay_payment_id or not razorpay_order_id or not razorpay_signature:
+                print("MISSING RAZORPAY DATA")
+                return JsonResponse({"redirect_url": reverse("settings")})
 
-            # verify signature
+            client = razorpay.Client(
+                auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+            )
+
+            # ---------------- SESSION ORDER CHECK ----------------
             stored_order_id = request.session.get("razorpay_order_id")
 
-            # session missing → fail safely
             if not stored_order_id:
                 print("SESSION ORDER ID MISSING")
                 return JsonResponse({"redirect_url": reverse("settings")})
-            
-            # 🔐 IMPORTANT SECURITY CHECK
-            # Razorpay returned order must match session order
+
+            # SECURITY: prevent fake callback
             if razorpay_order_id != stored_order_id:
                 print("ORDER ID MISMATCH")
                 return JsonResponse({"redirect_url": reverse("settings")})
-            
-            # Now verify signature using Razorpay returned order id
+
+            # ---------------- SIGNATURE VERIFY ----------------
             client.utility.verify_payment_signature({
-                'razorpay_payment_id': razorpay_payment_id,
-                'razorpay_order_id': razorpay_order_id,
-                'razorpay_signature': razorpay_signature
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_order_id": razorpay_order_id,
+                "razorpay_signature": razorpay_signature
             })
 
-
-
-
-            # PAYMENT VERIFIED → ACTIVATE PLAN
-            user = request.user
-            user.plan = selected_plan
-            user.plan_status = User.ACTIVE
-            user.plan_start = timezone.now()
-            user.plan_end = timezone.now() + timedelta(minutes=5)
-            user.save()
-
-            Payment.objects.create(
-                user=user,
-                payment_type="PLAN",
-                amount=amount,
-                status="SUCCESS",
-                razorpay_payment_id=razorpay_payment_id
+            # ===================================================
+            # 🟢 IDEMPOTENT PAYMENT CREATION (CRITICAL FIX)
+            # prevents duplicate callbacks in production
+            # ===================================================
+            payment_obj, created = Payment.objects.get_or_create(
+                razorpay_payment_id=razorpay_payment_id,
+                defaults={
+                    "user": request.user,
+                    "payment_type": "PLAN",
+                    "amount": amount,
+                    "status": "SUCCESS",
+                }
             )
 
+            # Activate plan ONLY first time
+            if created:
+                user = request.user
+                user.plan = selected_plan
+                user.plan_status = User.ACTIVE
+                user.plan_start = timezone.now()
+                user.plan_end = timezone.now() + timedelta(days=30)
+                user.save()
+
+            # cleanup session
             request.session.pop("selected_plan", None)
             request.session.pop("razorpay_order_id", None)
 
@@ -203,16 +213,22 @@ def payment(request):
             print("RAZORPAY VERIFY ERROR:", str(e))
             return JsonResponse({"redirect_url": reverse("settings")})
 
-    # ---------------- CREATE ORDER ----------------
+    # ============================================================
+    # 🟡 CREATE ORDER (GET)
+    # ============================================================
     try:
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        client = razorpay.Client(
+            auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+        )
 
         order = client.order.create({
-            "amount": int(amount * 100),  # paisa
+            "amount": int(amount * 100),  # paise
             "currency": "INR",
             "receipt": f"user_{request.user.id}_{selected_plan}",
             "payment_capture": 1
         })
+
+        # store order in session
         request.session["razorpay_order_id"] = order["id"]
 
     except Exception as e:
@@ -226,6 +242,7 @@ def payment(request):
         "razorpay_key": settings.RAZORPAY_KEY_ID,
         "order_id": order["id"],
     })
+
 
 
 
@@ -1010,6 +1027,7 @@ def mark_alert_read(request, alert_id):
     alert.is_read = True
     alert.save()
     return redirect("admin_unread_alerts")
+
 
 
 
