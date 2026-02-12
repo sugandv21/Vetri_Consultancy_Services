@@ -107,7 +107,11 @@ def post_job(request):
 from .models import SubscriptionPricing
 from django.utils import timezone
 from datetime import timedelta
-
+import razorpay
+import json
+from django.conf import settings
+from django.http import JsonResponse
+from django.urls import reverse
 @login_required
 def payment(request):
 
@@ -117,12 +121,10 @@ def payment(request):
         messages.error(request, "No plan selected.")
         return redirect("settings")
 
-    # prevent FREE tampering
     if selected_plan not in [User.PRO, User.PRO_PLUS]:
         messages.error(request, "Invalid plan selected.")
         return redirect("settings")
 
-    # dynamic pricing from admin
     pricing = SubscriptionPricing.objects.filter(plan=selected_plan).first()
 
     if not pricing:
@@ -132,32 +134,59 @@ def payment(request):
     amount = pricing.price
     plan_name = dict(User.PLAN_CHOICES).get(selected_plan, selected_plan)
 
-    # payment success simulation
+    # ---------------- HANDLE PAYMENT CONFIRM ----------------
     if request.method == "POST":
-        user = request.user
+        data = json.loads(request.body)
 
-        user.plan = selected_plan
-        user.plan_status = User.ACTIVE
-        user.plan_start = timezone.now()
-        user.plan_end = timezone.now() + timedelta(days=30)
-        #user.plan_end = timezone.now() + timedelta(minutes=2)
-        user.save()
+        razorpay_payment_id = data.get("razorpay_payment_id")
+        razorpay_order_id = data.get("razorpay_order_id")
+        razorpay_signature = data.get("razorpay_signature")
 
-        Payment.objects.create(
-            user=user,
-            payment_type="PLAN",
-            amount=amount,
-            status="SUCCESS"
-        )
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
-        request.session.pop("selected_plan", None)
+        try:
+            client.utility.verify_payment_signature({
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_signature': razorpay_signature
+            })
 
-        messages.success(request, f"Payment successful! Welcome to {plan_name}")
-        return redirect("dashboard")
+            # PAYMENT VERIFIED → ACTIVATE PLAN
+            user = request.user
+            user.plan = selected_plan
+            user.plan_status = User.ACTIVE
+            user.plan_start = timezone.now()
+            user.plan_end = timezone.now() + timedelta(minutes=5)
+            user.save()
+
+            Payment.objects.create(
+                user=user,
+                payment_type="PLAN",
+                amount=amount,
+                status="SUCCESS"
+            )
+
+            request.session.pop("selected_plan", None)
+            messages.success(request, f"Payment successful! Welcome to {plan_name}")
+            return JsonResponse({"redirect_url": reverse("dashboard")})
+
+        except:
+            return JsonResponse({"redirect_url": reverse("settings")})
+
+    # ---------------- CREATE ORDER ----------------
+    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+    order = client.order.create({
+        "amount": int(amount * 100),
+        "currency": "INR",
+        "payment_capture": 1
+    })
 
     return render(request, "accounts/payment.html", {
         "amount": amount,
-        "plan_name": plan_name
+        "plan_name": plan_name,
+        "razorpay_key": settings.RAZORPAY_KEY_ID,
+        "order_id": order["id"],
     })
 
 
@@ -376,9 +405,9 @@ def upgrade_to_pro_plus(request):
 
 
 #canditate list 
-
 @staff_required
 def candidate_list(request):
+
     candidates = (
         User.objects
         .filter(is_staff=False)
@@ -386,11 +415,25 @@ def candidate_list(request):
         .order_by("-date_joined")
     )
 
-    return render(
-        request,
-        "accounts/candidate.html",
-        {"candidates": candidates}
-    )
+    # ---------------- SUBSCRIPTION FILTER ----------------
+    plan = request.GET.get("plan")
+    if plan in ["FREE", "PRO", "PRO_PLUS"]:
+        candidates = candidates.filter(plan=plan)
+
+    # ---------------- HIRING STAGE FILTER ----------------
+    stage = request.GET.get("stage")
+
+    if stage == "PENDING":
+        candidates = candidates.filter(
+            job_applications__status="APPLIED"
+        ).distinct()
+
+    elif stage == "INTERVIEW":
+        candidates = candidates.filter(
+            job_applications__status="INTERVIEW"
+        ).distinct()
+
+    return render(request, "accounts/candidate.html", {"candidates": candidates})
 
 #canditate and  admin dashboard
 from django.contrib.auth.decorators import login_required
@@ -928,5 +971,6 @@ def mark_alert_read(request, alert_id):
     alert.is_read = True
     alert.save()
     return redirect("admin_unread_alerts")
+
 
 
