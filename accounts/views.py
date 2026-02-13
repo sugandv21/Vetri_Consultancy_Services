@@ -214,6 +214,7 @@ def payment(request):
             Payment.objects.create(
                 user=user,
                 payment_type="PLAN",
+                purchased_plan=selected_plan,  
                 amount=amount,
                 status="SUCCESS"
             )
@@ -1040,5 +1041,6 @@ def mark_alert_read(request, alert_id):
     alert.is_read = True
     alert.save()
     return redirect("admin_unread_alerts")
+
 
 
