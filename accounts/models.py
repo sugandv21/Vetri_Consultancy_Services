@@ -266,9 +266,23 @@ class Payment(models.Model):
         ("FAILED", "Failed"),
     ]
 
+    PLAN_CHOICES = [                 # ⭐ ADD THIS BLOCK
+        ("FREE", "Free"),
+        ("PRO", "Pro"),
+        ("PRO_PLUS", "Pro Plus"),
+    ]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE)
+
+    purchased_plan = models.CharField(     # ⭐ ADD THIS FIELD
+        max_length=20,
+        choices=PLAN_CHOICES,
+        null=True,
+        blank=True
+    )
+
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS)
 
@@ -280,9 +294,6 @@ class Payment(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user} - {self.payment_type} - {self.amount}"
 
 
 class SubscriptionPricing(models.Model):

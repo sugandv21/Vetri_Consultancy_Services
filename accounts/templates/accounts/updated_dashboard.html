@@ -151,16 +151,54 @@ View My Sessions
 </div>
 
 <!-- PROFILE COMPLETION -->
-<div class="card mt-4 shadow-sm">
-<div class="card-body">
-<h5>Profile Completion</h5>
-<div class="progress">
-<div class="progress-bar bg-success" style="width: {{ completion }}%">
-{{ completion }}%
+<div class="card mt-4 shadow-sm border-0 profile-card">
+    <div class="card-body">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">
+                <i class="bi bi-person-check-fill text-success me-2"></i>
+                Profile Completion
+            </h5>
+
+            <span class="badge rounded-pill px-3 py-2
+                {% if completion < 40 %} bg-danger
+                {% elif completion < 80 %} bg-warning text-dark
+                {% else %} bg-success
+                {% endif %}">
+                {{ completion }}%
+            </span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress rounded-pill" style="height: 14px;" role="progressbar"
+             aria-valuenow="{{ completion }}" aria-valuemin="0" aria-valuemax="100">
+
+            <div class="progress-bar progress-bar-striped progress-bar-animated
+                {% if completion < 40 %} bg-danger
+                {% elif completion < 80 %} bg-warning
+                {% else %} bg-success
+                {% endif %}"
+                style="width: 0%"
+                data-width="{{ completion }}">
+            </div>
+
+        </div>
+
+        <!-- Status Text -->
+        <small class="text-semibold d-block mt-2 fs-5">
+            {% if completion < 40 %}
+                Your profile needs more details to be visible to others.
+            {% elif completion < 80 %}
+                Good! Add a few more details to complete your profile.
+            {% else %}
+                Excellent! Your profile is fully optimized 
+            {% endif %}
+        </small>
+
+    </div>
 </div>
-</div>
-</div>
-</div>
+
 
 <!-- SKILLS MILESTONE 
 <div class="card mt-4 shadow-sm">
@@ -240,79 +278,158 @@ Upgrade to Unlock
 </div>
 
 
-<!-- TRAININGS TABLE (UNCHANGED) -->
-<h4 class="mt-5">My Trainings</h4>
+<h4 class="mt-5 fw-semibold"  id="my-trainings">
+    <i class="bi bi-journal-richtext me-2 text-primary fs-1"></i>
+    My Trainings
+</h4>
+
+<div class="card shadow-sm border-0 mt-3">
+<div class="card-body p-0">
 
 <div class="table-responsive">
-<table class="table table-bordered align-middle responsive-table">
+<table class="table align-middle modern-table mb-0">
+
 <thead class="table-light">
 <tr>
 <th>Training</th>
 <th>Mentor</th>
-<th>Training Link</th>
-<th>Timing</th>
+<th>Session</th>
+<th>Join</th>
 <th>Certificate</th>
 </tr>
 </thead>
 
 <tbody>
 {% for e in enrollments %}
-<tr>
-<td data-label="Training">{{ e.training.title }}</td>
+<tr class="training-row">
 
-<td data-label="Mentor">
-{{ e.mentor_name|default:"Not assigned" }}<br>
-<small class="text-muted">{{ e.mentor_email }}</small>
+<!-- TRAINING -->
+<td data-label="Training">
+    <div class="fw-semibold">{{ e.training.title }}</div>
+
+    {% if e.is_completed %}
+        <span class="badge bg-success-subtle text-success">Completed</span>
+    {% elif e.training_link %}
+        <span class="badge bg-primary-subtle text-primary">Live</span>
+    {% else %}
+        <span class="badge bg-secondary-subtle text-secondary">Upcoming</span>
+    {% endif %}
 </td>
 
-<td data-label="Training Link">
+<!-- MENTOR -->
+<td data-label="Mentor">
+    <div class="d-flex align-items-center gap-2">
+        <div class="mentor-avatar">
+            {{ e.mentor_name|default:"?"|first|upper }}
+        </div>
+        <div>
+            <div class="fw-medium">
+                {{ e.mentor_name|default:"Not assigned" }}
+            </div>
+            <small class="text-muted">{{ e.mentor_email }}</small>
+        </div>
+    </div>
+</td>
+
+<!-- TIMING -->
+<td data-label="Session">
+    <i class="bi bi-clock me-1 text-muted"></i>
+    {{ e.course_timing|default:"To be announced" }}
+</td>
+
+<!-- JOIN BUTTON -->
+<td data-label="Join">
 {% if e.training_link %}
-<a href="{{ e.training_link }}" target="_blank" class="btn btn-sm btn-primary">Join</a>
+    <a href="{{ e.training_link }}" target="_blank"
+       class="btn btn-sm btn-primary rounded-pill px-3">
+       <i class="bi bi-camera-video me-1"></i> Join
+    </a>
 {% else %}
-<span class="text-muted">Link not shared</span>
+    <span class="text-muted">Not shared</span>
 {% endif %}
 </td>
 
-<td data-label="Timing">{{ e.course_timing|default:"To be announced" }}</td>
-
+<!-- CERTIFICATE -->
 <td data-label="Certificate">
 {% if not e.is_completed %}
-<span class="text-muted">Available after course completion</span>
+    <span class="badge bg-light text-muted border">
+        After completion
+    </span>
+
 {% elif e.is_completed and not e.certificate %}
-<span class="text-warning">Certificate uploading soon</span>
+    <span class="badge bg-warning-subtle text-warning">
+        Uploading soon
+    </span>
+
 {% else %}
-<a href="{{ e.certificate.url }}" class="btn btn-sm btn-success">Download</a>
+    <a href="{{ e.certificate.url }}"
+       class="btn btn-sm btn-success rounded-pill px-3">
+       <i class="bi bi-download me-1"></i> Download
+    </a>
 {% endif %}
 </td>
+
 </tr>
+
 {% empty %}
 <tr>
-<td colspan="5" class="text-center text-muted py-4">No trainings enrolled.</td>
+<td colspan="5">
+    <div class="text-center py-5 empty-state">
+        <i class="bi bi-mortarboard display-6 text-muted"></i>
+        <p class="mt-3 text-muted">You haven't enrolled in any trainings yet</p>
+    </div>
+</td>
 </tr>
 {% endfor %}
 </tbody>
+
 </table>
 </div>
+</div>
+</div>
+
 
 </div>
 <style>
 /* Mobile-only table stacking */
+/* MOBILE TRAINING TABLE FIX */
 @media (max-width: 767px) {
-  .responsive-table thead { display:none; }
-  .responsive-table, .responsive-table tbody,
-  .responsive-table tr, .responsive-table td {
-    display:block; width:100%;
+
+  .modern-table thead {
+    display: none;
   }
-  .responsive-table tr {
-    margin-bottom:1rem; border:1px solid #dee2e6;
-    border-radius:8px; padding:10px; background:#fff;
+
+  .modern-table,
+  .modern-table tbody,
+  .modern-table tr,
+  .modern-table td {
+    display: block;
+    width: 100%;
   }
-  .responsive-table td { border:none; padding:6px 0; }
-  .responsive-table td::before {
-    content:attr(data-label); font-weight:600;
-    display:block; margin-bottom:2px; color:#6c757d;
+
+  .modern-table tr {
+    margin-bottom: 14px;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 12px;
+    background: #fff;
+  }
+
+  .modern-table td {
+    border: none !important;
+    padding: 6px 0;
+  }
+
+  .modern-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    display: block;
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 2px;
   }
 }
+
 
 .locked{
   opacity:.35;
@@ -356,6 +473,86 @@ Upgrade to Unlock
     color:#003b44;
 }
 
+.profile-card {
+    border-radius: 16px;
+}
+
+.profile-card .progress {
+    background-color: #f1f3f5;
+    overflow: hidden;
+}
+
+.profile-card .progress-bar {
+    transition: width 1.2s ease-in-out;
+    font-weight: 600;
+}
+
+.profile-card h5 {
+    font-weight: 600;
+}
+
+{% comment %} training {% endcomment %}
+ .modern-table tbody tr {
+    transition: background .2s ease, box-shadow .2s ease;
+    position: relative;
+}
+
+/* SAFE hover effect */
+.modern-table tbody tr:hover {
+    background: #f8fafc;
+    box-shadow: inset 0 0 0 9999px rgba(0,0,0,0.015);
+}
+
+/* Mentor avatar */
+.mentor-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#4f46e5,#22c55e);
+    color: white;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* Empty state */
+.empty-state i {
+    opacity: .6;
+}
+
+.badge {
+    font-weight: 500;
+}
 
 </style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".progress-bar").forEach(bar => {
+        let width = bar.getAttribute("data-width");
+        setTimeout(() => {
+            bar.style.width = width + "%";
+        }, 200);
+    });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    const params = new URLSearchParams(window.location.search);
+    if(params.get("section")==="trainings"){
+        const el = document.getElementById("my-trainings");
+        if(el){
+            setTimeout(()=>{
+                el.scrollIntoView({behavior:"smooth", block:"start"});
+            }, 250);
+        }
+    }
+
+});
+</script>
+
 {% endblock %}

@@ -1,144 +1,260 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<h3 class="mb-3">My Profile</h3>
+<div class="container py-3">
 
-<div class="mb-4">
-  <label class="form-label">Profile Completion</label>
-  <div class="progress">
+<!-- ================= PROFILE HEADER ================= -->
+<div class="profile-card mb-4">
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="mb-1">My Profile</h3>
+      <div class="text-muted small">Keep your profile complete to unlock job applications</div>
+    </div>
+
+    <div class="completion-wrapper text-center">
+      <div class="completion-circle" data-completion="{{ completion }}">
+        <span>{{ completion }}%</span>
+      </div>
+      <div class="small text-muted mt-1">Completed</div>
+    </div>
+  </div>
+
+  <div class="progress mt-3">
     <div class="progress-bar bg-success"
          role="progressbar"
          style="width: {{ completion }}%">
-      {{ completion }}%
     </div>
   </div>
+
 </div>
+
+
+<!-- ================= PROFILE FORM ================= -->
+<div class="card shadow-sm profile-form-card">
+  <div class="card-body">
 
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
 
-  <div class="mb-3">
-    <label class="form-label">Full Name</label>
-    <input type="text" class="form-control" name="full_name"
-           value="{{ profile.full_name|default:'' }}" required>
+  <div class="row g-3">
+
+    <div class="col-md-6">
+      <label class="form-label">Full Name</label>
+      <input type="text" class="form-control" name="full_name"
+             value="{{ profile.full_name|default:'' }}" required>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Mobile Number</label>
+      <input type="text" class="form-control" name="mobile_number"
+             value="{{ profile.mobile_number|default:'' }}"
+             placeholder="Enter mobile number" required>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Experience (years)</label>
+      <input type="number" class="form-control" name="experience"
+             value="{{ profile.experience|default_if_none:'' }}" min="0" required>
+    </div>
+
+    <div class="col-md-8">
+      <label class="form-label">Location</label>
+      <input type="text" class="form-control" name="location"
+             value="{{ profile.location|default:'' }}" required>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Skills</label>
+      <input type="text" class="form-control" name="skills"
+             value="{{ profile.skills|default:'' }}"
+             placeholder="Python, Django, REST" required>
+      <small class="text-muted">Separate skills using commas</small>
+    </div>
+
+    <!-- Resume -->
+    <div class="col-12">
+      <label class="form-label">Resume (PDF / DOC)</label>
+      <input type="file" class="form-control" name="resume" accept=".pdf,.doc,.docx">
+
+      {% if profile.resume %}
+        <div class="resume-status success mt-2">
+          ✓ Resume uploaded
+          <a href="{{ profile.resume.url }}" target="_blank">View</a>
+        </div>
+      {% else %}
+        <div class="resume-status muted mt-2">
+          No resume uploaded yet
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col-12">
+      <button class="btn btn-primary px-4">Save Profile</button>
+    </div>
+
   </div>
-
-  <div class="mb-3">
-    <label class="form-label">Mobile Number</label>
-    <input type="text" class="form-control" name="mobile_number"
-           value="{{ profile.mobile_number|default:'' }}"
-           placeholder="Enter mobile number" required>
-  </div>
-
-  <div class="mb-3">
-    <label class="form-label">Experience (years)</label>
-    <input type="number" class="form-control" name="experience"
-           value="{{ profile.experience|default_if_none:'' }}" min="0" required>
-  </div>
-
-  <div class="mb-3">
-    <label class="form-label">Location</label>
-    <input type="text" class="form-control" name="location"
-           value="{{ profile.location|default:'' }}" required>
-  </div>
-
-  <div class="mb-3">
-    <label class="form-label">Skills</label>
-    <input type="text" class="form-control" name="skills"
-           value="{{ profile.skills|default:'' }}"
-           placeholder="Python, Django, REST" required>
-  </div>
-
-  <!-- Resume -->
-  <div class="mb-3">
-    <label class="form-label">Resume (PDF / DOC)</label>
-    <input type="file" class="form-control" name="resume"
-           accept=".pdf,.doc,.docx">
-
-    {% if profile.resume %}
-      <small class="text-success d-block mt-1">
-        Uploaded:
-        <a href="{{ profile.resume.url }}" target="_blank">View Resume</a>
-      </small>
-    {% else %}
-      <small class="text-muted">No resume uploaded yet</small>
-    {% endif %}
-  </div>
-
-  <button class="btn btn-primary">Save Profile</button>
 </form>
+
+  </div>
+</div>
 
 
 <!-- ================= Resume AI Section ================= -->
 
-<hr class="my-4">
+<div class="resume-ai mt-5">
 
-<h4 class="mb-3">Resume Feedback</h4>
+<h4 class="mb-3">AI Resume Feedback</h4>
 
-<div class="mb-3">
+<div class="ai-action-box text-center">
 
   {% if request.user.plan == "FREE" or request.user.plan_status == "EXPIRED" %}
-  <a href="{% url 'settings' %}?upgrade_required=resume" class="btn btn-outline-warning">
-    Upgrade to get AI Resume Feedback
-  </a>
+    <a href="{% url 'settings' %}?upgrade_required=resume"
+       class="btn btn-outline-warning btn-sm px-4">
+      Upgrade for AI Resume Review
+    </a>
 
   {% elif request.user.plan == "PRO" %}
-    <a href="{% url 'generate_resume_review' %}" class="btn btn-outline-primary">
-      Get Resume Suggestions
+    <a href="{% url 'generate_resume_review' %}"
+       class="btn btn-outline-primary btn-sm px-4">
+      Resume Suggestions
     </a>
 
   {% elif request.user.plan == "PRO_PLUS" %}
-    <a href="{% url 'generate_advanced_resume_review' %}" class="btn btn-success">
-      Get Expert Resume Optimization
+    <a href="{% url 'generate_advanced_resume_review' %}"
+       class="btn btn-success btn-sm px-4">
+      Expert Optimization
     </a>
 
   {% endif %}
 
 </div>
 
+
+
 {% for review in profile.resume_reviews.all|dictsortreversed:"created_at" %}
-<div class="card mb-3 shadow-sm">
+<div class="card feedback-card mt-3">
   <div class="card-body">
 
-    <div class="d-flex justify-content-between">
-      <strong>{{ review.get_review_type_display }}</strong>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <strong class="text-primary">{{ review.get_review_type_display }}</strong>
       <small class="text-muted">{{ review.created_at }}</small>
     </div>
 
-   <div class="ai-feedback">
-    {{ review.feedback|linebreaks }}
-  </div>
-
+    <div class="ai-feedback">
+      {{ review.feedback|linebreaks }}
+    </div>
 
   </div>
 </div>
-
 {% empty %}
-<p class="text-muted">No feedback generated yet.</p>
-{% endfor %} 
+<p class="text-muted mt-3">No feedback generated yet.</p>
+{% endfor %}
+
+</div>
+
+</div>
 
 
 <style>
+
+  /* Highlight form labels */
+.form-label{
+  font-weight:600;
+  color:#0d6efd;
+  background:#eef4ff;
+  padding:3px 10px;
+  border-radius:6px;
+  display:inline-block;
+  margin-bottom:6px;
+}
+
+/* focus effect */
+.form-control:focus{
+  border-color:#0d6efd;
+  box-shadow:0 0 0 2px rgba(13,110,253,.15);
+}
+
+.ai-action-box .btn{
+    border-radius:999px;
+    font-weight:500;
+    letter-spacing:.2px;
+}
+
+/* HEADER CARD */
+.profile-card{
+    background:linear-gradient(135deg,#f8fafc,#ffffff);
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 6px 20px rgba(0,0,0,.05);
+}
+
+/* circular completion */
+.completion-circle{
+    width:70px;height:70px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;
+    background:
+      conic-gradient(#22c55e calc(var(--value)*1%), #e5e7eb 0);
+    position:relative;
+}
+.completion-circle span{position:relative;z-index:2}
+.completion-circle::before{
+    content:"";
+    position:absolute;inset:6px;
+    background:#fff;border-radius:50%;
+}
+
+/* form card */
+.profile-form-card{
+    border-radius:18px;
+}
+
+/* resume status */
+.resume-status{
+    padding:10px 14px;
+    border-radius:10px;
+    font-size:14px;
+}
+.resume-status.success{
+    background:#ecfdf5;color:#065f46;
+}
+.resume-status.muted{
+    background:#f1f5f9;color:#64748b;
+}
+
+/* AI Section */
+.ai-action-box{
+    background:#f8fafc;
+    padding:18px;
+    border-radius:14px;
+    border:1px dashed #cbd5e1;
+}
+
+/* feedback */
+.feedback-card{
+    border-radius:16px;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
+}
+
 .ai-feedback{
     background:#f8fafc;
-    border-left:4px solid #0ea5e9;
+    border-left:4px solid #3b82f6;
     padding:16px;
     border-radius:12px;
-    line-height:1.6;
+    line-height:1.7;
 }
 
-.ai-feedback ul{
-    margin-top:10px;
-    padding-left:20px;
-}
+.ai-feedback p{margin-bottom:8px}
+.ai-feedback strong{color:#0f172a}
 
-.ai-feedback strong{
-    color:#0f172a;
-}
+</style>
 
-.ai-feedback p{
-    margin-bottom:8px;
-}
-</style> 
+<script>
+document.querySelectorAll('.completion-circle').forEach(el=>{
+  el.style.setProperty('--value', el.dataset.completion);
+});
+</script>
 
 {% endblock %}

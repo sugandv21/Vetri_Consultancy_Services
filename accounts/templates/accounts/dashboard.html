@@ -240,7 +240,7 @@ Upgrade to Unlock
 
 
 <!-- TRAININGS TABLE (UNCHANGED) -->
-<h4 class="mt-5">My Trainings</h4>
+<h4 class="mt-5" id="my-trainings">My Trainings</h4>
 
 <div class="table-responsive">
 <table class="table table-bordered align-middle responsive-table">
@@ -292,6 +292,7 @@ Upgrade to Unlock
 </tbody>
 </table>
 </div>
+
 
 </div>
 <style>
@@ -357,4 +358,21 @@ Upgrade to Unlock
 
 
 </style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    const params = new URLSearchParams(window.location.search);
+    if(params.get("section")==="trainings"){
+        const el = document.getElementById("my-trainings");
+        if(el){
+            setTimeout(()=>{
+                el.scrollIntoView({behavior:"smooth", block:"start"});
+            }, 250);
+        }
+    }
+
+});
+</script>
+
 {% endblock %}
