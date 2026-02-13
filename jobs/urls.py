@@ -13,5 +13,6 @@ urlpatterns = [
     path("apply/<int:job_id>/", views.apply_job, name="apply_job"),
     path("applications/", views.applications, name="applications"),
     path("job/<int:job_id>/", views.job_detail, name="job_detail"),
+    
 
 ]

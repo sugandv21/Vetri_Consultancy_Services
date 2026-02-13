@@ -91,6 +91,7 @@ from django.core.paginator import Paginator
 from .utils import visible_jobs_for_user, can_user_apply
 
 from django.db.models import Q
+from jobs.models import JobApplication
 
 @login_required
 def search_jobs(request):
@@ -132,8 +133,16 @@ def search_jobs(request):
 
     # 🔹 Attach permission to each job
     job_list = list(page_obj.object_list)
+
+    # get all applied job ids in one query (FAST)
+    applied_job_ids = set(
+        JobApplication.objects.filter(user=user)
+        .values_list("job_id", flat=True)
+    )
+
     for job in job_list:
-        job.can_apply = can_user_apply(user, job)
+        job.is_applied = job.id in applied_job_ids
+        job.can_apply = can_user_apply(user, job) and not job.is_applied
 
         # determine upgrade target
         if job.visibility == "FREE":
@@ -142,6 +151,7 @@ def search_jobs(request):
             job.required_plan = "PRO"
         elif job.visibility == "PROPLUS":
             job.required_plan = "PROPLUS"
+
 
 
     page_obj.object_list = job_list
@@ -159,19 +169,45 @@ def search_jobs(request):
 from .utils import can_user_apply
 from .models import Job
 
+# @login_required
+# def job_detail(request, job_id):
+#     # allow viewing any published job
+#     job = get_object_or_404(Job, id=job_id, status="PUBLISHED")
+#     can_apply = can_user_apply(request.user, job)
+    
+
+#     required_plan = None
+#     if not can_apply:
+#         required_plan = job.visibility
+
+#     return render(request, "jobs/job_detail.html", {
+#         "job": job,
+#         "can_apply": can_apply,
+#         "required_plan": required_plan
+#     })
 @login_required
 def job_detail(request, job_id):
-    # allow viewing any published job
     job = get_object_or_404(Job, id=job_id, status="PUBLISHED")
-    can_apply = can_user_apply(request.user, job)
 
+    is_applied = JobApplication.objects.filter(
+        user=request.user,
+        job=job
+    ).exists()
+
+    can_apply_permission = can_user_apply(request.user, job)
+
+    # final permission
+    can_apply = can_apply_permission and not is_applied
+
+    # show upgrade only if plan restriction (NOT applied)
     required_plan = None
-    if not can_apply:
+    if not can_apply_permission and not is_applied:
         required_plan = job.visibility
 
     return render(request, "jobs/job_detail.html", {
         "job": job,
         "can_apply": can_apply,
+        "is_applied": is_applied,
         "required_plan": required_plan
     })
 
@@ -206,7 +242,7 @@ def apply_job(request, job_id):
 
     profile = request.user.profile
 
-    # 1️⃣ PROFILE COMPLETION CHECK
+    # PROFILE COMPLETION CHECK
     if profile.completion_percentage() < 100:
         messages.warning(
             request,
@@ -214,7 +250,7 @@ def apply_job(request, job_id):
         )
         return redirect("my_profile")
 
-    # 2️⃣ MONTHLY QUOTA CHECK
+    # MONTHLY QUOTA CHECK
     allowed, used, limit = can_apply_quota(request.user)
 
     if not allowed:
@@ -224,10 +260,10 @@ def apply_job(request, job_id):
         )
         return redirect("settings")
 
-    # 3️⃣ GET JOB
+    # GET JOB
     job = get_object_or_404(Job, id=job_id)
 
-    # 4️⃣ APPLY (PREVENT DUPLICATE APPLICATIONS)
+    # APPLY (PREVENT DUPLICATE APPLICATIONS)
     application, created = JobApplication.objects.get_or_create(
         user=request.user,
         job=job
@@ -237,20 +273,20 @@ def apply_job(request, job_id):
         messages.info(request, "You have already applied for this job.")
         return redirect("applications")
 
-    # 5️⃣ ADMIN ALERT (ONLY FIRST TIME APPLY)
+    # ADMIN ALERT (ONLY FIRST TIME APPLY)
     Notification.objects.create(
         user=None,  # admin alert
         title="New Job Application",
         message=f"{request.user.full_name} applied for {job.title}"
     )
 
-    # 6️⃣ REMOVE FROM SAVED JOBS (IF EXISTS)
+    # REMOVE FROM SAVED JOBS (IF EXISTS)
     SavedJob.objects.filter(
         user=request.user,
         job=job
     ).delete()
 
-    # 7️⃣ SUCCESS MESSAGE
+    # SUCCESS MESSAGE
     messages.success(request, "Application submitted successfully.")
     return redirect("applications")
 
@@ -261,3 +297,5 @@ def apply_job(request, job_id):
 def applications(request):
     applications = JobApplication.objects.filter(user=request.user)
     return render(request, "jobs/applications.html", {"applications": applications})
+
+

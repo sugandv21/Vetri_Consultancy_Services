@@ -2,8 +2,8 @@ from django.utils import timezone
 from jobs.models import JobApplication
 
 LIMITS = {
-    "FREE": 2,
-    "PRO": 3,
+    "FREE": 10,
+    "PRO": 5,
     "PRO_PLUS": None,
 }
 

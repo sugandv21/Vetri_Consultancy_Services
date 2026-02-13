@@ -33,7 +33,19 @@
     <hr>
 
     <!-- ACTIONS -->
-    {% if can_apply %}
+
+    {% if is_applied %}
+
+      <div class="alert alert-success mb-3">
+        You have already applied for this job
+      </div>
+
+      {% comment %} <button class="btn btn-success w-100" disabled>
+        Applied
+      </button> {% endcomment %}
+
+
+    {% elif can_apply %}
 
       <a href="{% url 'save_job' job.id %}" class="btn btn-outline-secondary">
         Save
@@ -43,7 +55,8 @@
         Apply
       </a>
 
-    {% else %}
+
+    {% elif required_plan %}
 
       <div class="alert alert-warning">
         This is a <strong>{{ required_plan }}</strong> job.
@@ -55,6 +68,7 @@
       </a>
 
     {% endif %}
+
 
   </div>
 </div>
