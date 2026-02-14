@@ -38,7 +38,10 @@ urlpatterns = [
     path("admin/alerts/read/<int:alert_id>/", views.mark_alert_read, name="mark_alert_read"),
     
     path("invoice/<int:payment_id>/", views.download_invoice, name="download_invoice"),
+    path("admin-alerts/", views.admin_alerts, name="admin_alerts"),
 
+
+    
 
 
 

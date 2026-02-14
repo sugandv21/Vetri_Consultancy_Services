@@ -10,8 +10,9 @@ from datetime import timedelta
 from jobs.models import JobApplication
 from django.shortcuts import get_object_or_404
 from accounts.models import Notification
-from accounts.models import Payment
-from accounts.utils.email import safe_send_mail
+from core.models import Payment
+
+
 
 
 # ---------------- LOGIN ----------------
@@ -34,10 +35,16 @@ def login_user(request):
         messages.success(request, "Login successful.")
 
         # ROLE BASED REDIRECT
-        if user.is_staff:     # admin / consultant
+        # ROLE BASED REDIRECT
+        if user.is_superuser:
             return redirect("admin_dashboard")
-        else:                 # candidate
-            return redirect("public_home")
+
+        elif user.is_staff:
+            return redirect("trainer_dashboard")
+
+        else:
+            return redirect("dashboard")
+
 
     return render(request, "accounts/login.html")
 
@@ -103,7 +110,7 @@ def logout_user(request):
 def post_job(request):
     return render(request, "jobs/post_job.html")
 
-from .models import SubscriptionPricing
+from core.models import SubscriptionPricing
 from django.utils import timezone
 from datetime import timedelta
 import razorpay
@@ -219,6 +226,7 @@ def payment(request):
                 status="SUCCESS"
             )
 
+
             request.session.pop("selected_plan", None)
             messages.success(request, f"Payment successful! Welcome to {plan_name}")
             return JsonResponse({"redirect_url": reverse("dashboard")})
@@ -276,20 +284,23 @@ def profile_wizard(request):
 
         # ✅ Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-            sent = safe_send_mail(
+            send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs and track applications.\n\n"
+                    "You can now apply for jobs, save opportunities, "
+                    "and track your applications from your dashboard.\n\n"
+                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,  # IMPORTANT
             )
 
-            if sent:
-                profile.completion_email_sent = True
-                profile.save(update_fields=["completion_email_sent"])
+            profile.completion_email_sent = True
+            profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("dashboard")
@@ -299,10 +310,10 @@ def profile_wizard(request):
         "accounts/profile_wizard.html",
         {
             "profile": profile,
-            "completion": profile.completion_percentage(),
-        },
+            "completion": profile.completion_percentage()
+        }
     )
-    
+
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek
 from jobs.models import JobApplication
@@ -329,23 +340,23 @@ def my_profile(request):
 
         # completion email
         completion = profile.completion_percentage()
-
-        # Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-            sent = safe_send_mail(
+            send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
                     "You can now apply for jobs and track applications.\n\n"
+                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
+                fail_silently=False,
             )
 
-            if sent:
-                profile.completion_email_sent = True
-                profile.save(update_fields=["completion_email_sent"])
+            profile.completion_email_sent = True
+            profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("my_profile")
@@ -425,7 +436,7 @@ def settings_view(request):
     })
 
 from django.http import HttpResponse
-from .models import Payment
+from core.models import Payment
 from .services.invoice import build_invoice
 from django.contrib.auth.decorators import login_required
 
@@ -474,7 +485,7 @@ def upgrade_to_pro_plus(request):
 #         "accounts/candidate.html",
 #         {"candidates": candidates}
 #     )
-@staff_required
+@admin_required
 def candidate_list(request):
 
     candidates = (
@@ -519,18 +530,20 @@ from core.models import Training, Enrollment, TrainingEnquiry
 from accounts.models import Notification
 
 
-@staff_required
+from django.db.models import OuterRef, Subquery
+from django.utils import timezone
+from datetime import timedelta
+from accounts.models import Notification
+
+@admin_required
 def admin_dashboard(request):
 
     # ---------------- USERS ----------------
     candidate_users = User.objects.filter(is_staff=False)
 
     total_candidates = candidate_users.count()
-
     free_users = candidate_users.filter(plan=User.FREE).count()
-
     paid_users = candidate_users.exclude(plan=User.FREE).count()
-
     expired_users = candidate_users.filter(plan_status=User.EXPIRED).count()
 
     # ---------------- JOBS ----------------
@@ -549,80 +562,79 @@ def admin_dashboard(request):
     total_enquiries = TrainingEnquiry.objects.count()
 
     # ---------------- SLA MONITORING ----------------
-    from django.utils import timezone
-    from datetime import timedelta
-
     one_day_ago = timezone.now() - timedelta(hours=24)
 
     last_message = EnquiryMessage.objects.filter(
         enquiry=OuterRef("pk")
     ).order_by("-created_at")
 
-    delayed_queryset = TrainingEnquiry.objects.annotate(
+    delayed_enquiries = TrainingEnquiry.objects.annotate(
         last_sender=Subquery(last_message.values("sender")[:1]),
         last_message_time=Subquery(last_message.values("created_at")[:1])
     ).filter(
         last_sender__isnull=False,
         last_message_time__lte=one_day_ago
     ).exclude(
-        last_sender=request.user.id
-    )
+        last_sender=request.user
+    ).count()
 
-    delayed_enquiries = delayed_queryset.count()
+    # ---------------- ALERT SYSTEM ----------------
 
+    admin_alerts = Notification.objects.filter(user__isnull=True)
 
-    # ---------------- ALERTS ----------------
-    job_notifications = Notification.objects.filter(
-        user__isnull=True,
-        is_read=False,
-        created_at__gte=one_day_ago
-    ).order_by("-created_at")
+    # 🔴 PRIORITY ALERTS (red box)
+    notifications = admin_alerts.filter(
+        is_admin_alert=True,
+        is_read=False
+    ).order_by("-created_at")[:5]
 
-    new_app_count = job_notifications.count()
-    recent_notifications = job_notifications[:5]
+    # 🟡 NEW APPLICATION ALERTS (yellow box)
+    recent_notifications = admin_alerts.filter(
+        type=Notification.JOB,
+        is_read=False
+    ).order_by("-created_at")[:5]
 
-    notifications = request.user.notifications.filter(
-        is_read=False,
-        created_at__gte=one_day_ago
-    ).order_by("-created_at")
-    # ---------------- UNREAD ADMIN ALERTS ----------------
-    unread_notifications = Notification.objects.filter(
-        user__isnull=True,   # admin/global alerts only
+    new_app_count = recent_notifications.count()
+
+    # 📊 Counters
+    unread_notifications = admin_alerts.filter(is_read=False).count()
+
+    trainer_alerts = admin_alerts.filter(
+        type=Notification.TRAINER,
         is_read=False
     ).count()
 
+
     return render(request, "accounts/admin_dashboard.html", {
 
-        # users
+        # stats
         "total_candidates": total_candidates,
         "free_users": free_users,
         "paid_users": paid_users,
         "expired_users": expired_users,
 
-        # jobs
         "total_jobs": total_jobs,
         "pending_jobs": pending_jobs,
         "active_jobs": active_jobs,
 
-        # applications
         "total_applications": total_applications,
         "pending_applications": pending_applications,
         "interview_applications": interview_applications,
 
-        # training
         "total_trainings": total_trainings,
         "total_enrollments": total_enrollments,
         "total_enquiries": total_enquiries,
 
-        # SLA
         "delayed_enquiries": delayed_enquiries,
-        "unread_notifications": unread_notifications,
 
         # alerts
-        "new_app_count": new_app_count,
-        "recent_notifications": recent_notifications,
         "notifications": notifications,
+        "recent_notifications": recent_notifications,
+        "new_app_count": new_app_count,
+        "unread_notifications": unread_notifications,
+        "trainer_alerts": trainer_alerts,
     })
+
 
 
 # #candidate resume view:
@@ -633,7 +645,7 @@ def admin_dashboard(request):
 
 
 
-@staff_required
+@admin_required
 def candidate_detail(request, user_id):
     candidate = get_object_or_404(User, id=user_id, is_staff=False)
 
@@ -715,12 +727,13 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
-from accounts.decorators import staff_required
+from accounts.decorators import admin_required
+
 from jobs.models import JobApplication
 from accounts.models import Notification
 
 
-@staff_required
+@admin_required
 @require_POST
 def update_application_status(request, app_id):
     application = get_object_or_404(JobApplication, id=app_id)
@@ -761,20 +774,15 @@ def update_application_status(request, app_id):
             "Vetri Consultancy Services"
         )
 
-        sent = safe_send_mail(
+        send_mail(
             subject=subject,
             message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[candidate.email],
+            fail_silently=True,
         )
 
-        if sent:
-            messages.success(request, "Application status updated & email sent.")
-        else:
-            messages.warning(request, "Status updated but email failed.")
-
-    else:
-        messages.success(request, "Application status updated.")
-
+    messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
 
 
@@ -785,8 +793,8 @@ from jobs.models import JobApplication, Job
 from jobs.models import SavedJob, JobApplication
 from core.models import Enrollment
 from collections import OrderedDict
-
-
+from consultation.models import ConsultantSession
+from core.models import ModuleProgress
 @login_required
 def dashboard(request):
 
@@ -795,27 +803,45 @@ def dashboard(request):
         return redirect("admin_dashboard")
 
     user = request.user
-    profile = user.profile
+
+    # profile safety (prevents crash for new users)
+    profile = getattr(user, "profile", None)
 
     # ---------------- DATA ----------------
     enrollments = Enrollment.objects.filter(user=user).select_related("training")
-    one_day_ago = timezone.now() - timedelta(hours=24)
+    
+    for e in enrollments:
 
+        progress_qs = ModuleProgress.objects.filter(
+            enrollment=e
+        ).select_related("module").order_by("module__order")
+
+        total = progress_qs.count()
+        completed_qs = progress_qs.filter(is_completed=True)
+        pending_qs = progress_qs.filter(is_completed=False)
+
+        completed = completed_qs.count()
+
+        # percentage
+        e.progress_percent = int((completed / total) * 100) if total else 0
+
+        # attach module lists
+        e.completed_modules = completed_qs
+        e.pending_modules = pending_qs
+        e.total_modules = total
+
+    one_day_ago = timezone.now() - timedelta(hours=24)
     notifications = user.notifications.filter(
         is_read=False,
         created_at__gte=one_day_ago
     ).order_by("-created_at")[:5]
 
-
     applications = JobApplication.objects.filter(user=user)
     interviews = applications.filter(status="INTERVIEW")
-    
-    # ---------------- RESPONSE ANALYTICS (LAST 4 WEEKS RANGE) ----------------
-    
 
+    # ---------------- RESPONSE ANALYTICS (LAST 4 WEEKS RANGE) ----------------
     today = timezone.now().date()
 
-    # Build last 4 weeks (Mon → Sun)
     week_ranges = []
     week_map = OrderedDict()
 
@@ -826,13 +852,11 @@ def dashboard(request):
         week_ranges.append((start, end, label))
         week_map[label] = 0
 
-    # Fetch responded applications
     responses = JobApplication.objects.filter(
         user=user,
         status__in=["IN_REVIEW", "INTERVIEW", "CLOSED"]
     )
 
-    # Count responses per week range
     for app in responses:
         applied_date = app.applied_at.date()
         for start, end, label in week_ranges:
@@ -843,13 +867,14 @@ def dashboard(request):
     chart_data = list(week_map.values())
     # -------------------------------------------------------------------------
 
+    # consultant sessions used
+    sessions_used = user.consultation_requests.filter(
+        status=ConsultantSession.COMPLETED
+    ).count()
 
-
-    # consultant sessions used this month
-    sessions_used = user.sessions.filter(status="COMPLETED").count()
-
-    # resume optimization usage
-    resume_used = profile.resume_reviews.count()
+    # resume optimization usage (safe)
+    resume_used = profile.resume_reviews.count() if profile else 0
+    completion = profile.completion_percentage() if profile else 0
 
     # ---------------- PLAN LIMITS ----------------
     if user.plan == "FREE":
@@ -884,7 +909,7 @@ def dashboard(request):
         "sessions_used": sessions_used,
         "session_limit": session_limit,
 
-        "completion": profile.completion_percentage(),
+        "completion": completion,
 
         "enrolled_trainings_count": enrollments.count(),
         "enrollments": enrollments,
@@ -892,12 +917,9 @@ def dashboard(request):
         "notifications": notifications,
         "chart_labels": chart_labels,
         "chart_data": chart_data,
-
     }
 
     return render(request, "accounts/updated_dashboard.html", context)
-
-
 
 #resume_review
 from .resume_ai import generate_resume_suggestions
@@ -981,7 +1003,7 @@ from core.models import TrainingEnquiry, EnquiryMessage
 from accounts.decorators import staff_required
 
 
-@staff_required
+@admin_required
 def admin_delayed_enquiries(request):
 
     one_day_ago = timezone.now() - timedelta(hours=24)
@@ -1011,7 +1033,7 @@ def admin_delayed_enquiries(request):
 
 
 # Shows admin inbox
-@staff_required
+@admin_required
 def admin_unread_alerts(request):
 
     alerts = Notification.objects.filter(
@@ -1034,7 +1056,7 @@ from django.shortcuts import get_object_or_404, redirect
 from accounts.models import Notification
 from accounts.decorators import staff_required
 
-@staff_required
+@admin_required
 @require_POST
 def mark_alert_read(request, alert_id):
     alert = get_object_or_404(Notification, id=alert_id)
@@ -1044,3 +1066,28 @@ def mark_alert_read(request, alert_id):
 
 
 
+
+# ---------------- ADMIN ALERT FILTER PAGE ----------------
+@admin_required
+def admin_alerts(request):
+
+    alert_type = request.GET.get("type")
+
+    alerts = Notification.objects.filter(user__isnull=True)
+
+    # trainer alerts
+    if alert_type == "trainer":
+        alerts = alerts.filter(type=Notification.TRAINER)
+
+    # job alerts
+    elif alert_type == "job":
+        alerts = alerts.filter(type=Notification.JOB)
+
+    return render(
+        request,
+        "accounts/admin_alerts.html",
+        {
+            "title": "Alerts",
+            "alerts": alerts.order_by("-created_at")
+        }
+    )

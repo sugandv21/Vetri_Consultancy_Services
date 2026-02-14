@@ -229,9 +229,20 @@ class ResumeReview(models.Model):
     def __str__(self):
         return f"{self.profile.user.email} - {self.review_type}"
 
-
-#notfication
 class Notification(models.Model):
+
+    # 🔔 Notification Types
+    GENERAL = "GENERAL"
+    TRAINER = "TRAINER"
+    JOB = "JOB"
+    SYSTEM = "SYSTEM"
+
+    TYPE_CHOICES = [
+        (GENERAL, "General"),
+        (TRAINER, "Trainer"),
+        (JOB, "Job"),
+        (SYSTEM, "System"),
+    ]
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -241,70 +252,20 @@ class Notification(models.Model):
         blank=True
     )
 
-
     title = models.CharField(max_length=200)
     message = models.TextField()
 
-    is_read = models.BooleanField(default=False)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.email} - {self.title}"
-
-
-
-class Payment(models.Model):
-
-    PAYMENT_TYPE = [
-        ("PLAN", "Subscription Plan"),
-        ("TRAINING", "Training Purchase"),
-    ]
-
-    STATUS = [
-        ("SUCCESS", "Success"),
-        ("FAILED", "Failed"),
-    ]
-
-    PLAN_CHOICES = [                 # ⭐ ADD THIS BLOCK
-        ("FREE", "Free"),
-        ("PRO", "Pro"),
-        ("PRO_PLUS", "Pro Plus"),
-    ]
-
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-
-    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE)
-
-    purchased_plan = models.CharField(     # ⭐ ADD THIS FIELD
+    type = models.CharField(
         max_length=20,
-        choices=PLAN_CHOICES,
-        null=True,
-        blank=True
+        choices=TYPE_CHOICES,
+        default=GENERAL
     )
 
-    amount = models.DecimalField(max_digits=8, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS)
-
-    training = models.ForeignKey(
-        "core.Training",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL
-    )
-
+    is_admin_alert = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-
-class SubscriptionPricing(models.Model):
-
-    PLAN_CHOICES = [
-        ("PRO", "Pro"),
-        ("PRO_PLUS", "Pro Plus"),
-    ]
-
-    plan = models.CharField(max_length=20, choices=PLAN_CHOICES, unique=True)
-    price = models.DecimalField(max_digits=8, decimal_places=2)
-
     def __str__(self):
-        return f"{self.plan} - ₹{self.price}"
+        if self.user:
+            return f"{self.user.email} - {self.title}"
+        return f"ADMIN ALERT - {self.title}"

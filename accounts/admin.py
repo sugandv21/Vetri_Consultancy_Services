@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Profile, ResumeReview, Notification, Payment
+from .models import User, Profile, ResumeReview, Notification
+
 
 
 
@@ -65,10 +66,34 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ("user", "title", "is_read", "created_at")
-    list_filter = ("is_read", "created_at")
-    search_fields = ("title", "message", "user__email")
+
+    list_display = (
+        "title",
+        "user",
+        "is_admin_alert",
+        "is_read",
+        "created_at",
+    )
+
+    list_filter = (
+        "is_admin_alert",
+        "is_read",
+        "created_at",
+    )
+
+    search_fields = (
+        "title",
+        "message",
+        "user__email",
+    )
+
     ordering = ("-created_at",)
+
+    actions = ["mark_as_read"]
+
+    def mark_as_read(self, request, queryset):
+        queryset.update(is_read=True)
+
     
 @admin.register(ResumeReview)
 class ResumeReviewAdmin(admin.ModelAdmin):
@@ -77,16 +102,3 @@ class ResumeReviewAdmin(admin.ModelAdmin):
     search_fields = ("profile__user__email",)
     ordering = ("-created_at",)
 
-@admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
-    list_display = ("user", "payment_type", "amount", "status", "created_at")
-    list_filter = ("payment_type", "status")
-    search_fields = ("user__email",)
-    ordering = ("-created_at",)
-
-
-from .models import SubscriptionPricing
-
-@admin.register(SubscriptionPricing)
-class SubscriptionPricingAdmin(admin.ModelAdmin):
-    list_display = ("plan", "price")
