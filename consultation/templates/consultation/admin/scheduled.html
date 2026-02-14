@@ -3,24 +3,53 @@
 
 <h3>Scheduled Sessions</h3>
 
-<table class="table">
+<table class="table table-bordered">
 <tr>
-  <th>User</th>
+  <th>Candidate</th>
+  <th>Trainer</th>
   <th>Date</th>
-  <th>Join</th>
-  <th>Complete</th>
+  <th>Meeting</th>
+  <th>Status</th>
+  <th>Action</th>
 </tr>
 
 {% for s in sessions %}
 <tr>
+
   <td>{{ s.user.email }}</td>
-  <td>{{ s.scheduled_at }}</td>
-  <td><a href="{{ s.meeting_link }}" target="_blank">Open</a></td>
+
   <td>
-    <a href="{% url 'mark_completed' s.id %}" class="btn btn-success btn-sm">
-      Mark Completed
-    </a>
+    {% if s.trainer %}
+      {{ s.trainer.email }}
+    {% else %}
+      Not Assigned
+    {% endif %}
   </td>
+
+  <td>{{ s.scheduled_at|date:"d M Y h:i A" }}</td>
+
+  <td>
+    <a href="{{ s.meeting_link }}" target="_blank">View Link</a>
+  </td>
+
+  <td>
+    {% if s.status == "SCHEDULED" %}
+        <span class="badge bg-warning text-dark">Waiting Trainer</span>
+    {% elif s.status == "ATTENDED" %}
+        <span class="badge bg-info">Trainer Completed</span>
+    {% endif %}
+  </td>
+
+  <td>
+    {% if s.status == "ATTENDED" %}
+        <a href="{% url 'mark_completed' s.id %}" class="btn btn-success btn-sm">
+          Verify & Close
+        </a>
+    {% else %}
+        <span class="text-muted">Pending Trainer</span>
+    {% endif %}
+  </td>
+
 </tr>
 {% endfor %}
 

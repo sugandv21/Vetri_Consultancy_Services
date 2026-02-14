@@ -1,18 +1,56 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<h3>Schedule Session</h3>
+<div class="container mt-4" style="max-width:650px">
 
-<form method="post">
-  {% csrf_token %}
+    <h3 class="mb-4">Schedule Consultation</h3>
 
-  <label>Meeting Link</label>
-  <input type="url" name="meeting_link" class="form-control" required>
+    <div class="card shadow-sm">
+        <div class="card-body">
 
-  <label class="mt-3">Date & Time</label>
-  <input type="datetime-local" name="scheduled_at" class="form-control" required>
+            <!-- Candidate Info -->
+            <div class="mb-3">
+                <strong>Candidate:</strong> {{ session.user.email }} <br>
+                <strong>Topic:</strong> {{ session.topic }}
+            </div>
 
-  <button class="btn btn-success mt-3">Confirm Schedule</button>
-</form>
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Trainer Select -->
+                <div class="mb-3">
+                    <label class="form-label">Assign Trainer</label>
+                    <select name="trainer" class="form-select" required>
+                        <option value="">Select Trainer</option>
+                        {% for trainer in trainers %}
+                            <option value="{{ trainer.id }}">
+                                {{ trainer.full_name|default:trainer.email }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Meeting Link -->
+                <div class="mb-3">
+                    <label class="form-label">Meeting Link</label>
+                    <input type="url" name="meeting_link" class="form-control" required>
+                </div>
+
+                <!-- Date Time -->
+                <div class="mb-3">
+                    <label class="form-label">Date & Time</label>
+                    <input type="datetime-local" name="scheduled_at" class="form-control" required>
+                </div>
+
+                <button class="btn btn-success w-100">
+                    Confirm Schedule
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
 
 {% endblock %}

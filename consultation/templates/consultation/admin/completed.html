@@ -1,23 +1,59 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<h3>Completed Sessions</h3>
+<h3 class="mb-4">Completed Sessions</h3>
 
-<table class="table">
+<table class="table table-bordered table-striped align-middle">
+<thead class="table-dark">
 <tr>
-  <th>User</th>
+  <th>Candidate</th>
+  <th>Trainer</th>
   <th>Topic</th>
   <th>Date</th>
+  <th>Feedback</th>
+  <th>Status</th>
 </tr>
+</thead>
+
+<tbody>
 
 {% for s in sessions %}
 <tr>
-  <td>{{ s.user.email }}</td>
+
+  <td>
+    {{ s.user.profile.full_name|default:s.user.email }}
+  </td>
+
+  <td>
+    {% if s.trainer %}
+      {{ s.trainer.profile.full_name|default:s.trainer.email }}
+    {% else %}
+      -
+    {% endif %}
+  </td>
+
   <td>{{ s.topic }}</td>
-  <td>{{ s.scheduled_at }}</td>
+
+  <td>{{ s.scheduled_at|date:"d M Y h:i A" }}</td>
+
+  <td style="max-width:300px; white-space:pre-wrap;">
+    {{ s.feedback|default:"No feedback submitted" }}
+  </td>
+
+  <td>
+    <span class="badge bg-success">Verified</span>
+  </td>
+
+</tr>
+{% empty %}
+<tr>
+  <td colspan="6" class="text-center text-muted">
+    No completed sessions yet
+  </td>
 </tr>
 {% endfor %}
 
+</tbody>
 </table>
 
 {% endblock %}

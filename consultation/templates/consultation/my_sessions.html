@@ -34,6 +34,25 @@
               {{ session.get_status_display }}
             </span>
 
+            {% if session.status == "ATTENDED" %}
+  <div class="alert alert-info mt-3">
+    Trainer completed session. Waiting for admin verification.
+  </div>
+{% endif %}
+
+{% if session.status == "COMPLETED" %}
+  <div class="mt-3 p-3 border rounded bg-light">
+
+    <h6 class="mb-2 text-success">Trainer Feedback</h6>
+
+    <p class="mb-0" style="white-space:pre-wrap;">
+      {{ session.feedback|default:"No feedback available" }}
+    </p>
+
+  </div>
+{% endif %}
+
+
             {% if session.meeting_link %}
               <div class="mt-3">
                 <a href="{{ session.meeting_link }}" target="_blank"
