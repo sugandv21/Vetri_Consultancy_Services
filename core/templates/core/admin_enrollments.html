@@ -15,6 +15,8 @@
         <th>Candidate Email</th>
         <th>Training</th>
         <th>Enrolled On</th>
+        <th>Modules Covered</th>
+        <th>Course Completion</th>
         <th>Update details</th>
       </tr>
     </thead>
@@ -38,12 +40,44 @@
           {{ e.enrolled_at|date:"d M Y, H:i" }}
         </td>
 
-        <td data-label="Update">
-          <a href="{% url 'edit_enrollment' e.id %}"
-             class="btn btn-sm btn-outline-primary w-100">
-            Update
-          </a>
-        </td>
+        <!-- PROGRESS -->
+<td data-label="Progress">
+
+<div class="progress" style="height:8px;">
+  <div class="progress-bar
+      {% if e.percent < 40 %} bg-danger
+      {% elif e.percent < 80 %} bg-warning
+      {% else %} bg-success
+      {% endif %}"
+      style="width: {{ e.percent }}%">
+  </div>
+</div>
+
+<small>{{ e.completed_modules }}/{{ e.total_modules }} modules</small>
+
+</td>
+
+<!-- STATUS -->
+<td data-label="Status">
+  {% if e.percent == 0 %}
+    <span class="badge bg-secondary">Not Started</span>
+
+  {% elif e.percent < 100 %}
+    <span class="badge bg-warning text-dark">In Progress</span>
+
+  {% else %}
+    <span class="badge bg-success">Completed</span>
+  {% endif %}
+</td>
+
+<!-- UPDATE -->
+<td data-label="Update">
+  <a href="{% url 'edit_enrollment' e.id %}"
+     class="btn btn-sm btn-outline-primary w-100">
+    Update
+  </a>
+</td>
+
       </tr>
 
       {% empty %}

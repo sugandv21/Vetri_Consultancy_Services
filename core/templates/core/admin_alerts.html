@@ -1,0 +1,19 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">System Alerts</h3>
+
+<div class="list-group">
+
+{% for a in alerts %}
+<div class="list-group-item">
+    <div>{{ a.message }}</div>
+    <small class="text-muted">{{ a.created_at|timesince }} ago</small>
+</div>
+{% empty %}
+<div class="text-muted">No alerts</div>
+{% endfor %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+[
+  { "model": "core.trainingmodule", "pk": 201, "fields": { "training": 1, "title": "Web Fundamentals", "description": "How the internet & web apps work", "order": 1, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 202, "fields": { "training": 1, "title": "HTML5 Basics", "description": "Structure web pages", "order": 2, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 203, "fields": { "training": 1, "title": "CSS3 & Layouts", "description": "Flexbox, Grid, responsive design", "order": 3, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 204, "fields": { "training": 1, "title": "Bootstrap Framework", "description": "Fast UI building", "order": 4, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 205, "fields": { "training": 1, "title": "JavaScript Basics", "description": "Variables, loops, DOM", "order": 5, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 206, "fields": { "training": 1, "title": "Advanced JavaScript", "description": "ES6, promises, async/await", "order": 6, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 207, "fields": { "training": 1, "title": "Git & GitHub", "description": "Version control workflow", "order": 7, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 208, "fields": { "training": 1, "title": "Python Programming", "description": "Core Python concepts", "order": 8, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 209, "fields": { "training": 1, "title": "OOP in Python", "description": "Classes & objects", "order": 9, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 210, "fields": { "training": 1, "title": "Django Basics", "description": "Models, Views, Templates", "order": 10, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 211, "fields": { "training": 1, "title": "Django Authentication", "description": "Login & registration system", "order": 11, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 212, "fields": { "training": 1, "title": "REST API Development", "description": "Django REST Framework basics", "order": 12, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 213, "fields": { "training": 1, "title": "Database Integration", "description": "PostgreSQL usage", "order": 13, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 214, "fields": { "training": 1, "title": "Project Development", "description": "Build full stack project", "order": 14, "video_url": "", "material": null, "is_active": true }},
+  { "model": "core.trainingmodule", "pk": 215, "fields": { "training": 1, "title": "Deployment & Hosting", "description": "Deploy to production server", "order": 15, "video_url": "", "material": null, "is_active": true }}
+]

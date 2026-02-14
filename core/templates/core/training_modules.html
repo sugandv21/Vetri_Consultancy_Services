@@ -1,0 +1,75 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">{{ training.title }} — Modules</h3>
+
+<!-- ADD MODULE -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="add_module">
+
+      <div class="row g-2">
+        <div class="col-md-4">
+          <input type="text" name="title" class="form-control" placeholder="Module title" required>
+        </div>
+
+        <div class="col-md-6">
+          <input type="text" name="description" class="form-control" placeholder="Short description">
+        </div>
+
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100">Add</button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+
+<!-- MODULE LIST -->
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+
+    <table class="table mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width:70px;">#</th>
+          <th>Module</th>
+          <th>Description</th>
+          <th style="width:120px;">Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for m in modules %}
+        <tr>
+          <td>{{ m.order }}</td>
+          <td class="fw-semibold">{{ m.title }}</td>
+          <td class="text-muted">{{ m.description }}</td>
+
+          <td>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="delete_module">
+              <input type="hidden" name="module_id" value="{{ m.id }}">
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">
+            No modules yet
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+{% endblock %}

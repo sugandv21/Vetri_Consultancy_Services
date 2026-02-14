@@ -46,15 +46,38 @@
         </td>
 
         <td data-label="Actions">
-          <div class="d-grid gap-2 d-md-flex">
-            <a href="{% url 'edit_training' t.id %}" class="btn btn-sm btn-warning flex-fill">
-              Edit
-            </a>
-            <a href="{% url 'delete_training' t.id %}" class="btn btn-sm btn-danger flex-fill">
-              Delete
-            </a>
-          </div>
-        </td>
+
+  <div class="d-grid gap-2">
+
+    <a href="{% url 'training_modules_admin' t.id %}"
+       class="btn btn-sm btn-primary">
+       Modules
+    </a>
+
+    <a href="{% url 'training_students_admin' t.id %}"
+       class="btn btn-sm btn-info">
+       Students
+    </a>
+
+    <a href="{% url 'training_progress_admin' t.id %}"
+       class="btn btn-sm btn-success">
+       Progress
+    </a>
+
+    <a href="{% url 'edit_training' t.id %}"
+       class="btn btn-sm btn-warning">
+       Edit
+    </a>
+
+    <a href="{% url 'delete_training' t.id %}"
+       class="btn btn-sm btn-danger">
+       Delete
+    </a>
+
+  </div>
+
+</td>
+
 
       </tr>
 

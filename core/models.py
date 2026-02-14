@@ -11,6 +11,8 @@ class Training(models.Model):
     description = models.TextField()
     duration = models.CharField(max_length=100)
     fee = models.DecimalField(max_digits=8, decimal_places=2)
+    placement_support = models.BooleanField(default=False)
+
     image = models.ImageField(
         upload_to="training_images/",
         blank=True,
@@ -22,6 +24,29 @@ class Training(models.Model):
     def __str__(self):
         return self.title
 
+class TrainingModule(models.Model):
+    training = models.ForeignKey(
+        Training,
+        on_delete=models.CASCADE,
+        related_name="modules"
+    )
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+
+    order = models.PositiveIntegerField(default=0)
+
+    # optional learning content
+    video_url = models.URLField(blank=True)
+    material = models.FileField(upload_to="training_materials/", blank=True, null=True)
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return f"{self.training.title} - {self.title}"
 
 class Enrollment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -47,6 +72,58 @@ class Enrollment(models.Model):
     def __str__(self):
         return f"{self.user} → {self.training}"
 
+
+class ModuleProgress(models.Model):
+    enrollment = models.ForeignKey(
+        Enrollment,
+        on_delete=models.CASCADE,
+        related_name="module_progress"
+    )
+
+    module = models.ForeignKey(
+        TrainingModule,
+        on_delete=models.CASCADE
+    )
+
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("enrollment", "module")
+
+    def __str__(self):
+        return f"{self.enrollment.user} - {self.module.title}"
+
+
+class TrainingCompletion(models.Model):
+
+    PENDING = "PENDING"
+    COMPLETED_BY_TRAINER = "COMPLETED_BY_TRAINER"
+    VERIFIED = "VERIFIED"
+
+    STATUS_CHOICES = [
+        (PENDING, "In Progress"),
+        (COMPLETED_BY_TRAINER, "Trainer Completed"),
+        (VERIFIED, "Admin Verified"),
+    ]
+
+    enrollment = models.OneToOneField(
+        Enrollment,
+        on_delete=models.CASCADE,
+        related_name="completion"
+    )
+
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default=PENDING
+    )
+
+    trainer_note = models.TextField(blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.enrollment.user} - {self.status}"
 
 
 class TrainingEnquiry(models.Model):
@@ -292,3 +369,75 @@ class PricingFeature(models.Model):
 
     def __str__(self):
         return self.text
+    
+
+class CertificateDesign(models.Model):
+    company_name = models.CharField(max_length=200, default="My Company")
+    signatory_name = models.CharField(max_length=150, default="Authorized Signatory")
+
+    background = models.ImageField(upload_to="certificate_assets/", blank=True, null=True)
+    logo = models.ImageField(upload_to="certificate_assets/", blank=True, null=True)
+    signature = models.ImageField(upload_to="certificate_assets/", blank=True, null=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return "Certificate Design"
+
+
+# ================= PAYMENTS =================
+
+class Payment(models.Model):
+
+    PAYMENT_TYPE = [
+        ("PLAN", "Subscription Plan"),
+        ("TRAINING", "Training Purchase"),
+    ]
+
+    STATUS = [
+        ("SUCCESS", "Success"),
+        ("FAILED", "Failed"),
+    ]
+
+    PLAN_CHOICES = [
+        ("FREE", "Free"),
+        ("PRO", "Pro"),
+        ("PRO_PLUS", "Pro Plus"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE)
+
+    purchased_plan = models.CharField(
+        max_length=20,
+        choices=PLAN_CHOICES,
+        null=True,
+        blank=True
+    )
+
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS)
+
+    training = models.ForeignKey(
+        "core.Training",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class SubscriptionPricing(models.Model):
+
+    PLAN_CHOICES = [
+        ("PRO", "Pro"),
+        ("PRO_PLUS", "Pro Plus"),
+    ]
+
+    plan = models.CharField(max_length=20, choices=PLAN_CHOICES, unique=True)
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.plan} - ₹{self.price}"

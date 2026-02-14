@@ -1,0 +1,80 @@
+[
+  {
+    "model": "core.trainingmodule",
+    "pk": 101,
+    "fields": {
+      "training": 2,
+      "title": "Introduction to Data Analytics",
+      "description": "Overview of data analytics lifecycle",
+      "order": 1,
+      "video_url": "",
+      "material": null,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.trainingmodule",
+    "pk": 102,
+    "fields": {
+      "training": 2,
+      "title": "Excel for Data Analysis",
+      "description": "Data cleaning and formulas",
+      "order": 2,
+      "video_url": "",
+      "material": null,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.trainingmodule",
+    "pk": 103,
+    "fields": {
+      "training": 2,
+      "title": "SQL Fundamentals",
+      "description": "Queries, joins, aggregations",
+      "order": 3,
+      "video_url": "",
+      "material": null,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.trainingmodule",
+    "pk": 104,
+    "fields": {
+      "training": 2,
+      "title": "Python for Data Analysis",
+      "description": "Pandas & NumPy basics",
+      "order": 4,
+      "video_url": "",
+      "material": null,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.trainingmodule",
+    "pk": 105,
+    "fields": {
+      "training": 2,
+      "title": "Data Visualization",
+      "description": "Matplotlib & Seaborn",
+      "order": 5,
+      "video_url": "",
+      "material": null,
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.trainingmodule",
+    "pk": 106,
+    "fields": {
+      "training": 2,
+      "title": "Power BI Dashboard",
+      "description": "Creating interactive dashboards",
+      "order": 6,
+      "video_url": "",
+      "material": null,
+      "is_active": true
+    }
+  }
+]

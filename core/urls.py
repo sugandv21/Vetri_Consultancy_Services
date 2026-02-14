@@ -10,7 +10,7 @@ from .views_admin import (
     delete_training,
     admin_enquiry_chat,
 )
-from .views import services_view, pricing_view, about_view, contact_view
+from .views import services_view, pricing_view, about_view, contact_view, complete_module
 from core import views
 from core import views_admin
 
@@ -58,7 +58,11 @@ urlpatterns = [
  
     path("training/<int:training_id>/pay/", views.training_pay, name="training_pay"),
     path("training/payment/verify/", views.verify_training_payment, name="verify_training_payment"),
-
     
+    path("complete-module/<int:progress_id>/", views.complete_module, name="complete_module"),
+
+   path("admin/alerts/", views_admin.admin_alerts, name="admin_alerts"),
+
+
 
 ]

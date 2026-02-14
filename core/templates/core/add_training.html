@@ -1,66 +1,119 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="container">
+<div class="container py-4">
+
   <div class="row justify-content-center">
-    <div class="col-12 col-md-8 col-lg-6">
+    <div class="col-lg-8">
 
-      <h3 class="mb-4 text-center">Add Training Program</h3>
+      <div class="card shadow-lg border-0">
+        <div class="card-body p-4">
 
-      <form method="post" enctype="multipart/form-data"
-            class="card shadow-sm p-4">
-        {% csrf_token %}
+          <h3 class="mb-4 text-center fw-semibold">
+            Create Training Program
+          </h3>
 
-        <input
-          name="title"
-          class="form-control mb-3"
-          placeholder="Training Title"
-          required
-        >
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
 
-        <textarea
-          name="description"
-          class="form-control mb-3"
-          placeholder="Training Description"
-          rows="4"
-          required
-        ></textarea>
+            <!-- BASIC INFO -->
+            <h6 class="text-muted mb-3">Basic Information</h6>
 
-        <input
-          name="duration"
-          class="form-control mb-3"
-          placeholder="Duration (e.g. 6 weeks)"
-        >
+            <input name="title"
+                   class="form-control mb-3"
+                   placeholder="Training Title (eg: Python Full Stack Developer)"
+                   required>
 
-        <input
-          name="fee"
-          type="number"
-          class="form-control mb-3"
-          placeholder="Fee"
-        >
+            <textarea name="description"
+                      class="form-control mb-4"
+                      placeholder="Explain what student will learn..."
+                      rows="4"
+                      required></textarea>
 
-        <input
-          type="file"
-          name="image"
-          class="form-control mb-4"
-          accept="image/*"
-        >
 
-        <!-- ACTION BUTTONS -->
-        <div class="d-flex justify-content-between align-items-center">
-          <button class="btn btn-primary btn-sm px-4">
-            Add Training
-          </button>
+            <!-- COURSE DETAILS -->
+            <h6 class="text-muted mb-3">Course Details</h6>
 
-          <a href="{% url 'admin_training_list' %}"
-             class="btn btn-warning btn-sm text-black px-3">
-            View Trainings List
-          </a>
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                <label class="form-label small text-muted">Duration</label>
+                <select name="duration" class="form-select">
+                  <option value="">Select duration</option>
+                  <option>2 Weeks</option>
+                  <option>4 Weeks</option>
+                  <option>6 Weeks</option>
+                  <option>2 Months</option>
+                  <option>3 Months</option>
+                  <option>6 Months</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small text-muted">Course Fee</label>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <input name="fee" type="number" class="form-control" placeholder="15000">
+                </div>
+              </div>
+
+            </div>
+
+
+            <!-- SETTINGS -->
+            <h6 class="text-muted mt-4 mb-3">Settings</h6>
+
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" name="is_active" checked>
+              <label class="form-check-label">Make this training visible to students</label>
+            </div>
+
+            <div class="form-check form-switch mb-4">
+              <input class="form-check-input" type="checkbox" name="placement_support">
+              <label class="form-check-label">Placement Support Included</label>
+            </div>
+
+
+            <!-- IMAGE UPLOAD -->
+            <h6 class="text-muted mb-2">Thumbnail</h6>
+
+            <input type="file" name="image" class="form-control mb-3" accept="image/*" onchange="previewImage(event)">
+
+            <div class="text-center mb-4">
+              <img id="preview" src="" class="img-fluid rounded shadow-sm d-none" style="max-height:200px;">
+            </div>
+
+
+            <!-- ACTION BUTTONS -->
+            <div class="d-flex justify-content-between mt-3">
+
+              <a href="{% url 'admin_training_list' %}"
+                 class="btn btn-outline-secondary">
+                Back
+              </a>
+
+              <button class="btn btn-primary px-4">
+                Create Training
+              </button>
+
+            </div>
+
+          </form>
+
         </div>
-      </form>
+      </div>
 
     </div>
   </div>
+
 </div>
+
+<script>
+function previewImage(event){
+  const preview = document.getElementById('preview');
+  preview.src = URL.createObjectURL(event.target.files[0]);
+  preview.classList.remove('d-none');
+}
+</script>
 
 {% endblock %}

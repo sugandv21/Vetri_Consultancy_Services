@@ -14,6 +14,9 @@ from jobs.utils import visible_jobs_for_user
 from jobs.models import JobApplication
 
 
+from .utils.certificate_generator import generate_certificate
+
+
 def public_home(request):
     # BLOCK ADMIN FROM PUBLIC PAGE
     if request.user.is_authenticated and request.user.is_staff:
@@ -127,7 +130,7 @@ def training_list(request):
     })
 
 
-from accounts.models import Payment
+from core.models import Payment
 
 @login_required
 def enroll_training(request, training_id):
@@ -302,7 +305,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 
 from .models import Training, Enrollment
-from accounts.models import Payment
+from core.models import Payment
 @login_required
 def training_pay(request, training_id):
 
@@ -402,3 +405,108 @@ def verify_training_payment(request):
         return JsonResponse({
             "redirect_url": reverse("training_detail", args=[training_id])
         })
+
+
+from core.models import Enrollment, ModuleProgress
+
+def candidate_training_modules(request, training_id):
+
+    enrollment = Enrollment.objects.filter(
+        user=request.user,
+        training_id=training_id
+    ).first()
+
+    if not enrollment:
+        return redirect("candidate_dashboard")
+
+    progress_list = ModuleProgress.objects.filter(
+        enrollment=enrollment
+    ).select_related("module").order_by("module__order")
+
+    context = {
+        "enrollment": enrollment,
+        "progress_list": progress_list,
+        "training": enrollment.training
+    }
+
+    return render(request, "candidate/training_modules.html", context)
+
+
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from core.models import ModuleProgress, TrainingCompletion
+from core.utils.certificate_generator import generate_certificate
+
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.conf import settings
+from django.core.files import File
+import os
+
+
+
+@login_required
+def complete_module(request, progress_id):
+
+    # ---------------- GET PROGRESS ----------------
+    try:
+        progress = ModuleProgress.objects.select_related("enrollment").get(
+            id=progress_id,
+            enrollment__user=request.user
+        )
+    except ModuleProgress.DoesNotExist:
+        return JsonResponse({"success": False}, status=404)
+
+    # already completed (avoid double click issues)
+    if progress.is_completed:
+        return JsonResponse({"success": True})
+
+    # ---------------- MARK MODULE COMPLETE ----------------
+    progress.is_completed = True
+    progress.completed_at = timezone.now()
+    progress.save()
+
+    enrollment = progress.enrollment
+
+    # ---------------- CALCULATE PROGRESS ----------------
+    total = enrollment.module_progress.count()
+    completed = enrollment.module_progress.filter(is_completed=True).count()
+    percent = int((completed / total) * 100) if total else 0
+
+    # ---------------- COURSE COMPLETION ----------------
+    if percent == 100 and not enrollment.is_completed:
+
+        enrollment.is_completed = True
+
+        # generate certificate PDF
+        file_path = generate_certificate(enrollment)   # returns: certificates/filename.pdf
+
+        if file_path:
+            full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+
+            # attach file properly to Django FileField
+            if os.path.exists(full_path):
+                with open(full_path, "rb") as f:
+                    enrollment.certificate.save(
+                        os.path.basename(full_path),
+                        File(f),
+                        save=False
+                    )
+
+        enrollment.save()
+
+        # update completion tracker
+        TrainingCompletion.objects.filter(
+            enrollment=enrollment
+        ).update(status=TrainingCompletion.COMPLETED_BY_TRAINER)
+
+    # ---------------- RESPONSE ----------------
+    return JsonResponse({
+        "success": True,
+        "percent": percent,
+        "completed": percent == 100
+    })

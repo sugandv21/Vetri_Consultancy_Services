@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Training, Enrollment, TrainingEnquiry, EnquiryMessage
+from .models import Training, Enrollment, TrainingEnquiry, EnquiryMessage, Payment
 
 
 @admin.register(Training)
@@ -122,3 +122,26 @@ class PricingPageAdmin(admin.ModelAdmin):
 @admin.register(PricingPlan)
 class PricingPlanAdmin(admin.ModelAdmin):
     inlines = [PricingFeatureInline]
+
+
+from .models import CertificateDesign
+
+@admin.register(CertificateDesign)
+class CertificateDesignAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return not CertificateDesign.objects.exists()  # only one allowed
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ("user", "payment_type", "amount", "status", "created_at")
+    list_filter = ("payment_type", "status")
+    search_fields = ("user__email",)
+    ordering = ("-created_at",)
+
+
+from .models import SubscriptionPricing
+
+@admin.register(SubscriptionPricing)
+class SubscriptionPricingAdmin(admin.ModelAdmin):
+    list_display = ("plan", "price")
