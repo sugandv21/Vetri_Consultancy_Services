@@ -11,7 +11,7 @@ from jobs.models import JobApplication
 from django.shortcuts import get_object_or_404
 from accounts.models import Notification
 from core.models import Payment
-
+from accounts.utils.email import safe_send_mail
 
 
 
@@ -120,57 +120,6 @@ from django.http import JsonResponse
 from django.urls import reverse
 
 
-# @login_required
-# def payment(request):
-
-#     selected_plan = request.session.get("selected_plan")
-
-#     if not selected_plan:
-#         messages.error(request, "No plan selected.")
-#         return redirect("settings")
-
-#     # prevent FREE tampering
-#     if selected_plan not in [User.PRO, User.PRO_PLUS]:
-#         messages.error(request, "Invalid plan selected.")
-#         return redirect("settings")
-
-#     # dynamic pricing from admin
-#     pricing = SubscriptionPricing.objects.filter(plan=selected_plan).first()
-
-#     if not pricing:
-#         messages.error(request, "Pricing not configured. Contact admin.")
-#         return redirect("settings")
-
-#     amount = pricing.price
-#     plan_name = dict(User.PLAN_CHOICES).get(selected_plan, selected_plan)
-
-#     # payment success simulation
-#     if request.method == "POST":
-#         user = request.user
-
-#         user.plan = selected_plan
-#         user.plan_status = User.ACTIVE
-#         user.plan_start = timezone.now()
-#         #user.plan_end = timezone.now() + timedelta(days=30)
-#         user.plan_end = timezone.now() + timedelta(minutes=2)
-#         user.save()
-
-#         Payment.objects.create(
-#             user=user,
-#             payment_type="PLAN",
-#             amount=amount,
-#             status="SUCCESS"
-#         )
-
-#         request.session.pop("selected_plan", None)
-
-#         messages.success(request, f"Payment successful! Welcome to {plan_name}")
-#         return redirect("dashboard")
-
-#     return render(request, "accounts/payment.html", {
-#         "amount": amount,
-#         "plan_name": plan_name
-#     })
 @login_required
 def payment(request):
 
@@ -279,28 +228,26 @@ def profile_wizard(request):
 
         profile.save()
 
-        # ✅ Check completion AFTER save
+        #  Check completion AFTER save
         completion = profile.completion_percentage()
 
-        # ✅ Send email only ONCE
+        #  Send email only ONCE
         if completion == 100 and not profile.completion_email_sent:
-            send_mail(
+            sent = safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
-                    "You can now apply for jobs, save opportunities, "
-                    "and track your applications from your dashboard.\n\n"
-                    "Warm regards,\n"
+                    "You can now apply for jobs and track applications.\n\n"
                     "Vetri Consultancy Services"
                 ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
-                fail_silently=False,  # IMPORTANT
             )
 
-            profile.completion_email_sent = True
-            profile.save(update_fields=["completion_email_sent"])
+            if sent:
+                profile.completion_email_sent = True
+                profile.save(update_fields=["completion_email_sent"])
+     
 
         messages.success(request, "Profile updated successfully.")
         return redirect("dashboard")
@@ -341,22 +288,20 @@ def my_profile(request):
         # completion email
         completion = profile.completion_percentage()
         if completion == 100 and not profile.completion_email_sent:
-            send_mail(
+            sent = safe_send_mail(
                 subject="🎉 Profile Completed Successfully!",
                 message=(
                     f"Hi {profile.full_name or 'there'},\n\n"
                     "Your profile has been completed successfully.\n\n"
                     "You can now apply for jobs and track applications.\n\n"
-                    "Warm regards,\n"
                     "Vetri Consultancy Services"
                 ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[request.user.email],
-                fail_silently=False,
             )
 
-            profile.completion_email_sent = True
-            profile.save(update_fields=["completion_email_sent"])
+            if sent:
+                profile.completion_email_sent = True
+                profile.save(update_fields=["completion_email_sent"])
 
         messages.success(request, "Profile updated successfully.")
         return redirect("my_profile")
@@ -774,13 +719,25 @@ def update_application_status(request, app_id):
             "Vetri Consultancy Services"
         )
 
-        send_mail(
+        # send_mail(
+        #     subject=subject,
+        #     message=message,
+        #     from_email=settings.DEFAULT_FROM_EMAIL,
+        #     recipient_list=[candidate.email],
+        #     fail_silently=True,
+        # )
+        sent = safe_send_mail(
             subject=subject,
             message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[candidate.email],
-            fail_silently=True,
         )
+
+        if sent:
+            messages.success(request, "Application status updated & email sent.")
+        else:
+            messages.warning(request, "Status updated but email failed.")
+    else:
+        messages.success(request, "Application status updated.")
 
     messages.success(request, "Application status updated.")
     return redirect("candidate_detail", user_id=application.user.id)
@@ -1091,3 +1048,4 @@ def admin_alerts(request):
             "alerts": alerts.order_by("-created_at")
         }
     )
+
