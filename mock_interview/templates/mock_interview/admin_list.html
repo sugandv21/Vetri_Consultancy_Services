@@ -12,6 +12,7 @@
   <th>Preferred Slot</th>
   <th>Confirmed Time</th>
   <th>Status</th>
+  <th>Update</th>
   <th>Action</th>
 </tr>
 </thead>
@@ -56,12 +57,21 @@
        Manage
     </a>
 
-    {% if i.status == "scheduled" or i.status == "completed" %}
-    <a class="btn btn-sm btn-success"
-       href="{% url 'mock_feedback' i.id %}">
-       Feedback
-    </a>
-    {% endif %}
+    <td>
+
+
+
+{% if i.has_feedback %} <!-- Trainer already submitted --> <a class="btn btn-sm btn-info"
+    href="{% url 'mock_report' i.id %}">
+View Report </a>
+
+{% elif i.status == "scheduled" or i.status == "completed" %} <!-- No feedback yet --> <a class="btn btn-sm btn-success"
+    href="{% url 'mock_feedback' i.id %}">
+Give Feedback </a>
+{% endif %}
+
+</td>
+
   </td>
 
 </tr>

@@ -1,33 +1,88 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<h3 class="mb-4">Submit Interview Feedback</h3>
+<div class="container py-4">
 
-<form method="post" class="card p-4 shadow-sm">
+<div class="card shadow-sm mx-auto" style="max-width:750px;">
+<div class="card-body">
+
+<h4 class="fw-semibold mb-4">
+    Submit Interview Feedback
+</h4>
+
+<!-- Candidate Info -->
+
+<div class="alert alert-light border mb-4">
+    <div><strong>Candidate:</strong> {{ interview.candidate.email }}</div>
+    <div><strong>Scheduled:</strong> {{ interview.scheduled_datetime|date:"d M Y, H:i" }}</div>
+</div>
+
+<form method="post">
 {% csrf_token %}
 
-<div class="mb-3">
-<label>Rating (1-5)</label>
-<input type="number" name="rating" min="1" max="5" class="form-control" required>
-</div>
+<!-- Rating -->
 
 <div class="mb-3">
-<label>Strengths</label>
-<textarea name="strengths" class="form-control" rows="3" required></textarea>
+    <label class="form-label fw-medium">Rating (1–5)</label>
+    <input type="number"
+           name="rating"
+           min="1"
+           max="5"
+           class="form-control"
+           required>
 </div>
+
+<!-- Strengths -->
 
 <div class="mb-3">
-<label>Improvements</label>
-<textarea name="improvements" class="form-control" rows="3" required></textarea>
+    <label class="form-label fw-medium">Strengths</label>
+    <textarea name="strengths"
+              class="form-control"
+              rows="3"
+              placeholder="What candidate did well..."
+              required></textarea>
 </div>
+
+<!-- Improvements -->
 
 <div class="mb-3">
-<label>Notes</label>
-<textarea name="notes" class="form-control" rows="3"></textarea>
+    <label class="form-label fw-medium">Areas to Improve</label>
+    <textarea name="improvements"
+              class="form-control"
+              rows="3"
+              placeholder="What should be improved..."
+              required></textarea>
 </div>
 
-<button class="btn btn-primary">Submit Feedback</button>
+<!-- Notes -->
+
+<div class="mb-4">
+    <label class="form-label fw-medium">Additional Notes</label>
+    <textarea name="notes"
+              class="form-control"
+              rows="3"
+              placeholder="Optional remarks"></textarea>
+</div>
+
+<div class="d-flex justify-content-between">
+
+```
+<a href="{% url 'admin_mock_list' %}" class="btn btn-outline-secondary">
+    Cancel
+</a>
+
+<button class="btn btn-primary">
+    Submit Feedback
+</button>
+```
+
+</div>
 
 </form>
+
+</div>
+</div>
+
+</div>
 
 {% endblock %}

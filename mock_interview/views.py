@@ -25,9 +25,13 @@ def schedule_mock(request):
 
         # 🔔 notify admins
         Notification.objects.create(
-            user=None,  # global admin notification
-            message=f"New mock interview request from {request.user}"
+            user=None,
+            title="Mock Interview Request",
+            message=f"New mock interview request from {request.user.email} completed",
+            type=Notification.TRAINER,
+            is_admin_alert=True
         )
+
 
         return redirect("my_mock_interviews")
 
@@ -68,14 +72,25 @@ def join_mock(request, pk):
 # ---------------------------------
 # ADMIN DASHBOARD LIST PAGE
 # ---------------------------------
+from .models import MockInterview, InterviewFeedback
+
 @staff_member_required
 def admin_mock_list(request):
 
-    interviews = MockInterview.objects.all().order_by("-preferred_date")
+    interviews = MockInterview.objects.all().select_related("candidate","consultant")
+
+    # attach feedback existence flag
+    feedback_map = set(
+        InterviewFeedback.objects.values_list("interview_id", flat=True)
+    )
+
+    for i in interviews:
+        i.has_feedback = i.id in feedback_map
 
     return render(request, "mock_interview/admin_list.html", {
         "interviews": interviews
     })
+
 
 
 # ---------------------------------
@@ -101,8 +116,26 @@ def admin_mock_update(request, pk):
         if interview.status == "scheduled":
             Notification.objects.create(
                 user=interview.candidate,
-                message="Your mock interview has been scheduled.... Check it in Mock Interview section → My Interview."
+                title="Interview Scheduled",
+                message="Your mock interview has been scheduled. Check My Interview section."
             )
+
+            # 🔔 notify admin (THIS FIXES COUNTER)
+            Notification.objects.create(
+                user=None,
+                title="Interview Scheduled",
+                message=f"Trainer Completed interview for {interview.candidate.email} and submitted report",
+                type=Notification.TRAINER
+            )
+
+            # 🔔 notify trainer (NEW)
+            if interview.consultant:
+                Notification.objects.create(
+                    user=interview.consultant,
+                    title="New Mock Interview Assigned",
+                    message=f"You have been assigned a mock interview with {interview.candidate.email}"
+                )
+
 
         return redirect("admin_mock_list")
 
@@ -135,10 +168,21 @@ def mock_feedback(request, pk):
         interview.save()
 
         # 🔔 notify candidate feedback ready
+        # 🔔 notify candidate
         Notification.objects.create(
             user=interview.candidate,
-            message="Your mock interview feedback has been updated.....Check it in Mock Interview section → My Interview → Feedback"
+            title="Interview Feedback Ready",
+            message="Your mock interview feedback has been updated. Check My Interview → Feedback."
         )
+
+        # 🔔 notify admin (THIS FIXES COUNTER)
+        Notification.objects.create(
+            user=None,
+            title="Feedback Submitted",
+            message=f"Trainer submitted feedback for {interview.candidate.email}",
+            type=Notification.TRAINER
+        )
+
 
         return redirect("admin_mock_list")
 
