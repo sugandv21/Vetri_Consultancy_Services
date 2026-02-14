@@ -1,0 +1,117 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container py-4">
+
+    <h3 class="mb-4 fw-semibold">
+        <i class="bi bi-people-fill me-2 text-primary"></i>
+        My Training Students
+    </h3>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 modern-table">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student</th>
+                            <th>Training</th>
+                            <th>Progress</th>
+                            <th>Status</th>
+                            <th>View</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    {% for e in enrollments %}
+                    <tr>
+
+                        <!-- STUDENT -->
+                        <td data-label="Student">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle">
+                                    {{ e.user.profile.full_name|default:e.user.email|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">
+                                        {{ e.user.profile.full_name|default:"No Name" }}
+                                    </div>
+                                    <small class="text-muted">{{ e.user.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- TRAINING -->
+                        <td data-label="Training">
+                            <span class="fw-medium">{{ e.training.title }}</span>
+                        </td>
+
+                        <!-- PROGRESS -->
+                        <td data-label="Progress" style="width:180px;">
+                            <div class="progress" style="height:10px;">
+                                <div class="progress-bar
+                                    {% if e.progress_percent < 40 %}bg-danger
+                                    {% elif e.progress_percent < 80 %}bg-warning
+                                    {% else %}bg-success
+                                    {% endif %}"
+                                    style="width: {{ e.progress_percent }}%">
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ e.progress_percent }}%</small>
+                        </td>
+
+                        <!-- STATUS -->
+                        <td data-label="Status">
+                            {% if e.is_completed %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-secondary">In Progress</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- VIEW -->
+                        <td data-label="View">
+                            <a href="{% url 'trainer_student_progress' e.id %}"
+                               class="btn btn-sm btn-primary rounded-pill px-3">
+                               View Progress
+                            </a>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-mortarboard display-6"></i>
+                                <p class="mt-3">No students enrolled yet</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:#0d6efd;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:600;
+}
+</style>
+
+{% endblock %}

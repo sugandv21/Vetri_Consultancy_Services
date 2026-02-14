@@ -1,0 +1,57 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <h4 class="mb-4">Today's Sessions</h4>
+
+    {% if sessions %}
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Candidate</th>
+                        <th>Topic</th>
+                        <th>Time</th>
+                        <th>Meeting</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for s in sessions %}
+                    <tr>
+                        <td>{{ s.user.profile.full_name|default:s.user.email }}</td>
+                        <td>{{ s.topic }}</td>
+                        <td>{{ s.scheduled_at|date:"h:i A" }}</td>
+
+                        <td>
+                            <a href="{{ s.meeting_link }}" target="_blank" class="btn btn-sm btn-success">
+                                Join
+                            </a>
+                        </td>
+
+                        <td>
+                            <a href="{% url 'trainer_submit_feedback' s.id %}" class="btn btn-sm btn-primary">
+                                Mark Attended
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+    {% else %}
+        <div class="alert alert-info">No sessions scheduled today.</div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

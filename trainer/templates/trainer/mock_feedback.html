@@ -1,0 +1,86 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container py-4">
+
+<div class="card shadow-sm mx-auto" style="max-width:750px;">
+<div class="card-body">
+
+<h4 class="fw-semibold mb-3">
+    📝 Submit Mock Interview Feedback
+</h4>
+
+<div class="alert alert-light border mb-4">
+    <div><strong>Candidate:</strong> {{ interview.candidate.email }}</div>
+    <div><strong>Date:</strong> {{ interview.scheduled_datetime|date:"d M Y, H:i" }}</div>
+</div>
+
+<form method="post">
+{% csrf_token %}
+
+<!-- Rating -->
+
+<div class="mb-3">
+<label class="form-label fw-semibold">Rating</label>
+<select name="rating" class="form-select" required>
+    <option value="">Select rating</option>
+    <option value="1">⭐ 1 - Very Poor</option>
+    <option value="2">⭐⭐ 2 - Poor</option>
+    <option value="3">⭐⭐⭐ 3 - Average</option>
+    <option value="4">⭐⭐⭐⭐ 4 - Good</option>
+    <option value="5">⭐⭐⭐⭐⭐ 5 - Excellent</option>
+</select>
+</div>
+
+<!-- Strengths -->
+
+<div class="mb-3">
+<label class="form-label fw-semibold">Strengths</label>
+<textarea name="strengths"
+          class="form-control"
+          rows="3"
+          placeholder="Mention candidate strengths..."
+          required></textarea>
+</div>
+
+<!-- Improvements -->
+
+<div class="mb-3">
+<label class="form-label fw-semibold">Areas to Improve</label>
+<textarea name="improvements"
+          class="form-control"
+          rows="3"
+          placeholder="Mention improvement areas..."
+          required></textarea>
+</div>
+
+<!-- Notes -->
+
+<div class="mb-4">
+<label class="form-label fw-semibold">Additional Notes</label>
+<textarea name="notes"
+          class="form-control"
+          rows="3"
+          placeholder="Optional notes or suggestions"></textarea>
+</div>
+
+<div class="d-flex justify-content-between">
+
+<a href="{% url 'trainer_mock_list' %}"
+class="btn btn-outline-secondary">
+← Back </a>
+
+<button type="submit"
+     class="btn btn-success px-4">
+Submit Feedback </button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+</div>
+
+{% endblock %}

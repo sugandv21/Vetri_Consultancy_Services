@@ -1,0 +1,49 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h3 class="mb-4">My Training Students</h3>
+
+<div class="card shadow-sm">
+<table class="table align-middle">
+
+<thead class="table-dark">
+<tr>
+    <th>Student</th>
+    <th>Training</th>
+    <th>Status</th>
+    <th></th>
+</tr>
+</thead>
+
+<tbody>
+{% for e in enrollments %}
+<tr>
+    <td>{{ e.user.email }}</td>
+    <td>{{ e.training.title }}</td>
+
+    <td>
+        {% if e.completion.status == "COMPLETED_BY_TRAINER" %}
+            <span class="badge bg-warning">Waiting Admin</span>
+        {% elif e.completion.status == "VERIFIED" %}
+            <span class="badge bg-success">Verified</span>
+        {% else %}
+            <span class="badge bg-secondary">Learning</span>
+        {% endif %}
+    </td>
+
+    <td>
+        <a href="{% url 'trainer_student_progress' e.id %}"
+           class="btn btn-sm btn-primary">
+           View Progress
+        </a>
+    </td>
+</tr>
+{% empty %}
+<tr><td colspan="4" class="text-center">No students assigned</td></tr>
+{% endfor %}
+</tbody>
+
+</table>
+</div>
+
+{% endblock %}

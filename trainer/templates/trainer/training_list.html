@@ -1,0 +1,36 @@
+<h3 class="mb-4">My Trainings</h3>
+
+<div class="row g-4">
+{% for t in trainings %}
+<div class="col-md-6">
+
+<div class="card shadow-sm h-100">
+<div class="card-body">
+
+<h5>{{ t.title }}</h5>
+<p class="text-muted">{{ t.description|truncatewords:20 }}</p>
+
+<div class="d-grid gap-2">
+
+<a href="{% url 'trainer_modules' t.id %}" class="btn btn-primary">
+Manage Modules
+</a>
+
+<a href="{% url 'trainer_students' t.id %}" class="btn btn-info">
+Students & Attendance
+</a>
+
+<a href="{% url 'trainer_feedback' t.id %}" class="btn btn-success">
+Submit Completion
+</a>
+
+</div>
+
+</div>
+</div>
+
+</div>
+{% empty %}
+<p>No trainings assigned</p>
+{% endfor %}
+</div>

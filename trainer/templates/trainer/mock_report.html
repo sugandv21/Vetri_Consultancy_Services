@@ -1,0 +1,74 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container py-4">
+
+<div class="card shadow-sm mx-auto" style="max-width:800px;">
+<div class="card-body">
+
+<h4 class="fw-semibold mb-4">
+     Mock Interview Report
+</h4>
+
+<!-- Candidate Info -->
+
+<div class="alert alert-light border mb-4">
+    <div><strong>Candidate:</strong> {{ feedback.interview.candidate.email }}</div>
+    <div><strong>Date:</strong> {{ feedback.interview.scheduled_datetime|date:"d M Y, H:i" }}</div>
+</div>
+
+<!-- Rating -->
+
+<div class="mb-4">
+    <h6 class="fw-semibold">Rating</h6>
+    <div class="fs-4 text-warning">
+        {% for i in "12345" %}
+            {% if forloop.counter <= feedback.rating %}
+                ⭐
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Strengths -->
+
+<div class="mb-4">
+    <h6 class="fw-semibold">Strengths</h6>
+    <div class="border rounded p-3 bg-light">
+        {{ feedback.strengths|linebreaks }}
+    </div>
+</div>
+
+<!-- Improvements -->
+
+<div class="mb-4">
+    <h6 class="fw-semibold">Areas to Improve</h6>
+    <div class="border rounded p-3 bg-light">
+        {{ feedback.improvements|linebreaks }}
+    </div>
+</div>
+
+<!-- Notes -->
+
+{% if feedback.notes %}
+
+<div class="mb-4">
+    <h6 class="fw-semibold">Additional Notes</h6>
+    <div class="border rounded p-3 bg-light">
+        {{ feedback.notes|linebreaks }}
+    </div>
+</div>
+{% endif %}
+
+<div class="text-end">
+    <a href="{% url 'trainer_mock_list' %}" class="btn btn-primary">
+        Back to Mock Interviews
+    </a>
+</div>
+
+</div>
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container mt-5" style="max-width:700px">
+
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Session Feedback</h5>
+        </div>
+
+        <div class="card-body">
+
+            <p><strong>Candidate:</strong> {{ session.user.email }}</p>
+            <p><strong>Topic:</strong> {{ session.topic }}</p>
+            <p><strong>Time:</strong> {{ session.scheduled_at|date:"d M Y h:i A" }}</p>
+
+            <hr>
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <textarea name="feedback" class="form-control" rows="5"
+                          placeholder="Write candidate performance, improvements, next steps..."
+                          required></textarea>
+
+                <button class="btn btn-success mt-3">
+                    Save & Mark Attended
+                </button>
+
+                <a href="{% url 'trainer_sessions_today' %}" class="btn btn-secondary mt-3">
+                    Cancel
+                </a>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

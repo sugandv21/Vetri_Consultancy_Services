@@ -1,0 +1,139 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h3 class="mb-4">Trainer Dashboard</h3>
+    
+    <p>Welcome {{ user.profile.full_name|default:user.email }}</p>
+
+
+    {% if user.notifications.all %}
+<div class="alert alert-info">
+    <strong>Notifications</strong>
+    <ul class="mb-0">
+        {% for n in user.notifications.all|slice:":5" %}
+            {% if not n.is_read %}
+            <li>{{ n.message }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+    <!-- STATS -->
+    <div class="row mb-4">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center p-3">
+                <h6 class="text-muted">Today's Sessions</h6>
+                <h2 class="fw-bold">{{ today_sessions|length }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center p-3">
+                <h6 class="text-muted">Upcoming</h6>
+                <h2 class="fw-bold">{{ upcoming_sessions|length }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center p-3">
+                <h6 class="text-muted">Completed</h6>
+                <h2 class="fw-bold">{{ completed_sessions }}</h2>
+            </div>
+        </div>
+
+    </div>
+
+   {% comment %} <div class="col-md-4 my-3">
+    <div class="card shadow-sm border-0 text-center p-3">
+        <h6 class="text-muted">Mock Interviews Assigned</h6>
+        <h2 class="fw-bold text-danger">{{ assigned_mock_count }}</h2>
+    </div>
+</div> {% endcomment %}
+
+
+    <!-- TODAY SESSIONS -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">
+            Today’s Sessions
+        </div>
+
+        <div class="card-body">
+
+            {% if today_sessions %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Candidate</th>
+                        <th>Time</th>
+                        <th>Topic</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                {% for s in today_sessions %}
+                    <tr>
+                        <td>{{ s.user.profile.full_name|default:s.user.email }}</td>
+                        <td>{{ s.scheduled_at|date:"h:i A" }}</td>
+                        <td>{{ s.topic }}</td>
+                        <td>
+                            <a href="{{ s.meeting_link }}" target="_blank" class="btn btn-sm btn-primary">
+                                Join
+                            </a>
+
+                            <a href="{% url 'trainer_attend_session' s.id %}" class="btn btn-sm btn-success">
+                                Mark Attended
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+
+            {% else %}
+                <p class="text-muted">No sessions today.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    <!-- UPCOMING -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            Upcoming Sessions
+        </div>
+
+        <div class="card-body">
+
+            {% if upcoming_sessions %}
+                <ul class="list-group">
+
+                {% for s in upcoming_sessions %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>
+                            {{ s.user.profile.full_name|default:s.user.email }}
+                            — {{ s.scheduled_at|date:"d M h:i A" }}
+                        </span>
+
+                        <span class="badge bg-info">{{ s.topic }}</span>
+                    </li>
+                {% endfor %}
+
+                </ul>
+            {% else %}
+                <p class="text-muted">No upcoming sessions.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container py-4">
+
+<h3 class="mb-4 fw-semibold">
+    <i class="bi bi-person-video3 me-2"></i>
+    Mock Interviews
+</h3>
+
+<!-- ================= TODAY ================= -->
+
+<div class="card shadow-sm mb-4">
+<div class="card-body">
+
+<h5 class="mb-3">Today's Interviews</h5>
+
+<div class="list-group">
+
+{% for i in today_interviews %}
+
+<div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+
+<div>
+    <div class="fw-semibold">{{ i.candidate.email }}</div>
+    <small class="text-muted">
+        {{ i.scheduled_datetime|date:"d M Y, H:i" }}
+    </small>
+    {% comment %} <span class="badge bg-secondary">
+    Starts in {{ i.scheduled_datetime|timeuntil }}
+    </span> {% endcomment %}
+</div>
+
+<div class="d-flex gap-2">
+
+    {# JOIN — only after start time #}
+    {% if i.meeting_link and i.scheduled_datetime <= now and i.status != "completed" %}
+    <a href="{{ i.meeting_link }}" target="_blank"
+       class="btn btn-sm btn-primary">
+       Join
+    </a>
+    {% endif %}
+
+    {# FEEDBACK — only after time #}
+    {% if i.scheduled_datetime <= now and i.status != "completed" %}
+    <a href="{% url 'trainer_mock_feedback' i.id %}"
+       class="btn btn-sm btn-warning">
+       Give Feedback
+    </a>
+    {% endif %}
+
+    {# REPORT — after completed #}
+    {% if i.status == "completed" %}
+    <a href="{% url 'trainer_mock_report' i.id %}"
+       class="btn btn-sm btn-success">
+       Report
+    </a>
+    {% endif %}
+
+</div>
+
+</div>
+
+{% empty %}
+
+<div class="text-muted">No interviews today</div>
+{% endfor %}
+
+</div>
+</div>
+</div>
+
+<!-- ================= UPCOMING ================= -->
+
+<div class="card shadow-sm mb-4">
+<div class="card-body">
+
+<h5 class="mb-3">Upcoming Interviews</h5>
+
+<div class="list-group">
+
+{% for i in upcoming_interviews %}
+
+<div class="list-group-item d-flex justify-content-between align-items-center">
+
+<div>
+    <div class="fw-semibold">{{ i.candidate.email }}</div>
+    <small class="text-muted">
+        {{ i.scheduled_datetime|date:"d M Y, H:i" }}
+    </small>
+</div>
+
+<span class="badge bg-secondary">
+    Starts in {{ i.scheduled_datetime|timeuntil }}
+</span>
+
+</div>
+{% empty %}
+<div class="text-muted">No upcoming interviews</div>
+{% endfor %}
+
+</div>
+</div>
+</div>
+
+<!-- ================= PENDING FEEDBACK ================= -->
+
+<div class="card shadow-sm mb-4">
+<div class="card-body">
+
+<h5 class="mb-3">Pending Feedback</h5>
+
+<table class="table align-middle">
+<thead>
+<tr>
+<th>Candidate</th>
+<th>Scheduled</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+{% for i in pending_feedback %}
+<tr>
+<td>{{ i.candidate.email }}</td>
+<td>{{ i.scheduled_datetime|date:"d M Y H:i" }}</td>
+<td class="d-flex gap-2">
+
+
+{% if i.meeting_link %}
+<a href="{{ i.meeting_link }}" target="_blank"
+   class="btn btn-sm btn-primary">
+   Join
+</a>
+{% endif %}
+
+<a href="{% url 'trainer_mock_feedback' i.id %}"
+   class="btn btn-sm btn-warning">
+   Give Feedback
+</a>
+
+
+</td>
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="3" class="text-muted text-center">
+No pending feedback
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+</div>
+
+<!-- ================= COMPLETED ================= -->
+
+<div class="card shadow-sm">
+<div class="card-body">
+
+<h5 class="mb-3">Completed Interviews</h5>
+
+<table class="table align-middle">
+<thead>
+<tr>
+<th>Candidate</th>
+<th>Date</th>
+<th>Report</th>
+</tr>
+</thead>
+
+<tbody>
+{% for i in completed %}
+<tr>
+<td>{{ i.candidate.email }}</td>
+<td>{{ i.scheduled_datetime|date:"d M Y" }}</td>
+
+<td class="d-flex gap-2">
+
+{% if i.meeting_link %}
+<a href="{{ i.meeting_link }}" target="_blank"
+   class="btn btn-sm btn-outline-secondary">
+   Open Link
+</a>
+{% endif %}
+
+<a href="{% url 'trainer_mock_report' i.id %}"
+   class="btn btn-sm btn-success">
+   View Report
+</a>
+
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="3" class="text-center text-muted">
+No completed interviews
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+</div>
+
+</div>
+
+{% endblock %}

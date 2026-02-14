@@ -1,0 +1,114 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container py-4">
+
+<h3 class="fw-semibold mb-3">
+    {{ enrollment.user.profile.full_name|default:enrollment.user.email }}
+</h3>
+
+<p class="text-muted">
+    Training: <strong>{{ enrollment.training.title }}</strong>
+</p>
+
+<!-- PROGRESS BAR -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between mb-2">
+            <span class="fw-medium">Overall Progress</span>
+            <span class="fw-semibold">{{ percent }}%</span>
+        </div>
+
+        <div class="progress" style="height:14px;">
+            <div id="progressBar"
+                 class="progress-bar bg-success"
+                 style="width: {{ percent }}%">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODULES -->
+<div class="card shadow-sm">
+<div class="card-body">
+
+<h5 class="mb-3">Modules</h5>
+
+<ul class="list-group">
+
+{% for p in progress_list %}
+<li class="list-group-item d-flex justify-content-between align-items-center">
+
+    <div>
+        <strong>{{ p.module.title }}</strong>
+        <div class="small text-muted">{{ p.module.description }}</div>
+    </div>
+
+    {% if p.is_completed %}
+        <span class="badge bg-success">
+            Completed
+        </span>
+    {% else %}
+        <button class="btn btn-sm btn-outline-primary mark-complete"
+                data-id="{{ p.id }}">
+            Mark Complete
+        </button>
+    {% endif %}
+
+</li>
+{% endfor %}
+
+</ul>
+
+</div>
+</div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+
+    document.querySelectorAll(".mark-complete").forEach(btn => {
+
+        btn.addEventListener("click", function () {
+
+            const progressId = this.dataset.id;
+            const button = this;
+
+            fetch(`/trainer/module/${progressId}/complete/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": csrfToken
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+
+                if(data.success){
+
+                    button.innerText = "Completed";
+                    button.classList.remove("btn-outline-primary");
+                    button.classList.add("btn-success");
+                    button.disabled = true;
+
+                    if(data.completed){
+                        setTimeout(()=>location.reload(),800);
+                    }
+                }
+
+            });
+
+        });
+
+    });
+
+});
+</script>
+
+
+
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <h4 class="mb-4">Completed / Attended Sessions</h4>
+
+    {% if sessions %}
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Candidate</th>
+                        <th>Topic</th>
+                        <th>Scheduled Time</th>
+                        <th>Status</th>
+                        <th>Feedback</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for session in sessions %}
+                    <tr>
+                        <td>
+                            {{ session.user.profile.full_name|default:session.user.email }}
+                        </td>
+
+                        <td>{{ session.topic }}</td>
+
+                        <td>
+                            {{ session.scheduled_at|date:"d M Y h:i A" }}
+                        </td>
+
+                        <td>
+                            {% if session.status == "ATTENDED" %}
+                                <span class="badge bg-warning text-dark">Awaiting Admin</span>
+                            {% else %}
+                                <span class="badge bg-success">Completed</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ session.feedback|default:"—" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+        <div class="alert alert-info">
+            No completed sessions yet.
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
