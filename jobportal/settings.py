@@ -48,10 +48,11 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     'accounts.apps.AccountsConfig',
-    'core',
+    'core.apps.CoreConfig',
     'jobs',
-    'consultation',
+    "consultation",
     'mock_interview',
+    'trainer',
 ]
 
 
@@ -64,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'accounts.middleware_admin_block.BlockTrainerAdminMiddleware',  
     'accounts.middleware.SubscriptionMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -251,6 +253,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
 
 
 
