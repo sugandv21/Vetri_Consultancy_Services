@@ -294,6 +294,8 @@ Upgrade to Unlock
 <th>Training</th>
 <th>Mentor</th>
 <th>Session</th>
+<th>Progress</th>
+<th>Modules</th>
 <th>Join</th>
 <th>Certificate</th>
 </tr>
@@ -337,6 +339,75 @@ Upgrade to Unlock
     {{ e.course_timing|default:"To be announced" }}
 </td>
 
+<!-- PROGRESS -->
+<td data-label="Progress">
+
+<div class="progress" style="height:10px;">
+  <div class="progress-bar
+      {% if e.progress_percent < 40 %} bg-danger
+      {% elif e.progress_percent < 80 %} bg-warning
+      {% else %} bg-success
+      {% endif %}"
+      style="width: {{ e.progress_percent }}%">
+  </div>
+</div>
+
+<small class="text-muted">{{ e.progress_percent }}%</small>
+
+</td>
+
+<!-- MODULES -->
+<td data-label="Modules">
+
+<!-- covered -->
+{% if e.completed_modules %}
+<details class="mb-2">
+    <summary class="text-success small fw-semibold">
+        Covered ({{ e.completed_modules|length }})
+    </summary>
+
+    <ul class="small ps-3 mb-0">
+        {% for p in e.completed_modules %}
+            <li class="text-success">
+                <i class="bi bi-check-circle-fill"></i>
+                {{ p.module.title }}
+            </li>
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}
+
+<!-- uncovered -->
+{% if e.pending_modules %}
+<details>
+    <summary class="text-danger small fw-semibold">
+        Remaining ({{ e.pending_modules|length }})
+    </summary>
+
+    <ul class="small ps-3 mb-0">
+        {% for p in e.pending_modules %}
+        <li class="text-muted d-flex justify-content-between align-items-center">
+
+            <span>
+                <i class="bi bi-circle"></i>
+                {{ p.module.title }}
+            </span>
+
+            <button class="btn btn-sm btn-outline-success mark-complete"
+                    data-id="{{ p.id }}">
+                Mark Complete
+            </button>
+
+        </li>
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}
+
+
+</td>
+
+
 <!-- JOIN BUTTON -->
 <td data-label="Join">
 {% if e.training_link %}
@@ -373,7 +444,7 @@ Upgrade to Unlock
 
 {% empty %}
 <tr>
-<td colspan="5">
+<td colspan="7">
     <div class="text-center py-5 empty-state">
         <i class="bi bi-mortarboard display-6 text-muted"></i>
         <p class="mt-3 text-muted">You haven't enrolled in any trainings yet</p>
@@ -554,5 +625,51 @@ document.addEventListener("DOMContentLoaded", function(){
 
 });
 </script>
+
+
+<script>
+document.addEventListener("click", function(e){
+
+    if(!e.target.classList.contains("mark-complete")) return;
+
+    const btn = e.target;
+    const id = btn.dataset.id;
+
+    fetch(`/complete-module/${id}/`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+
+    btn.innerHTML = "Completed";
+    btn.classList.remove("btn-outline-success");
+    btn.classList.add("btn-success");
+    btn.disabled = true;
+
+    const row = btn.closest("tr");
+    const progressBar = row.querySelector(".progress-bar");
+
+    if(progressBar){
+        progressBar.style.width = data.percent + "%";
+    }
+
+    // 🎓 training completed
+    if(data.completed){
+        const badge = row.querySelector(".badge");
+        if(badge){
+            badge.classList.remove("bg-primary-subtle","text-primary","bg-secondary-subtle","text-secondary");
+            badge.classList.add("bg-success-subtle","text-success");
+            badge.innerText = "Completed";
+        }
+    }
+}
+
+    });
+
+});
+</script>
+
 
 {% endblock %}

@@ -276,12 +276,13 @@ Upgrade to Unlock
 
 <td data-label="Certificate">
 {% if not e.is_completed %}
-<span class="text-muted">Available after course completion</span>
+    After completion
 {% elif e.is_completed and not e.certificate %}
-<span class="text-warning">Certificate uploading soon</span>
+    Uploading soon
 {% else %}
-<a href="{{ e.certificate.url }}" class="btn btn-sm btn-success">Download</a>
+    Download
 {% endif %}
+
 </td>
 </tr>
 {% empty %}

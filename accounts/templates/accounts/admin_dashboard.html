@@ -176,6 +176,19 @@
     </a>
   </div> {% endcomment %}
 
+  <div class="col-md-3 mb-3">
+  <a href="{% url 'admin_alerts' %}?type=trainer" class="text-decoration-none text-dark">
+    <div class="card text-center border-warning shadow-sm h-100">
+      <div class="card-body">
+        <h6>Trainer Alerts</h6>
+        <h3>{{ trainer_alerts }}</h3>
+        <small class="text-muted">Trainer actions</small>
+      </div>
+    </div>
+  </a>
+</div>
+
+
   <!-- UNREAD ALERTS -->
   <div class="col-md-3 mb-3">
     <a href="{% url 'admin_unread_alerts' %}" class="text-decoration-none text-dark">
